@@ -26,7 +26,7 @@ mainfont: "Lato"
 monofont: "Hack"
 monofontoptions: "Scale=0.7"
 
-bibliography: [book.bib, packages.bib, bibliography.bib]
+bibliography: [packages.bib, bibliography.bib]
 biblio-style: apalike
 link-citations: yes
 colorlinks: yes
@@ -117,31 +117,3 @@ pre {
 
 ```
 
-```{r load-libraries,message=FALSE}
-# Load libraries
-library(tidyverse)
-library(gridExtra)
-library(kableExtra)
-library(lubridate)
-```
-
-```{r load-dataset-from-disk}
-# LendingClub data
-if (!exists("lending_club")) lending_club <- readRDS("datasets/lending_club_reformatted.rds")
-if (!exists("loans")) loans <- readRDS("datasets/lending_club_reformatted_paid.rds")
-
-# Interest rate swaps
-if (!exists("RATES")) RATES <- readRDS("datasets/rates.rds")
-# if (!exists("RATES3Y")) RATES3Y <- readRDS("datasets/rates3Y.rds")
-# if (!exists("RATES5Y")) RATES5Y <- readRDS("datasets/rates5Y.rds")
-
-# ZIP/FIPS code data
-if (!exists("zips")) zips <- readRDS("datasets/zips.rds")
-if (!exists("zipfips")) zips <- readRDS("datasets/zipfips.rds")
-
-# Macro data
-if (!exists("medianIncome")) medianIncome <- readRDS("datasets/medianincome.rds")
-if (!exists("personalIncome")) personalIncome <- readRDS("datasets/personalincome.rds")
-if (!exists("unemploymentRate")) unemploymentRate <- readRDS("datasets/unemployment.rds")
-
-```

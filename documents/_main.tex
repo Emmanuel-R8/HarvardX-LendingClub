@@ -172,6 +172,22 @@
 
 \normalsize
 
+\small
+
+\normalsize
+
+\small
+
+\normalsize
+
+\small
+
+\normalsize
+
+\small
+
+\normalsize
+
 \hypertarget{introduction}{%
 \chapter*{Introduction}\label{introduction}}
 \addcontentsline{toc}{chapter}{Introduction}
@@ -218,23 +234,63 @@ The dataset has been used a number of times in the past by various people. One p
 \hypertarget{general-presentation}{%
 \section{General presentation}\label{general-presentation}}
 
-The original dataset is rich: it includes 2260668 loan samples, each containing 144 variables (after the identification variables filled with null values). The dataset represents a total of ca.\$34bln in loan principals, which is a substantial share of the total amount stated to have been intermediated to date by LC (reported to be \$50bln+).
+The original dataset is rich: it includes 2260668 loan samples, each containing 144 variables (after the identification variables filled with null values). The loans were issued from 2007-06-01 to 2018-12-01.
 
-\hypertarget{identification}{%
-\subsection{Identification}\label{identification}}
+\hypertarget{business-volume}{%
+\subsection{Business volume}\label{business-volume}}
 
-The dataset is anonymised (all identifying ID numbers are deleted) and we therefore removed those columns from the dataset. Since the identification \texttt{ID}s have been removed to anonymise the dataset, we cannot see if a borrower borrowed several times.
+The dataset represents a total of ca.\$34bln in loan principals, which is a substantial share of the total amount stated to have been intermediated to date by LC (reported to be \$50bln+). About 60\% of the portfolio is fully repaid. See Table \ref{tab:loan-per-status}.
+
+\small
+
+\begin{table}
+
+\caption{\label{tab:loan-per-status}Number of loans per status}
+\centering
+\begin{tabular}[t]{>{\raggedright\arraybackslash}p{8.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{3.5cm}}
+\toprule
+Loan status & Count & Proportion (\%)\\
+\midrule
+Charged Off & 261655 & 11.574\\
+Current & 919695 & 40.682\\
+Default & 31 & 0.001\\
+Does not meet the credit policy. Status:Charged Off & 761 & 0.034\\
+Does not meet the credit policy. Status:Fully Paid & 1988 & 0.088\\
+\addlinespace
+Fully Paid & 1041952 & 46.090\\
+In Grace Period & 8952 & 0.396\\
+Late (16-30 days) & 3737 & 0.165\\
+Late (31-120 days) & 21897 & 0.969\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\normalsize
+
+Figure \ref{fig:business-volume-per-month} plots the number, volume (cumulative principal amount) and average principal per loan. It shows that the business grew exponentially (in the common sense of the word) from inception until 2016. At this point, according to Wikipedia \footnote{source: \url{https://en.wikipedia.org/wiki/LendingClub} - Retrieval date 15 September 2019}:
+
+" \emph{Like other peer-to-peer lenders including Prosper, Sofi and Khutzpa.com, LendingClub experienced increasing difficulty attracting investors during early 2016. This led the firm to increase the interest rate it charges borrowers on three occasions during the first months of the year. The increase in interest rates and concerns over the impact of the slowing United States economy caused a large drop in LendingClub's share price.}"
+
+The number and volume of loans plotted have been aggregated by month. The growth is very smooth in the early years, and suddenly very volatile. As far as the first part of the dataset is concerned, a starting business could expect to be volatile and could witness a yearly cycle (expected from economic consumption figures) superimposed on the growth trend. This is not the case.
+
+An interesting metric is that the average principal of loans has increased (see Figure \ref{business-volume-per-month}, on a sample of 100,000 loans). Partly, the increase in the early years could be interpreted success in confidence building. This metric plateau-ed in 2016 and decreased afterwards, but to a much lesser extent than the gross volume metrics. However, it is more volatile than the two previous metrics in the early years.
+
+By the end of the dataset, all metrics have essentially recovered to their 2016 level.
 
 \hypertarget{loan-lifecyle-and-status}{%
 \subsection{Loan lifecyle and status}\label{loan-lifecyle-and-status}}
 
 In the dataset, less loans are still outstanding than matured or ``\emph{charged off}'' (term that LC use to mean partially or fully written off, i.e.~there are no possibilty for LC and/or the investors to receive further payments). The share of outstanding loans is:
 
+\small
+
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
 \NormalTok{## Share of current loans =  42.214 %}
 \end{Highlighting}
 \end{Shaded}
+
+\normalsize
 
 The dataset describes the life cycle of a loan. In the typical (ideal) case, we understand it to be:
 
@@ -294,6 +350,8 @@ Based on this information, the loan is approved or not. Approval includes the fi
 
 Figure \ref{fig:interest-rate-table} \footnote{source: \url{https://www.lendingclub.com/investing/investor-education/interest-rates-and-fees}} shows the predetermined interest rate depending on the initial rating as of July 2019.
 
+\small
+
 \begin{figure}
 
 {\centering \includegraphics[width=0.7\linewidth]{images/interest-rates-jul2019} 
@@ -303,9 +361,13 @@ Figure \ref{fig:interest-rate-table} \footnote{source: \url{https://www.lendingc
 \caption{Interest rates given rating}\label{fig:interest-rate-table}
 \end{figure}
 
+\normalsize
+
 At the date of this report, the ratings range from \texttt{A} (the best) down to \texttt{D}, each split in 5 sub-ratings. However, LC previously also intermediated loans rated F or G (until 6 November 2017) and E (until 30 June 2019) \footnote{See \url{https://www.lendingclub.com/info/demand-and-credit-profile.action}}. This explains that such ratings are in the dataset. We will assume that the ratings in the dataset are the rating at the time of approval and that, even if loans are re-rated by LC, the dataset does not reflect it.
 
 Figures \ref{fig:interest-over-time} shows the change in interest rate over time for different ratings and separated for each tenor. (Each figure is on a sample of 100,000 loans.) For each rating, we can see several parallel lines which correspond to the 5 sub-rating of each rating. We note that the range of interest rates has substantial widened over time. That is, the risk premium necessary to attract potential investors has had to substantially increase. In the most recent years, the highest rates exceed 30\% which is higher than many credit cards.3-year loans are, unsurprinsingly, considered safer (more A-rated, less G-rated). Identical ratings attract identical rates of interest.
+
+\small
 
 \begin{figure}
 
@@ -316,7 +378,11 @@ Figures \ref{fig:interest-over-time} shows the change in interest rate over time
 \caption{Interest rate per grade over time}\label{fig:interest-over-time}
 \end{figure}
 
+\normalsize
+
 By comparison, we plot the 3-year (in red) and 5-year (in blue) bank swap rates in Figure @(fig:swap-rates). We see that the swap curve has flattened in recent times (3-year and 5-y rates are almost identical). We also can see that in broad terms the interest rates charged reflect those underlying swap rates. It is therefore most relevant to examine the credit margins added to the swap rates.
+
+\small
 
 \begin{figure}
 
@@ -327,7 +393,11 @@ By comparison, we plot the 3-year (in red) and 5-year (in blue) bank swap rates 
 \caption{Historical Swap Rates}\label{fig:swap-rates}
 \end{figure}
 
+\normalsize
+
 Figures \ref{fig:margin-over-time} shows the change in credit margin over time for different ratings and separated for each tenor. (Each figure is on a sample of 100,000 loans.) As above, for each rating, we can see several parallel lines which correspond to the 5 sub-rating of each rating. We note that the range of credit margins has widened over time but less than the interest rates. Identical ratings attract identical credit margins.
+
+\small
 
 \begin{figure}
 
@@ -337,6 +407,8 @@ Figures \ref{fig:margin-over-time} shows the change in credit margin over time f
 
 \caption{Credit margins per grade over time}\label{fig:margin-over-time}
 \end{figure}
+
+\normalsize
 
 {[}TODO: DTI, amount\ldots{} by grade{]}
 
@@ -350,6 +422,8 @@ Installment = Principal \times \frac{1}{1 - \frac{1}{(1+rate)^N}}
 \]
 
 Where \(Principal\) is the amount borrowed, \(rate = \frac{\text{Quoted Interest Rate}}{12}\) is the monthly interest rate, and \(N\) is the number of installments (36 or 60 monthly payments). The following piece of code shows that the average error between this formula and the dataset value is about 2 cents. We therefore precisely understand this variable.
+
+\small
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -367,6 +441,8 @@ Where \(Principal\) is the amount borrowed, \(rate = \frac{\text{Quoted Interest
 \end{Highlighting}
 \end{Shaded}
 
+\normalsize
+
 \hypertarget{variables}{%
 \section{Variables}\label{variables}}
 
@@ -375,42 +451,7 @@ We here present the dataset in a bit more details The full list of variable is g
 \hypertarget{general}{%
 \subsection{General}\label{general}}
 
-The loans were issued from 2007-06-01 to 2018-12-01. About 60\% of the portfolio is fully repaid. See Table \ref{tab:loan-per-status}.
-
-\begin{table}
-
-\caption{\label{tab:loan-per-status}Number of loans per status}
-\centering
-\begin{tabular}[t]{>{\raggedright\arraybackslash}p{8.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{3.5cm}}
-\toprule
-Loan status & Count & Proportion (\%)\\
-\midrule
-Charged Off & 261655 & 11.574\\
-Current & 919695 & 40.682\\
-Default & 31 & 0.001\\
-Does not meet the credit policy. Status:Charged Off & 761 & 0.034\\
-Does not meet the credit policy. Status:Fully Paid & 1988 & 0.088\\
-\addlinespace
-Fully Paid & 1041952 & 46.090\\
-In Grace Period & 8952 & 0.396\\
-Late (16-30 days) & 3737 & 0.165\\
-Late (31-120 days) & 21897 & 0.969\\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\hypertarget{business-volume}{%
-\subsubsection{Business volume}\label{business-volume}}
-
-Figure \ref{fig:business-volume-per-month} plots the number, volume (cumulative principal amount) and average principal per loan shows that the business grew exponentially (in the common sense of the word) since inception until 2016. At this point, according to Wikipedia \footnote{source: \url{https://en.wikipedia.org/wiki/LendingClub} - Retreival date 15 September 2019}:
-
-" \emph{Like other peer-to-peer lenders including Prosper, Sofi and Khutzpa.com, LendingClub experienced increasing difficulty attracting investors during early 2016. This led the firm to increase the interest rate it charges borrowers on three occasions during the first months of the year. The increase in interest rates and concerns over the impact of the slowing United States economy caused a large drop in LendingClub's share price.}"
-
-The number and volume of loans plotted have been aggregated by month. The growth is very smooth in the early years, and suddenly very volatile. As far as the first part of the dataset is concerned, a starting business could expect to be volatile and could witness a yearly cycle (expected from economic consumption figures) superimposed on the growth trend. This is not the case.
-
-An interesting metric is that the average principal of loans has increased (see Figure \ref{business-volume-per-month}, on a sample of 100,000 loans). Partly, the increase in the early years could be interpreted success in confidence building. This metric plateau-ed in 2016 and decreased afterwards, but to a much lesser extent than the gross volume metrics. However, it is more volatile than the two previous metrics in the early years.
-
-By the end of the dataset, all metrics have essentially recovered to their 2016 level.
+\small
 
 \begin{figure}
 
@@ -421,12 +462,21 @@ By the end of the dataset, all metrics have essentially recovered to their 2016 
 \caption{Business volume written per month}\label{fig:business-volume-per-month}
 \end{figure}
 
+\normalsize
+
+\hypertarget{identification}{%
+\subsection{Identification}\label{identification}}
+
+The dataset is anonymised (all identifying ID numbers are deleted) and we therefore removed those columns from the dataset. Since the identification \texttt{ID}s have been removed to anonymise the dataset, we cannot see if a borrower borrowed several times.
+
 \hypertarget{loan-decision}{%
 \section{Loan decision}\label{loan-decision}}
 
 As indicated in the introduction, our focus is on loans that have gone through their entire life cycle to consider their respective pricing, risk and profitability. To that effect, we will remove all loans which are still current (either performing or not). From here on, everything will be based on this reduced dataset.
 
 In this reduced dataset, we focus on loans that have matured or been terminated. It contains 1306356 samples. Most of the loans (ca.80\%) have been repaid in full. See Table \ref{tab:matured-loans}.
+
+\small
 
 \begin{table}
 
@@ -444,7 +494,11 @@ Does not meet the credit policy. Status:Charged Off & 761 & 19025\\
 \end{tabular}
 \end{table}
 
+\normalsize
+
 When grouped by grade (Figure \ref{fig:funded-by-subgrade}), we see a clear correlation between grade and default: the lower the grade the higher the portion defaults (all the way down to about 50\%). In addition, most of the business is written in the B- or C-rating range.
+
+\small
 
 \begin{figure}
 
@@ -454,6 +508,8 @@ When grouped by grade (Figure \ref{fig:funded-by-subgrade}), we see a clear corr
 
 \caption{Funding and Write-offs by Sub-grades}(\#fig:funded-by-subgrade, )
 \end{figure}
+
+\normalsize
 
 \hypertarget{appendix}{%
 \chapter*{Appendix}\label{appendix}}
@@ -497,6 +553,8 @@ We here show the code used to prepare the data.
 
 \hypertarget{lendinclub-dataset}{%
 \subsection{LendinClub dataset}\label{lendinclub-dataset}}
+
+\small
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -789,10 +847,14 @@ We here show the code used to prepare the data.
 \end{Highlighting}
 \end{Shaded}
 
+\normalsize
+
 \hypertarget{zip-codes-and-fips-codes}{%
 \subsection{Zip codes and FIPS codes}\label{zip-codes-and-fips-codes}}
 
 The R package \texttt{zipcode} was installed.
+
+\small
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -810,7 +872,11 @@ The R package \texttt{zipcode} was installed.
 \end{Highlighting}
 \end{Shaded}
 
+\normalsize
+
 A csv file containing zip codes, FIPS codes and population information was downloaded from the \emph{Simple Maps} \footnote{\url{https://simplemaps.com/data/us-zips}} website.
+
+\small
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -829,6 +895,8 @@ A csv file containing zip codes, FIPS codes and population information was downl
 \end{Highlighting}
 \end{Shaded}
 
+\normalsize
+
 \hypertarget{market-interest-rates}{%
 \subsection{Market interest rates}\label{market-interest-rates}}
 
@@ -846,6 +914,8 @@ Download sources are:
 \item
   Post-LIBOR 5-y swap \url{https://fred.stlouisfed.org/series/ICERATES1100USD5Y}
 \end{itemize}
+
+\small
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -910,6 +980,8 @@ Download sources are:
 \end{Highlighting}
 \end{Shaded}
 
+\normalsize
+
 \hypertarget{macro-economical-data}{%
 \subsection{Macro-economical data}\label{macro-economical-data}}
 
@@ -926,6 +998,8 @@ Macro-economical datasets were sourced from the same website as Microsoft Excel 
   Unemployment:
   \url{https://geofred.stlouisfed.org/map/?th=rdpu\&cc=5\&rc=false\&im=fractile\&sb\&lng=-90\&lat=40\&zm=4\&sl\&sv\&am=Average\&at=Not\%20Seasonally\%20Adjusted,\%20Monthly,\%20Percent\&sti=1224\&fq=Monthly\&rt=county\&un=lin\&dt=2019-08-01}
 \end{itemize}
+
+\small
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -1063,10 +1137,14 @@ Macro-economical datasets were sourced from the same website as Microsoft Excel 
 \end{Highlighting}
 \end{Shaded}
 
+\normalsize
+
 \hypertarget{list-of-variables}{%
 \section{List of variables}\label{list-of-variables}}
 
 This table presents the list of variables provided in the original dataset. The descriptions come from a spreadsheet attached with the dataset and, unfortunately, are not extremely precise and subject to interpretation. We added comments and/or particular interpretations in \emph{CAPITAL LETTERS}.
+
+\small
 
 \begin{longtable}[t]{>{\raggedright\arraybackslash}p{7cm}>{\raggedright\arraybackslash}p{7cm}}
 \caption{\label{tab:variable-description}Description of the dataset variables as provided in the dataset downloaded from Kaggle}\\
@@ -1090,9 +1168,9 @@ term & The number of payments on the loan. Values are in months and can be eithe
 int\_rate & Interest Rate on the loan\\
 \addlinespace
 installment & The monthly payment owed by the borrower if the loan originates.\\
-grade & LC assigned loan grade. THIS RATING IS CONFUSING.\\
+grade & LC assigned loan grade\\
 sub\_grade & LC assigned loan subgrade\\
-emp\_title & The job title supplied by the Borrower when applying for the loan.*\\
+emp\_title & The job title supplied by the Borrower when applying for the loan.\\
 emp\_length & Employment length in years. Possible values are between 0 and 10 where 0 means less than one year and 10 means ten or more years.\\
 \addlinespace
 home\_ownership & The home ownership status provided by the borrower during registration or obtained from the credit report. Our values are: RENT, OWN, MORTGAGE, OTHER\\
@@ -1122,7 +1200,8 @@ pub\_rec & Number of derogatory public records\\
 revol\_bal & Total credit revolving balance\\
 revol\_util & Revolving line utilization rate, or the amount of credit the borrower is using relative to all available revolving credit.\\
 total\_acc & The total number of credit lines currently in the borrower's credit file\\
-initial\_list\_status & The initial listing status of the loan. Possible values are – W, F\\
+initial\_list\_status & The initial listing status of the loan. Possible values are – W,
+  F\\
 out\_prncp & Remaining outstanding principal for total amount funded\\
 \addlinespace
 out\_prncp\_inv & Remaining outstanding principal for portion of total amount funded by investors\\
@@ -1132,21 +1211,27 @@ total\_rec\_prncp & Principal received to date\\
 total\_rec\_int & Interest received to date\\
 \addlinespace
 total\_rec\_late\_fee & Late fees received to date\\
-recoveries & post charge off gross recovery\\
-collection\_recovery\_fee & post charge off collection fee\\
+recoveries & Post charge off gross recovery\\
+collection\_recovery\_fee & Post charge off collection fee\\
 last\_pymnt\_d & Last month payment was received\\
 last\_pymnt\_amnt & Last total payment amount received\\
 \addlinespace
 next\_pymnt\_d & Next scheduled payment date\\
 last\_credit\_pull\_d & The most recent month LC pulled credit for this loan\\
 collections\_12\_mths\_ex\_med & Number of collections in 12 months excluding medical collections\\
-mths\_since\_last\_major\_derog & Months since most recent 90-day or worse rating\\
-policy\_code & publicly available policy\_code=1, new products not publicly available policy\_code=2\\
+mths\_since\_last\_major\_derog & Months since most recent 90 -
+    day or worse rating\\
+policy\_code & Publicly available policy\_code =
+    1 / New products not publicly available policy\_code = 2\\
 \addlinespace
-application\_type & Indicates whether the loan is an individual application or a joint application with two co-borrowers\\
-annual\_inc\_joint & The combined self-reported annual income provided by the co-borrowers during registration\\
+application\_type & Indicates whether the loan is an individual application or a joint application with two co -
+    borrowers\\
+annual\_inc\_joint & The combined self -
+    reported annual income provided by the co - borrowers during registration\\
 dti\_joint & A ratio calculated using the co-borrowers' total monthly payments on the total debt obligations, excluding mortgages and the requested LC loan, divided by the co-borrowers' combined self-reported monthly income\\
-verification\_status\_joint & Indicates if income was verified by LC, not verified, or if the income source was verified\\
+verification\_status\_joint & Indicates if income was verified by LC,
+  not verified,
+  or if the income source was verified\\
 acc\_now\_delinq & The number of accounts on which the borrower is now delinquent.\\
 \addlinespace
 tot\_coll\_amt & Total collection amounts ever owed\\
@@ -1158,13 +1243,15 @@ open\_il\_12m & Number of installment accounts opened in past 12 months\\
 open\_il\_24m & Number of installment accounts opened in past 24 months\\
 mths\_since\_rcnt\_il & Months since most recent installment accounts opened\\
 total\_bal\_il & Total current balance of all installment accounts\\
-il\_util & Ratio of total current balance to high credit/credit limit on all install acct\\
+il\_util & Ratio of total current balance to high credit /
+    credit limit on all install acct\\
 open\_rv\_12m & Number of revolving trades opened in past 12 months\\
 \addlinespace
 open\_rv\_24m & Number of revolving trades opened in past 24 months\\
 max\_bal\_bc & Maximum current balance owed on all revolving accounts\\
 all\_util & Balance to credit limit on all trades\\
-total\_rev\_hi\_lim & Principal received to date\\
+total\_rev\_hi\_lim & Total revolving high credit /
+    credit limit\\
 inq\_fi & Number of personal finance inquiries\\
 \addlinespace
 total\_cu\_tl & Number of finance trades\\
@@ -1173,9 +1260,11 @@ acc\_open\_past\_24mths & Number of trades opened in past 24 months.\\
 avg\_cur\_bal & Average current balance of all accounts\\
 bc\_open\_to\_buy & Total open to buy on revolving bankcards.\\
 \addlinespace
-bc\_util & Ratio of total current balance to high credit/credit limit for all bankcard accounts.\\
-chargeoff\_within\_12\_mths & Number of charge-offs within 12 months\\
-delinq\_amnt & The past-due amount owed for the accounts on which the borrower is now delinquent.\\
+bc\_util & Ratio of total current balance to high credit /
+    credit limit for all bankcard accounts.\\
+chargeoff\_within\_12\_mths & Number of charge -
+    offs within 12 months\\
+delinq\_amnt & The past - due amount owed for the accounts on which the borrower is now delinquent.\\
 mo\_sin\_old\_il\_acct & Months since oldest bank installment account opened\\
 mo\_sin\_old\_rev\_tl\_op & Months since oldest revolving account opened\\
 \addlinespace
@@ -1197,7 +1286,8 @@ num\_il\_tl & Number of installment accounts\\
 num\_op\_rev\_tl & Number of open revolving accounts\\
 num\_rev\_accts & Number of revolving accounts\\
 \addlinespace
-num\_rev\_tl\_bal\_gt\_0 & Number of revolving trades with balance >0\\
+num\_rev\_tl\_bal\_gt\_0 & Number of revolving trades with balance >
+    0\\
 num\_sats & Number of satisfactory accounts\\
 num\_tl\_120dpd\_2m & Number of accounts currently 120 days past due (updated in past 2 months)\\
 num\_tl\_30dpd & Number of accounts currently 30 days past due (updated in past 2 months)\\
@@ -1205,7 +1295,7 @@ num\_tl\_90g\_dpd\_24m & Number of accounts 90 or more days past due in last 24 
 \addlinespace
 num\_tl\_op\_past\_12m & Number of accounts opened in past 12 months\\
 pct\_tl\_nvr\_dlq & Percent of trades never delinquent\\
-percent\_bc\_gt\_75 & Percentage of all bankcard accounts > 75\% of limit.\\
+percent\_bc\_gt\_75 & Percentage of all bankcard accounts > 75 \% of limit.\\
 pub\_rec\_bankruptcies & Number of public record bankruptcies\\
 tax\_liens & Number of tax liens\\
 \addlinespace
@@ -1215,17 +1305,17 @@ total\_bc\_limit & Total bankcard high credit/credit limit\\
 total\_il\_high\_credit\_limit & Total installment high credit/credit limit\\
 revol\_bal\_joint & Total credit revolving balance\\
 \addlinespace
-sec\_app\_earliest\_cr\_line & Number of collections within last 12 months excluding medical collections at time of application for the secondary applicant\\
-sec\_app\_inq\_last\_6mths & FICO range (high) for the secondary applicant\\
-sec\_app\_mort\_acc & Credit inquiries in the last 6 months at time of application for the secondary applicant\\
-sec\_app\_open\_acc & Number of revolving accounts at time of application for the secondary applicant\\
-sec\_app\_revol\_util & Number of currently active installment trades at time of application for the secondary applicant\\
+sec\_app\_earliest\_cr\_line & Earliest credit line at time of application for the secondary applicant\\
+sec\_app\_inq\_last\_6mths & Credit inquiries in the last 6 months at time of application for the secondary applicant\\
+sec\_app\_mort\_acc & Number of mortgage accounts at time of application for the secondary applicant\\
+sec\_app\_open\_acc & Number of open trades at time of application for the secondary applicant\\
+sec\_app\_revol\_util & Ratio of total current balance to high credit/credit limit for all revolving accounts\\
 \addlinespace
 sec\_app\_open\_act\_il & Number of currently active installment trades at time of application for the secondary applicant\\
-sec\_app\_num\_rev\_accts & Months since most recent 90-day or worse rating at time of application for the secondary applicant\\
-sec\_app\_chargeoff\_within\_12\_mths & Revolving line utilization rate, or the amount of credit the borrower is using relative to all available revolving credit.\\
-sec\_app\_collections\_12\_mths\_ex\_med & Number of charge-offs within last 12 months at time of application for the secondary applicant\\
-sec\_app\_mths\_since\_last\_major\_derog & Number of mortgage accounts at time of application for the secondary applicant\\
+sec\_app\_num\_rev\_accts & Number of revolving accounts at time of application for the secondary applicant\\
+sec\_app\_chargeoff\_within\_12\_mths & Number of charge-offs within last 12 months at time of application for the secondary applicant\\
+sec\_app\_collections\_12\_mths\_ex\_med & Number of collections within last 12 months excluding medical collections at time of application for the secondary applicant\\
+sec\_app\_mths\_since\_last\_major\_derog & Months since most recent 90-day or worse rating at time of application for the secondary applicant\\
 \addlinespace
 hardship\_flag & Flags whether or not the borrower is on a hardship plan\\
 hardship\_type & Describes the hardship plan offering\\
@@ -1255,8 +1345,12 @@ settlement\_amount & The loan amount that the borrower has agreed to settle for\
 settlement\_percentage & The settlement amount as a percentage of the payoff balance amount on the loan\\*
 \end{longtable}
 
+\normalsize
+
 \hypertarget{system-version}{%
 \section{System version}\label{system-version}}
+
+\small
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -1279,7 +1373,9 @@ settlement\_percentage & The settlement amount as a percentage of the payoff bal
 \end{Highlighting}
 \end{Shaded}
 
-\bibliography{book.bib,packages.bib,bibliography.bib}
+\normalsize
+
+\bibliography{packages.bib,bibliography.bib}
 
 
 \end{document}
