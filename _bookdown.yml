@@ -1,0 +1,18 @@
+# book_filename: "LendingClub"
+output_dir: "documents"
+language:
+  ui:
+    chapter_name: "Chapter "
+delete_merged_file: true
+
+rmd_files: [
+  "00-index.Rmd",
+  "01-intro.Rmd",
+  "02-dataset.Rmd",
+  "08-appendix.Rmd",
+  "09-references.Rmd"
+]
+
+
+
+

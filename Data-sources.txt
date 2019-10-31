@@ -1,0 +1,31 @@
+DOWNLOAD oct.2019
+  
+OLD 3-y swap https://fred.stlouisfed.org/series/DSWP3
+NEW 3-y swap https://fred.stlouisfed.org/series/ICERATES1100USD3Y
+
+OLD 5-y swap https://fred.stlouisfed.org/series/MSWP5
+OLD 5-y swap https://fred.stlouisfed.org/series/ICERATES1100USD5Y
+
+
+FRED
+Per capita personal income
+https://geofred.stlouisfed.org/map/?th=pubugn&cc=5&rc=false&im=fractile&sb&lng=-112.41&lat=44.31&zm=4&sl&sv&am=Average&at=Not%20Seasonally%20Adjusted,%20Annual,%20Dollars&sti=882&fq=Annual&rt=county&un=lin&dt=2017-01-01
+
+Unemployment
+https://geofred.stlouisfed.org/map/?th=rdpu&cc=5&rc=false&im=fractile&sb&lng=-90&lat=40&zm=4&sl&sv&am=Average&at=Not%20Seasonally%20Adjusted,%20Monthly,%20Percent&sti=1224&fq=Monthly&rt=county&un=lin&dt=2019-08-01
+
+Median household
+https://geofred.stlouisfed.org/map/?th=pubugn&cc=5&rc=false&im=fractile&sb&lng=-112.41&lat=44.31&zm=4&sl&sv&am=Average&at=Not%20Seasonally%20Adjusted,%20Annual,%20Dollars&sti=2022&fq=Annual&rt=county&un=lin&dt=2017-01-01
+
+
+
+ZIPS/COUNTY
+https://simplemaps.com/data/us-zips
+
+FIPS to Counties
+https://wonder.cdc.gov/wonder/sci_data/codes/fips/type_txt/cntyxref.asp
+
+
+
+
+https://www.huduser.gov/portal/datasets/usps_crosswalk.html

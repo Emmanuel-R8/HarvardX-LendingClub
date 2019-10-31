@@ -1,0 +1,147 @@
+--- 
+title: "Lending Club"
+subtitle: "HarvardX - PH125.9x Data Science Capstone"
+author: "Emmanuel Rialland - https://github.com/Emmanuel_R8"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+site: bookdown::bookdown_site
+output: 
+  bookdown::pdf_book:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    keep_tex: true
+    df_print: kable
+  html_document: 
+    number_sections: true
+    df_print: paged
+    theme: united
+    
+documentclass: report
+geometry: "a4paper,left=2.5cm,right=2.5cm,top=3cm,bottom=3cm"
+lot: yes
+lof: yes
+
+fontsize: 11pt
+mainfont: "Lato"
+monofont: "Hack"
+monofontoptions: "Scale=0.7"
+
+bibliography: [book.bib, packages.bib, bibliography.bib]
+biblio-style: apalike
+link-citations: yes
+colorlinks: yes
+
+github-repo: Emmanuel_R8/HarvardX-LendingClub
+description: ""
+---
+
+```{r rebuild-command,eval=FALSE,echo=FALSE,message=FALSE,warning=FALSE}
+###################################################################################################
+## To rebuild the document
+##
+bookdown::render_book("00-index.Rmd", output_format = "bookdown::pdf_book")
+```
+
+
+```{r knitr-options,echo=FALSE,message=FALSE}
+###################################################################################################
+## GLOBAL SETUP
+##
+
+# Trigger line numbering
+knitr::opts_chunk$set(
+  class.source = "numberLines lineAnchors",
+  class.output = c("numberLines lineAnchors chunkout")
+)
+
+# knitr global settings - By default, the final document will not include source code unless
+# expressly stated.
+knitr::opts_chunk$set(
+  # Chunks
+  cache = TRUE,
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+
+  # Graphics
+  out.width = "70%",
+  fig.align = "center",
+  #   fig.show = 'hold',
+  fig.height = 3,
+  dev = "png",
+
+  # Text size
+  size = "small"
+)
+
+# automatically create a bib database for R packages
+knitr::write_bib(c(.packages(), "bookdown", "knitr", "rmarkdown"), "packages.bib")
+
+# Modify the size of the code chunks
+# https://stackoverflow.com/questions/25646333/code-chunk-font-size-in-rmarkdown-with-knitr-and-latex
+def.chunk.hook <- knitr::knit_hooks$get("chunk")
+knitr::knit_hooks$set(chunk = function(x, options) {
+  x <- def.chunk.hook(x, options)
+  ifelse(options$size != "normalsize", paste0("\n \\", options$size, "\n\n", x, "\n\n \\normalsize"), x)
+})
+```
+
+
+```{css echo=FALSE}
+code.r {
+  font-family: Hack, monospace;
+  font-size: 70%;
+  padding: 0;
+  padding-top: 0.2em;
+  padding-bottom: 0.2em;
+  background-color: rgba(0,0,0,0.04);
+  border-radius: 3px;
+}
+
+code:before,
+code:after {
+  letter-spacing: -0.2em;
+  content: "\00a0";
+}
+
+
+pre {
+  font-family: Hack, monospace;
+  font-size: 70%;
+  margin-left: 0%; 
+  #padding: 25%;
+  padding-top: 0.2em;
+  padding-bottom: 0.2em;
+  background-color: rgba(0,0,255,0.1);
+}
+
+```
+
+```{r load-libraries,message=FALSE}
+# Load libraries
+library(tidyverse)
+library(gridExtra)
+library(kableExtra)
+library(lubridate)
+```
+
+```{r load-dataset-from-disk}
+# LendingClub data
+if (!exists("lending_club")) lending_club <- readRDS("datasets/lending_club_reformatted.rds")
+if (!exists("loans")) loans <- readRDS("datasets/lending_club_reformatted_paid.rds")
+
+# Interest rate swaps
+if (!exists("RATES")) RATES <- readRDS("datasets/rates.rds")
+# if (!exists("RATES3Y")) RATES3Y <- readRDS("datasets/rates3Y.rds")
+# if (!exists("RATES5Y")) RATES5Y <- readRDS("datasets/rates5Y.rds")
+
+# ZIP/FIPS code data
+if (!exists("zips")) zips <- readRDS("datasets/zips.rds")
+if (!exists("zipfips")) zips <- readRDS("datasets/zipfips.rds")
+
+# Macro data
+if (!exists("medianIncome")) medianIncome <- readRDS("datasets/medianincome.rds")
+if (!exists("personalIncome")) personalIncome <- readRDS("datasets/personalincome.rds")
+if (!exists("unemploymentRate")) unemploymentRate <- readRDS("datasets/unemployment.rds")
+
+```
