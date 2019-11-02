@@ -2,8 +2,12 @@
 .Rhistory
 .RData
 _publish.R
+
 _book
 _bookdown_files
+_main_cache
+_main_files
+
 rsconnect
 *.log
 

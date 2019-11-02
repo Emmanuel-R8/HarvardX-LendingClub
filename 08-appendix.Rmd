@@ -345,16 +345,23 @@ A csv file containing zip codes, FIPS codes and population information was downl
 
 ```{r simplemaps,eval=FALSE,echo=TRUE}
 local({
-  zipfips <- read.csv("datasets/csv/uszips.csv")
+  kaggleCodes <- read.csv("datasets/csv/ZIP-COUNTY-FIPS_2017-06.csv")
   
-  # Delete the last 2 digits of the zipcode and only keep relevant information
-  zipfips <-
-    zipfips %>%
-    as_tibble() %>%
-    mutate(zip = floor(zip / 100)) %>%
-    select(zip, state_id, population, county_fips, county_name)
-  
-  saveRDS(zipfips, "datasets/zipfips.rds")
+  kaggleCodes <- 
+    kaggleCodes %>% 
+    as_tibble() %>% 
+    mutate(zip = floor(ZIP/100), 
+           FIPS = STCOUNTYFP, 
+           COUNTYNAME = str_replace(COUNTYNAME, pattern = "County", replacement = ""),
+           COUNTYNAME = str_replace(COUNTYNAME, pattern = "Borough", replacement = ""),
+           COUNTYNAME = str_replace(COUNTYNAME, pattern = "Municipio", replacement = ""),
+           COUNTYNAME = str_replace(COUNTYNAME, pattern = "Parish", replacement = ""),
+           COUNTYNAME = str_replace(COUNTYNAME, pattern = "Census Area", replacement = "")) %>% 
+    rename(county = COUNTYNAME) %>% 
+    select(zip, county, FIPS) %>% 
+    arrange(zip)
+
+  saveRDS(zipfips, "datasets/kaggleCodes.rds")
 })
 ```
 
@@ -453,6 +460,7 @@ local({
   ##
   ## Median income per household by FIPS from 2002 to 2017
   ##
+  # Prepare median income
   medianIncome <-
     # Load the dataset after dropping the first line
     read.csv(
@@ -469,26 +477,19 @@ local({
     rename(FIPS = "Region.Code") %>%
     
     # Order by FIPS
-    arrange(FIPS) %>%
+    arrange(FIPS) %>% 
     
-    # Transpose the table to have the FIPS as columns, and the years as observations
-    t()
-  
-  # After the transpose, correct the name of the columns by using the first row (from which blanks are removed)
-  colnames(medianIncome) <- medianIncome[1, ] %>% str_remove("[ ]")
-  
-  # Create a new column with the name of the year and converts to tible
-  medianIncome <-
-    cbind(Year = rownames(medianIncome), medianIncome) %>%
-    as_tibble() %>%
-    slice(2:n())
-  
-  # Converts the content of the Year column to an actual date
-  medianIncome <- medianIncome %>%
-    mutate(Year = str_replace(Year, "[X]", ""),
-           Year = ymd(str_c(Year, "-12-31")))
+    # Convert to a 'long' table, i.e. one column for FIPS, one for date, one for income
+    pivot_longer(cols = starts_with("X"), 
+                 names_to = "Date", 
+                 values_to = "medianIncome") %>% 
+    
+    # Create actual dates
+    mutate(Date = str_replace(Date, "[X]", ""),
+           Date = ymd(str_c(Date, "-12-31")))
   
   saveRDS(medianIncome, "datasets/medianincome.rds")
+
   
   
   ###################################################################################################
@@ -511,25 +512,16 @@ local({
     rename(FIPS = "Region.Code") %>%
     
     # Order by FIPS
-    arrange(FIPS) %>%
+    arrange(FIPS) %>% 
     
-    # Transpose the table to have the FIPS as columns, and the years as observations
-    t()
-  
-  # Correct the name of the columns after the transpose
-  colnames(personalIncome) <-
-    personalIncome[1, ] %>% str_remove("[ ]")
-  
-  # Create a new column with the name of the year and converts to tible
-  personalIncome <-
-    cbind(Year = rownames(personalIncome), personalIncome) %>%
-    as_tibble() %>%
-    slice(2:n())
-  
-  # Converts the content of the Year column to an actual date
-  personalIncome <- personalIncome %>%
-    mutate(Year = str_replace(Year, "[X]", ""),
-           Year = ymd(str_c(Year, "-12-31")))
+    # Convert to a 'long' table, i.e. one column for FIPS, one for date, one for income
+    pivot_longer(cols = starts_with("X"), 
+                 names_to = "Date", 
+                 values_to = "personalIncome") %>% 
+    
+    # Create actual dates
+    mutate(Date = str_replace(Date, "[X]", ""),
+           Date = ymd(str_c(Date, "-12-31")))
   
   saveRDS(personalIncome, "datasets/personalincome.rds")
   
@@ -554,27 +546,21 @@ local({
     rename(FIPS = "Region.Code") %>%
     
     # Order by FIPS
-    arrange(FIPS) %>%
+    arrange(FIPS) %>% 
     
-    # Transpose the table to have the FIPS as columns, and the years as observations
-    t()
+    mutate_all(as.double) %>% 
   
-  # Correct the name of the columns after the transpose
-  colnames(unemploymentRate) <-
-    unemploymentRate[1, ] %>% str_remove("[ ]")
-  
-  # Create a new column with the name of the year and converts to tible
-  unemploymentRate <-
-    cbind(Year = rownames(unemploymentRate), unemploymentRate) %>%
-    as_tibble() %>%
-    slice(2:n())
-  
-  # Converts the content of the Year column to an actual date
-  unemploymentRate <- unemploymentRate %>%
+    # Convert to a 'long' table, i.e. one column for FIPS, one for date, one for income
+    pivot_longer(cols = starts_with("X"), 
+                 names_to = "Date", 
+                 values_to = "unemploymentRate", 
+                 values_ptypes = c("unemploymentRate", numeric)) %>% 
+    
+    # Converts the content of the Year column to an actual date
     mutate(
-      Year = str_replace(Year, "[X]", ""),
-      Year = str_replace(Year, "[.]", "-"),
-      Year = ymd(str_c(Year, "-1"))
+      Date = str_replace(Date, "[X]", ""),
+      Date = str_replace(Date, "[.]", "-"),
+      Date = ymd(str_c(Date, "-1"))
     )
   
   saveRDS(unemploymentRate, "datasets/unemployment.rds")

@@ -32,7 +32,7 @@ link-citations: yes
 colorlinks: yes
 
 github-repo: Emmanuel_R8/HarvardX-LendingClub
-description: ""
+description: "HarvardX - PH125.9x Data Science Capstone"
 ---
 
 ```{r rebuild-command,eval=FALSE,echo=FALSE,message=FALSE,warning=FALSE}

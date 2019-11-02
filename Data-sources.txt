@@ -21,6 +21,7 @@ https://geofred.stlouisfed.org/map/?th=pubugn&cc=5&rc=false&im=fractile&sb&lng=-
 
 ZIPS/COUNTY
 https://simplemaps.com/data/us-zips
+https://www.kaggle.com/danofer/zipcodes-county-fips-crosswalk
 
 FIPS to Counties
 https://wonder.cdc.gov/wonder/sci_data/codes/fips/type_txt/cntyxref.asp
