@@ -10,6 +10,7 @@ rmd_files: [
   "01-startup.Rmd",
   "02-intro.Rmd",
   "03-dataset.Rmd",
+  "04-model.Rmd",
   "08-appendix.Rmd",
   "09-references.Rmd"
 ]

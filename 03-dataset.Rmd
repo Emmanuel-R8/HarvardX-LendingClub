@@ -318,7 +318,7 @@ When grouped by grade (Figure \@ref(fig:funded-by-subgrade)), we see a clear cor
 
 
 
-```{r funded-by-subgrade, , fig.cap="Funding and Write-offs by Sub-grades"}
+```{r funded-by-subgrade,fig.cap="Funding and Write-offs by Sub-grades"}
 loanSizeSummary <-
   loans %>%
   group_by(sub_grade) %>%
@@ -346,9 +346,4 @@ grid.arrange(loanBySubgrade1, loanBySubgrade2, ncol = 1)
 ```
 
  
-
-
-
-
-
 

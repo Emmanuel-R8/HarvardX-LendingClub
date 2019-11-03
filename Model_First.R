@@ -36,7 +36,7 @@ loansPredictors <-
 
 #################################################################################################
 ##
-## Reformatting/wrangling of factors (in case model do not mix continuous and cat. variables)
+## One-hot encoding of factors (in case model do not mix continuous and cat. variables)
 ##
 modelX <-
   loansPredictors %>%
@@ -87,16 +87,19 @@ modelX <-
 
 # Seed
 set.seed(42)
+sample005 <- sample(1:nSamples, floor(nSamples * 0.005), replace = FALSE)
 sample01 <- sample(1:nSamples, floor(nSamples * 0.01), replace = FALSE)
 sample05 <- sample(1:nSamples, floor(nSamples * 0.05), replace = FALSE)
 sample10 <- sample(1:nSamples, floor(nSamples * 0.10), replace = FALSE)
 sample20 <- sample(1:nSamples, floor(nSamples * 0.20), replace = FALSE)
 
+loans005 <- loansPredictors %>% slice(sample005)
 loans01 <- loansPredictors %>% slice(sample01)
 loans05 <- loansPredictors %>% slice(sample05)
 loans10 <- loansPredictors %>% slice(sample10)
 loans20 <- loansPredictors %>% slice(sample20)
 
+model005 <- modelX %>% slice(sample005)
 model01 <- modelX %>% slice(sample01)
 model05 <- modelX %>% slice(sample05)
 model10 <- modelX %>% slice(sample10)
@@ -116,10 +119,10 @@ trainKMEANS <- train(x = model01, y = Y01$sub_grade_num,
                      tuneGrid = data.frame(k = seq(3, 9, 2)))
 
 # Random Search
-set.seed(seed)
-rf_random <- train(Class~., data=dataset, method="rf", metric=metric, trControl=control)
-print(rf_random)
-plot(rf_random)
+# set.seed(seed)
+# rf_random <- train(Class~., data = dataset, method = "rf", metric = metric, trControl = control)
+# print(rf_random)
+# plot(rf_random)
 
 
 ###################################################################################################
@@ -129,6 +132,9 @@ plot(rf_random)
 ## Use Rborist since it accepts factors
 ##
 
+
+# 17000 sec.
+# Best result = 32 predictors
 {
   require(caret)
   require(Rborist)
@@ -141,17 +147,64 @@ plot(rf_random)
 
   trainRF <- train(x = loans01, y = Y01$sub_grade_num,
                    method = "Rborist",
-                   trControl = trainControl(method = "repeatedcv",
-                                            number = 10,
-                                            repeats = 3))
+                   nSamp = 2500,
+                   trControl = trainControl(method = "cv"))
 
   tictoc::toc()
   stopCluster(cl)
+
+  print(trainRF)
+  # Random Forest
+  #
+  # 13063 samples
+  # 63 predictor
+  #
+  # No pre-processing
+  # Resampling: Cross-Validated (10 fold, repeated 1 times)
+  # Summary of sample sizes: 11756, 11757, 11757, 11757, 11758, 11757, ...
+  # Resampling results across tuning parameters:
+  #
+  #   predFixed  RMSE       Rsquared   MAE
+  # 2         1.0217915  0.4787036  0.8070386
+  # 32         0.9217696  0.4984839  0.7231087
+  # 63         0.9235622  0.4944814  0.7241667
+  #
+  # Tuning parameter 'minNode' was held constant at a value of 3
+  # RMSE was used to select the optimal model using the smallest value.
+  # The final values used for the model were predFixed = 32 and minNode = 3.
 }
 
-print(trainRF)
-ggplot(trainRF)
 
+
+
+
+
+# .
+# Best result = 32 predictors
+{
+  require(caret)
+  require(Rborist)
+  require(doParallel)
+
+  cl <- makePSOCKcluster(4)
+  registerDoParallel(cl)
+
+  tictoc::tic()
+
+  trainRF <- train(x = loans01, y = Y01$sub_grade_num,
+                   method = "Rborist",
+                   predFixed = 32,
+                   nSamp = 2500)
+
+  tictoc::toc()
+  stopCluster(cl)
+
+  print(trainRF)
+}
+
+
+
+ggplot(trainRF)
 
 cc <- cor(modelX)
 ggcorrplot::ggcorrplot(cc, hc.order = TRUE, type = "upper", outline.color = "white")

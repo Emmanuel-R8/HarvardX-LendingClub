@@ -17,6 +17,9 @@ library(gridExtra)
 library(kableExtra)
 library(lubridate)
 
+library(dslabs)
+ds_theme_set()
+
 ```
 
 ```{r load-dataset-from-disk}

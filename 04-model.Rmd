@@ -1,0 +1,21 @@
+# Modelling
+
+At the outset, the dataset presents a number of challenges:
+
++ There is a mix of continuous and categorical data.
+
++ The number of observations is very large. 
+
+The diagram \@ref(fig:scikit-map)^[Source: https://scikit-learn.org/stable/tutorial/machine_learning_map/index.html] shows a useful decision tree.
+
+
+```{r scikit-map, fig.cap="Scikit Learn algorithm cheat-sheet",fig.height=5,cache=FALSE}
+knitr::include_graphics("images/scikit-learn-mlmap.png")
+```
+
+
+
+
+
+
+ 
