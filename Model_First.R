@@ -4,11 +4,20 @@ library(lubridate)
 
 # Load data
 if (!exists("loans")) loans <- readRDS("datasets/lending_club_reformatted_paid.rds")
+if (!exists("loansIRR")) loansIRR <- read.csv("datasets/loanIRR.csv") %>% as_tibble()
 nSamples <- nrow(loans)
 
 
+loans <- loans %>%
+  # add IRR calculations
+  left_join(loansIRR, by = "loanID") %>%
+
+  # add a % principal loss variable
+  mutate(principal_loss_pct = (funded_amnt - total_rec_prncp) / funded_amnt)
+
 # Select the variables checked in 01-startup.Rmd
 varList <- c(LC_variable[LC_variable$inModel == TRUE, "variable_name"])$variable_name
+
 
 #################################################################################################
 ##
@@ -105,61 +114,32 @@ model05  <- modelX %>% slice(sample05)
 model10  <- modelX %>% slice(sample10)
 model20  <- modelX %>% slice(sample20)
 
-Y01 <- loans %>% select(sub_grade_num) %>% slice(sample01)
-Y05 <- loans %>% select(sub_grade_num) %>% slice(sample05)
-Y10 <- loans %>% select(sub_grade_num) %>% slice(sample10)
-Y20 <- loans %>% select(sub_grade_num) %>% slice(sample20)
+G01 <- loans %>% select(sub_grade_num) %>% slice(sample01)
+G05 <- loans %>% select(sub_grade_num) %>% slice(sample05)
+G10 <- loans %>% select(sub_grade_num) %>% slice(sample10)
+G20 <- loans %>% select(sub_grade_num) %>% slice(sample20)
 
-###################################################################################################
-##
-## add IRR calculations
-##
-
-calc005 <-
-  loans %>%
-  slice(sample005) %>%
-  select(funded_amnt, int_rate, installment, term,
-         total_pymnt, total_rec_prncp, total_rec_int, total_rec_late_fee,
-         recoveries,
-         last_pymnt_amnt,
-         issue_d, last_pymnt_d)
-
-{
-  tictoc::tic()
-
-  loansIRR <-
-    loans %>%
-    rowwise() %>%
-    do(calculateIRR(loanNumber = .$loanID,
-                    loan = .$funded_amnt, intRate = .$int_rate, term = .$term,
-                    totalPaid = .$total_pymnt, totalPrincipalPaid = .$total_rec_prncp,
-                    totalInterestPaid = .$total_rec_int,
-                    recoveries = .$recoveries, lateFees = .$total_rec_late_fee))
-
-    tictoc::toc()
-}
+loss01 <- loans %>% select(principal_loss_pct) %>% slice(sample01)
+loss05 <- loans %>% select(principal_loss_pct) %>% slice(sample01)
+loss10 <- loans %>% select(principal_loss_pct) %>% slice(sample01)
+loss20 <- loans %>% select(principal_loss_pct) %>% slice(sample01)
 
 
-
-loanNumberIRR(1341914)
-
-
-
-loans %>%
-  slice(sample01) %>%
-  select(funded_amnt, funded_amnt_inv,
-         total_pymnt, total_pymnt_inv, total_rec_prncp, total_rec_int,  total_rec_late_fee, recoveries, settlement_amount,
-         out_prncp, out_prncp_inv) %>%
-  mutate(settlement_amount = if_else(is.na(settlement_amount), 0, settlement_amount),
-         missingP = funded_amnt - total_rec_prncp,
-         not_funded_by_investors = round(funded_amnt - funded_amnt_inv, digits = 2),
-         not_received_by_investors = round(total_pymnt - total_pymnt_inv, digits = 2),
-         not_going_to_inv = round(not_funded_by_investors - not_received_by_investors, digits = 2),
-         check = total_pymnt - (total_rec_int + total_rec_prncp + total_rec_late_fee + recoveries)) %>%
-  view()
-
-
-
+#
+# This method of approximating the credit margin is far less sophisticated than what FI's do.
+# Need to calculate what should the credit margin be on a defaulted loan
+#
+# CF principal is -L the amortising P
+#
+# On a risk free loan the CF will be P+LIBOR on borrowing side / ditto on lending side
+#
+# On a defaulted loan, the CF will be:
+#  borrowing = P + P&I @ LIBOR / lending P + P&I @ (LIBOR + credit margin) for less than tenor + decreased P
+#
+# The P amortisation profile depends on the credit margin used. We will arbitrarily use 20%.
+#
+# credit risk on that CF should be nil with the right margin.
+#
 
 
 
@@ -199,7 +179,7 @@ trainKMEANS <- train(x = model01, y = Y01$sub_grade_num,
 
   tictoc::tic()
 
-  trainRF <- train(x = loans01, y = Y01$sub_grade_num,
+  trainRF <- train(x = loans01, y = loss01$principal_loss_pct,
                    method = "Rborist",
                    nSamp = 2500,
                    trControl = trainControl(method = "cv"))
@@ -208,7 +188,11 @@ trainKMEANS <- train(x = model01, y = Y01$sub_grade_num,
   stopCluster(cl)
 
   print(trainRF)
+
+  #################################################################################################
   # Random Forest
+  #
+  # IF RESPONSE IS THE SUB-GRADE
   #
   # 13063 samples
   # 63 predictor
@@ -226,6 +210,30 @@ trainKMEANS <- train(x = model01, y = Y01$sub_grade_num,
   # Tuning parameter 'minNode' was held constant at a value of 3
   # RMSE was used to select the optimal model using the smallest value.
   # The final values used for the model were predFixed = 32 and minNode = 3.
+  #
+
+  #################################################################################################
+  # Random Forest
+  #
+  # IF RESPONSE IS THE PRINCIPAL LOSS (in %)
+  #
+  # 13063 samples
+  # 65 predictor
+  #
+  # No pre-processing
+  # Resampling: Cross-Validated (10 fold)
+  # Summary of sample sizes: 11756, 11757, 11757, 11758, 11756, 11756, ...
+  # Resampling results across tuning parameters:
+  #
+  #   predFixed  RMSE       Rsquared    MAE
+  # 2         0.2824622  0.09468031  0.2166095
+  # 33         0.2812666  0.09767208  0.2120904
+  # 65         0.2820000  0.09485043  0.2124572
+  #
+  # Tuning parameter 'minNode' was held constant at a value of 3
+  # RMSE was used to select the optimal model using the smallest value.
+  # The final values used for the model were predFixed = 33 and minNode = 3.
+  #
 }
 
 

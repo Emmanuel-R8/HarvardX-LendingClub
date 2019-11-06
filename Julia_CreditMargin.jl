@@ -1,4 +1,4 @@
-######################################################################################################################
+ ####################################################################################################
 ##
 ## Prepare datasets
 ##
@@ -13,7 +13,7 @@ lendingClub = CSV.read("datasets/lending_club.csv"; delim = ",")
 
 
 
-######################################################################################################################
+####################################################################################################
 ##
 ## IRR calculations
 ##
@@ -29,7 +29,8 @@ lendingClub = CSV.read("datasets/lending_club.csv"; delim = ",")
 ##
 ## In other cases, the borrower defaults. Overall payments are less than expected.
 ##
-## Based on the limited information of the dataset, the function makes educated guesses on the exact schedule.
+## Based on the limited information of the dataset, the function makes educated guesses on the exact
+## schedule.
 ##
 using DataFrames, Roots
 
@@ -49,7 +50,8 @@ function calculateIRR(; loanNumber = 1, loan = 0.0, intRate = 0.0, term = 36,
   installment = ceil(loan * intRate / 12 / (1 - 1 / (1 + intRate / 12) ^ term), digits = 2)
 
   # We create a schedule
-  schedule = DataFrame(month = 0:nMonths, monthlyPayment = 0.0, totalPandI = 0.0, totalI = 0.0, totalP = 0.0)
+  schedule = DataFrame(month = 0:nMonths, monthlyPayment = 0.0, 
+                       totalPandI = 0.0, totalI = 0.0, totalP = 0.0)
 
   for i in 2:(nMonths + 1)
     # Get situation at the end of previous month
@@ -142,7 +144,7 @@ function loanNumberIRR(loanNumber)
 end
 
 
-#######################################################################################################################
+####################################################################################################
 ##
 ## Quick check
 ##
@@ -220,3 +222,8 @@ IRR_Result[1:10,:]
 loanNumberIRR(171)
 
 CSV.write("datasets/loanIRR.csv", IRR_Result)
+
+
+
+
+
