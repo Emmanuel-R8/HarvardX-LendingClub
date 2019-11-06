@@ -88,27 +88,81 @@ modelX <-
 # Seed
 set.seed(42)
 sample005 <- sample(1:nSamples, floor(nSamples * 0.005), replace = FALSE)
-sample01 <- sample(1:nSamples, floor(nSamples * 0.01), replace = FALSE)
-sample05 <- sample(1:nSamples, floor(nSamples * 0.05), replace = FALSE)
-sample10 <- sample(1:nSamples, floor(nSamples * 0.10), replace = FALSE)
-sample20 <- sample(1:nSamples, floor(nSamples * 0.20), replace = FALSE)
+sample01  <- sample(1:nSamples, floor(nSamples * 0.01), replace = FALSE)
+sample05  <- sample(1:nSamples, floor(nSamples * 0.05), replace = FALSE)
+sample10  <- sample(1:nSamples, floor(nSamples * 0.10), replace = FALSE)
+sample20  <- sample(1:nSamples, floor(nSamples * 0.20), replace = FALSE)
 
 loans005 <- loansPredictors %>% slice(sample005)
-loans01 <- loansPredictors %>% slice(sample01)
-loans05 <- loansPredictors %>% slice(sample05)
-loans10 <- loansPredictors %>% slice(sample10)
-loans20 <- loansPredictors %>% slice(sample20)
+loans01  <- loansPredictors %>% slice(sample01)
+loans05  <- loansPredictors %>% slice(sample05)
+loans10  <- loansPredictors %>% slice(sample10)
+loans20  <- loansPredictors %>% slice(sample20)
 
 model005 <- modelX %>% slice(sample005)
-model01 <- modelX %>% slice(sample01)
-model05 <- modelX %>% slice(sample05)
-model10 <- modelX %>% slice(sample10)
-model20 <- modelX %>% slice(sample20)
+model01  <- modelX %>% slice(sample01)
+model05  <- modelX %>% slice(sample05)
+model10  <- modelX %>% slice(sample10)
+model20  <- modelX %>% slice(sample20)
 
 Y01 <- loans %>% select(sub_grade_num) %>% slice(sample01)
 Y05 <- loans %>% select(sub_grade_num) %>% slice(sample05)
 Y10 <- loans %>% select(sub_grade_num) %>% slice(sample10)
 Y20 <- loans %>% select(sub_grade_num) %>% slice(sample20)
+
+###################################################################################################
+##
+## add IRR calculations
+##
+
+calc005 <-
+  loans %>%
+  slice(sample005) %>%
+  select(funded_amnt, int_rate, installment, term,
+         total_pymnt, total_rec_prncp, total_rec_int, total_rec_late_fee,
+         recoveries,
+         last_pymnt_amnt,
+         issue_d, last_pymnt_d)
+
+{
+  tictoc::tic()
+
+  loansIRR <-
+    loans %>%
+    rowwise() %>%
+    do(calculateIRR(loanNumber = .$loanID,
+                    loan = .$funded_amnt, intRate = .$int_rate, term = .$term,
+                    totalPaid = .$total_pymnt, totalPrincipalPaid = .$total_rec_prncp,
+                    totalInterestPaid = .$total_rec_int,
+                    recoveries = .$recoveries, lateFees = .$total_rec_late_fee))
+
+    tictoc::toc()
+}
+
+
+
+loanNumberIRR(1341914)
+
+
+
+loans %>%
+  slice(sample01) %>%
+  select(funded_amnt, funded_amnt_inv,
+         total_pymnt, total_pymnt_inv, total_rec_prncp, total_rec_int,  total_rec_late_fee, recoveries, settlement_amount,
+         out_prncp, out_prncp_inv) %>%
+  mutate(settlement_amount = if_else(is.na(settlement_amount), 0, settlement_amount),
+         missingP = funded_amnt - total_rec_prncp,
+         not_funded_by_investors = round(funded_amnt - funded_amnt_inv, digits = 2),
+         not_received_by_investors = round(total_pymnt - total_pymnt_inv, digits = 2),
+         not_going_to_inv = round(not_funded_by_investors - not_received_by_investors, digits = 2),
+         check = total_pymnt - (total_rec_int + total_rec_prncp + total_rec_late_fee + recoveries)) %>%
+  view()
+
+
+
+
+
+
 
 library(cluster)
 library(factoextra)
@@ -211,18 +265,16 @@ ggcorrplot::ggcorrplot(cc, hc.order = TRUE, type = "upper", outline.color = "whi
 
 
 
+tmp01 <-
+  loans %>%
+  slice(sample01) %>%
+  select(funded_amnt, int_rate, installment, term, total_pymnt, total_rec_prncp)
 
 
 
 
 
-d <- dist(l01)
-h <- hclust(d)
 
-plot(h, cex = 0.6)
 
-subgroup <- cutree(h, k = 5)
-rect.hclust(h, k = 5, border = 2:5)
-fviz_cluster(list(data = model01, cluster = subgroup))
 
-fviz_nbclust(model01, FUN = hcut, method = "wss")
+

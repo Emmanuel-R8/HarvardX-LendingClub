@@ -132,7 +132,7 @@
   \postauthor{\par}
       \predate{\centering\large\emph}
   \postdate{\par}
-    \date{November 03, 2019}
+    \date{November 06, 2019}
 
 % Additional packages for Kable Extra
 \usepackage{caption}
@@ -168,26 +168,6 @@
 }
 \listoftables
 \listoffigures
-\small
-
-\normalsize
-
-\small
-
-\normalsize
-
-\small
-
-\normalsize
-
-\small
-
-\normalsize
-
-\small
-
-\normalsize
-
 \small
 
 \normalsize
@@ -238,14 +218,12 @@ The dataset has been used a number of times in the past by various people. One p
 \hypertarget{general-presentation}{%
 \section{General presentation}\label{general-presentation}}
 
-The original dataset is rich: it includes 2260668 loan samples, each containing 144 variables (after the identification variables filled with null values). The loans were issued from 2007-06-01 to 2018-12-01.
+The original dataset is rich: it includes 2260668 loan samples, each containing 145 variables (after the identification variables filled with null values). The loans were issued from 2007-06-01 to 2018-12-01.
 
 \hypertarget{business-volume}{%
 \subsection{Business volume}\label{business-volume}}
 
 The dataset represents a total of ca.\$34bln in loan principals, which is a substantial share of the total amount stated to have been intermediated to date by LC (reported to be \$50bln+). About 60\% of the portfolio is fully repaid. See Table \ref{tab:loan-per-status}.
-
-\small
 
 \begin{table}
 
@@ -269,8 +247,6 @@ Late (31-120 days) & 21897 & 0.969\\
 \end{tabular}
 \end{table}
 
-\normalsize
-
 Figure \ref{fig:business-volume-per-month} plots the number, volume (cumulative principal amount) and average principal per loan. It shows that the business grew exponentially (in the common sense of the word) from inception until 2016. At this point, according to Wikipedia \footnote{source: \url{https://en.wikipedia.org/wiki/LendingClub} - Retrieval date 15 September 2019}:
 
 " \emph{Like other peer-to-peer lenders including Prosper, Sofi and Khutzpa.com, LendingClub experienced increasing difficulty attracting investors during early 2016. This led the firm to increase the interest rate it charges borrowers on three occasions during the first months of the year. The increase in interest rates and concerns over the impact of the slowing United States economy caused a large drop in LendingClub's share price.}"
@@ -286,15 +262,11 @@ By the end of the dataset, all metrics have essentially recovered to their 2016 
 
 In the dataset, less loans are still outstanding than matured or ``\emph{charged off}'' (term that LC use to mean partially or fully written off, i.e.~there are no possibilty for LC and/or the investors to receive further payments). The share of outstanding loans is:
 
-\small
-
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
 \NormalTok{## Share of current loans =  42.214 %}
 \end{Highlighting}
 \end{Shaded}
-
-\normalsize
 
 The dataset describes the life cycle of a loan. In the typical (ideal) case, we understand it to be:
 
@@ -316,7 +288,7 @@ In the worst case, it is:
 \rightarrow  \text{Late 31 to 120 days} \rightarrow  \text{Default} \rightarrow  \text{Charged Off}
 \]
 
-Note that \emph{Default} precedes and is distinct from \emph{Charged Off} \footnote{See LendingClub FAQ at \url{https://help.lendingclub.com/hc/en-us/articles/215488038}}. A couple of things could happen to a loan in default:
+Note that \emph{Default} precedes and is distinct from \emph{Charged Off} \footnote{See LendingClub FAQ at \href{https://help.lendingclub.com/hc/en-us/articles/215488038}{} and help page \href{https://help.lendingclub.com/hc/en-us/articles/216127897-What-happens-when-a-loan-is-charged-off-}{}}. A couple of things could happen to a loan in default:
 
 \begin{itemize}
 \item
@@ -328,6 +300,14 @@ Note that \emph{Default} precedes and is distinct from \emph{Charged Off} \footn
 The dataset also describes situations where a borrower negotiated a restructuring of the repayment schedule in case of unexpected hardship (e.g.~disaster, sudden unemployment).
 
 Note that this progression of distinguishing default (event in time) and actual financial loss mirrors what banks and rating agencies do\textgreater{} The former is called the \emph{Probability of Default} (PD), the latter \emph{Loss Given Default} (LGD). Ratings change over time (in a process resembling a Markov Chains). LGD show some correlations with ratings. The dataset, although detailed, does not include the full life of each loan to conduct this sort of analysis (change of loan quality over time). This is an important reason why we decided to focus on the loan approval and expected return.
+
+\begin{quote}
+CHANGE: Debt-Settlement companies \footnote{\url{https://help.lendingclub.com/hc/en-us/articles/115011819087-Debt-settlement-companies}} that explains that debt settlement companies can step in, buy the debt and pay to LC.
+\end{quote}
+
+\begin{quote}
+CHANGE: What is the difference between a loan that is in ``default'' and a loan that has been ``charged off''? \footnote{\url{https://help.lendingclub.com/hc/en-us/articles/216127747}}
+\end{quote}
 
 \hypertarget{loan-application}{%
 \subsection{Loan application}\label{loan-application}}
@@ -354,8 +334,6 @@ Based on this information, the loan is approved or not. Approval includes the fi
 
 Figure \ref{fig:interest-rate-table} \footnote{source: \url{https://www.lendingclub.com/investing/investor-education/interest-rates-and-fees}} shows the predetermined interest rate depending on the initial rating as of July 2019.
 
-\small
-
 \begin{figure}
 
 {\centering \includegraphics[width=0.7\linewidth]{images/interest-rates-jul2019} 
@@ -365,13 +343,9 @@ Figure \ref{fig:interest-rate-table} \footnote{source: \url{https://www.lendingc
 \caption{Interest rates given rating}\label{fig:interest-rate-table}
 \end{figure}
 
-\normalsize
-
 At the date of this report, the ratings range from \texttt{A} (the best) down to \texttt{D}, each split in 5 sub-ratings. However, LC previously also intermediated loans rated F or G (until 6 November 2017) and E (until 30 June 2019) \footnote{See \url{https://www.lendingclub.com/info/demand-and-credit-profile.action}}. This explains that such ratings are in the dataset. We will assume that the ratings in the dataset are the rating at the time of approval and that, even if loans are re-rated by LC, the dataset does not reflect it.
 
 Figures \ref{fig:interest-over-time} shows the change in interest rate over time for different ratings and separated for each tenor. (Each figure is on a sample of 100,000 loans.) For each rating, we can see several parallel lines which correspond to the 5 sub-rating of each rating. We note that the range of interest rates has substantial widened over time. That is, the risk premium necessary to attract potential investors has had to substantially increase. In the most recent years, the highest rates exceed 30\% which is higher than many credit cards.3-year loans are, unsurprinsingly, considered safer (more A-rated, less G-rated). Identical ratings attract identical rates of interest.
-
-\small
 
 \begin{figure}
 
@@ -382,11 +356,7 @@ Figures \ref{fig:interest-over-time} shows the change in interest rate over time
 \caption{Interest rate per grade over time}\label{fig:interest-over-time}
 \end{figure}
 
-\normalsize
-
 By comparison, we plot the 3-year (in red) and 5-year (in blue) bank swap rates in Figure @(fig:swap-rates). We see that the swap curve has flattened in recent times (3-year and 5-y rates are almost identical). We also can see that in broad terms the interest rates charged reflect those underlying swap rates. It is therefore most relevant to examine the credit margins added to the swap rates.
-
-\small
 
 \begin{figure}
 
@@ -397,11 +367,7 @@ By comparison, we plot the 3-year (in red) and 5-year (in blue) bank swap rates 
 \caption{Historical Swap Rates}\label{fig:swap-rates}
 \end{figure}
 
-\normalsize
-
 Figures \ref{fig:margin-over-time} shows the change in credit margin over time for different ratings and separated for each tenor. (Each figure is on a sample of 100,000 loans.) As above, for each rating, we can see several parallel lines which correspond to the 5 sub-rating of each rating. We note that the range of credit margins has widened over time but less than the interest rates. Identical ratings attract identical credit margins.
-
-\small
 
 \begin{figure}
 
@@ -412,8 +378,6 @@ Figures \ref{fig:margin-over-time} shows the change in credit margin over time f
 \caption{Credit margins per grade over time}\label{fig:margin-over-time}
 \end{figure}
 
-\normalsize
-
 {[}TODO: DTI, amount\ldots{} by grade{]}
 
 \hypertarget{payments}{%
@@ -422,12 +386,10 @@ Figures \ref{fig:margin-over-time} shows the change in credit margin over time f
 The loans are approved for only two tenors, 3 and 5 years, with monthly repayments. Installments are calculated easily with the usual formula:
 
 \[
-Installment = Principal \times \frac{1}{1 - \frac{1}{(1+rate)^N}}
+Installment = Principal \times rate \times \frac{1}{1 - \frac{1}{(1+rate)^N}}
 \]
 
 Where \(Principal\) is the amount borrowed, \(rate = \frac{\text{Quoted Interest Rate}}{12}\) is the monthly interest rate, and \(N\) is the number of installments (36 or 60 monthly payments). The following piece of code shows that the average error between this formula and the dataset value is about 2 cents. We therefore precisely understand this variable.
-
-\small
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -440,12 +402,10 @@ Where \(Principal\) is the amount borrowed, \(rate = \frac{\text{Quoted Interest
 \NormalTok{    ) }\OperatorTok{%>%}
 \StringTok{    }\KeywordTok{select}\NormalTok{(PMT_delta)}
   
-  \KeywordTok{mean}\NormalTok{(}\DecValTok{100} \OperatorTok{*}\StringTok{ }\NormalTok{installmentError}\OperatorTok{$}\NormalTok{PMT_delta)}
+  \KeywordTok{round}\NormalTok{(}\KeywordTok{mean}\NormalTok{(}\DecValTok{100} \OperatorTok{*}\StringTok{ }\NormalTok{installmentError}\OperatorTok{$}\NormalTok{PMT_delta), }\DataTypeTok{digits =} \DecValTok{2}\NormalTok{)}
 \NormalTok{\})}
 \end{Highlighting}
 \end{Shaded}
-
-\normalsize
 
 \hypertarget{variables}{%
 \section{Variables}\label{variables}}
@@ -455,8 +415,6 @@ We here present the dataset in a bit more details The full list of variable is g
 \hypertarget{general}{%
 \subsection{General}\label{general}}
 
-\small
-
 \begin{figure}
 
 {\centering \includegraphics[width=0.7\linewidth]{HarvardX-LendingClub_files/figure-latex/business-volume-per-month-1} 
@@ -465,8 +423,6 @@ We here present the dataset in a bit more details The full list of variable is g
 
 \caption{Business volume written per month}\label{fig:business-volume-per-month}
 \end{figure}
-
-\normalsize
 
 \hypertarget{identification}{%
 \subsection{Identification}\label{identification}}
@@ -479,8 +435,6 @@ The dataset is anonymised (all identifying ID numbers are deleted) and we theref
 As indicated in the introduction, our focus is on loans that have gone through their entire life cycle to consider their respective pricing, risk and profitability. To that effect, we will remove all loans which are still current (either performing or not). From here on, everything will be based on this reduced dataset.
 
 In this reduced dataset, we focus on loans that have matured or been terminated. It contains 1306356 samples. Most of the loans (ca.80\%) have been repaid in full. See Table \ref{tab:matured-loans}.
-
-\small
 
 \begin{table}
 
@@ -498,11 +452,7 @@ Does not meet the credit policy. Status:Charged Off & 761 & 19025\\
 \end{tabular}
 \end{table}
 
-\normalsize
-
 When grouped by grade (Figure \ref{fig:funded-by-subgrade}), we see a clear correlation between grade and default: the lower the grade the higher the portion defaults (all the way down to about 50\%). In addition, most of the business is written in the B- or C-rating range.
-
-\small
 
 \begin{figure}
 
@@ -513,7 +463,21 @@ When grouped by grade (Figure \ref{fig:funded-by-subgrade}), we see a clear corr
 \caption{Funding and Write-offs by Sub-grades}\label{fig:funded-by-subgrade}
 \end{figure}
 
-\normalsize
+\hypertarget{payment-related-information}{%
+\section{Payment-related information}\label{payment-related-information}}
+
+\begin{quote}
+As mentioned previously, the descriptions of the dataset variables is at times incomplete or confusing. For the purpose of determining the cash flow of each individual loans, we have attempted to reconstruct the variables.
+
+We have verfied that:
+
+\begin{itemize}
+\item
+  installments are calculated as per the formula shown above, rounded to the next cent.
+\item
+  total\_pymnt = total\_rec\_prncp + total\_rec\_int + total\_rec\_late\_fee + recoveries
+\end{itemize}
+\end{quote}
 
 \hypertarget{modelling}{%
 \chapter{Modelling}\label{modelling}}
@@ -525,11 +489,15 @@ At the outset, the dataset presents a number of challenges:
   There is a mix of continuous and categorical data.
 \item
   The number of observations is very large.
+\item
+  The possible number of predictors is fairly large.
+\item
+  As shown in the previous section, credit margins have changed over time. This is clearly related to the wider US economic environment. Financial hardship is a key driver for some of the loans. Availability of disposable income is important to assess the ability to repay. Therefore, the cost of living, which varies from state to state, seems relevant.
 \end{itemize}
 
-The diagram \ref{fig:scikit-map}\footnote{Source: \url{https://scikit-learn.org/stable/tutorial/machine_learning_map/index.html}} shows a useful decision tree.
+Any model will require training through batch methods (e.g.~stochastic gradient descent) or online methods. Our intuition is that online methods are not adapted to a skewed dataset: the number of defaults/write-offs is fairly low for high ratings.
 
-\small
+The diagram \ref{fig:scikit-map}\footnote{Source: \url{https://scikit-learn.org/stable/tutorial/machine_learning_map/index.html}} shows a useful decision tree.
 
 \begin{figure}
 
@@ -539,8 +507,6 @@ The diagram \ref{fig:scikit-map}\footnote{Source: \url{https://scikit-learn.org/
 
 \caption{Scikit Learn algorithm cheat-sheet}\label{fig:scikit-map}
 \end{figure}
-
-\normalsize
 
 \hypertarget{appendix}{%
 \chapter*{Appendix}\label{appendix}}
@@ -553,11 +519,13 @@ As mentioned during this report, we had to make numerous assumptions given the l
 
 \begin{itemize}
 \item
-  The dataset does not contain any errors that we cannot notice (e.g.~minor error of amount or rate, zipcode).
+  \emph{Dataset quality}: Aside from cents rounding issues, the dataset does not contain any flagrant errors that we could see (e.g.~minor error of amount or rate, zipcode). Quality of the variable description is a different matter altogether.
 \item
-  The day-1 rating is between A1 and (and no lower than) G5. No note is rated lower than E5 from 6 November 2017, and lower than D5 from 30 June 2019.
+  \emph{Ratings}: The day-1 rating is between A1 and (and no lower than) G5. No note is rated lower than E5 after 6 November 2017, and lower than D5 after 30 June 2019.
 \item
-  Credit history information for the principal borrower relates to pre-approval and not post-funding. This is clear for the joint applicants, but simply an assumption for the principal borrower.
+  \emph{Credit history}: Credit history information for the principal borrower relates to pre-approval and not post-funding. This is clear for the joint applicants, but simply an assumption for the principal borrower.
+\item
+  \emph{Recoveries}: Recoveries (if any) are assumed to be paid 3 months after the last scheduled payment date (variable \texttt{last\_pymnt\_d})
 \item
   \emph{Survival effect}: The dataset does not include applications that were rejected.
 \end{itemize}
@@ -585,8 +553,6 @@ We here show the code used to prepare the data.
 \hypertarget{lendinclub-dataset}{%
 \subsection{LendinClub dataset}\label{lendinclub-dataset}}
 
-\small
-
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
 \KeywordTok{local}\NormalTok{(\{}
@@ -606,6 +572,9 @@ We here show the code used to prepare the data.
   \CommentTok{# STEP 2: Prepare the dabase as a tibble}
   \CommentTok{#}
   
+  \CommentTok{##}
+  \CommentTok{## }\AlertTok{WARNING}\CommentTok{: THIS ASSUMES A 'datasets' DIRECTORY WAS CREATED}
+  \CommentTok{## }
   \KeywordTok{library}\NormalTok{(RSQLite)}
 \NormalTok{  db_conn <-}
 \StringTok{    }\KeywordTok{dbConnect}\NormalTok{(RSQLite}\OperatorTok{::}\KeywordTok{SQLite}\NormalTok{(), }\StringTok{"datasets/lending_club.sqlite"}\NormalTok{)}
@@ -632,10 +601,14 @@ We here show the code used to prepare the data.
   \CommentTok{# str(lending_club)}
   \CommentTok{#}
   
-  \CommentTok{# We leave the original dataset untouched and work with a copy.}
+  \CommentTok{# Leave the original dataset untouched and work with a copy.}
 \NormalTok{  lc <-}\StringTok{ }\NormalTok{lending_club}
   
 \NormalTok{  lc <-}\StringTok{ }\NormalTok{lc }\OperatorTok{%>%}
+
+\StringTok{    }\CommentTok{# Add loan identification number to track the loans across calculations}
+\StringTok{    }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{loanID =} \KeywordTok{row_number}\NormalTok{()) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{    }
 \StringTok{    }\CommentTok{# Remove useless strings}
 \StringTok{    }\KeywordTok{mutate}\NormalTok{(}
       \DataTypeTok{term       =} \KeywordTok{str_remove}\NormalTok{(term, }\StringTok{" months"}\NormalTok{),}
@@ -856,6 +829,9 @@ We here show the code used to prepare the data.
 \StringTok{    }\CommentTok{# Keep the first 3 digits of the zipcode as numbers}
 \StringTok{    }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{zip_code =} \KeywordTok{as.integer}\NormalTok{(}\KeywordTok{str_sub}\NormalTok{(zip_code, }\DecValTok{1}\NormalTok{, }\DecValTok{3}\NormalTok{))) }\OperatorTok{%>%}
 \StringTok{    }
+\StringTok{    }\CommentTok{# order by date}
+\StringTok{    }\KeywordTok{arrange}\NormalTok{(issue_d) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{    }
 \StringTok{    }\CommentTok{# Remove empty columns}
 \StringTok{    }\KeywordTok{select}\NormalTok{(}\OperatorTok{-}\NormalTok{id, }\OperatorTok{-}\NormalTok{member_id, }\OperatorTok{-}\NormalTok{url)}
   
@@ -874,18 +850,14 @@ We here show the code used to prepare the data.
 \NormalTok{    )}
   
   \KeywordTok{saveRDS}\NormalTok{(past_loans, }\StringTok{"datasets/lending_club_reformatted_paid.rds"}\NormalTok{)}
-\NormalTok{\})}
+\NormalTok{\})}\StringTok{```}
 \end{Highlighting}
 \end{Shaded}
-
-\normalsize
 
 \hypertarget{zip-codes-and-fips-codes}{%
 \subsection{Zip codes and FIPS codes}\label{zip-codes-and-fips-codes}}
 
 The R package \texttt{zipcode} was installed.
-
-\small
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -903,11 +875,7 @@ The R package \texttt{zipcode} was installed.
 \end{Highlighting}
 \end{Shaded}
 
-\normalsize
-
 A csv file containing zip codes, FIPS codes and population information was downloaded from the \emph{Simple Maps} \footnote{\url{https://simplemaps.com/data/us-zips}} website.
-
-\small
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -933,8 +901,6 @@ A csv file containing zip codes, FIPS codes and population information was downl
 \end{Highlighting}
 \end{Shaded}
 
-\normalsize
-
 \hypertarget{market-interest-rates}{%
 \subsection{Market interest rates}\label{market-interest-rates}}
 
@@ -952,8 +918,6 @@ Download sources are:
 \item
   Post-LIBOR 5-y swap \url{https://fred.stlouisfed.org/series/ICERATES1100USD5Y}
 \end{itemize}
-
-\small
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -1018,8 +982,6 @@ Download sources are:
 \end{Highlighting}
 \end{Shaded}
 
-\normalsize
-
 \hypertarget{macro-economical-data}{%
 \subsection{Macro-economical data}\label{macro-economical-data}}
 
@@ -1036,8 +998,6 @@ Macro-economical datasets were sourced from the same website as Microsoft Excel 
   Unemployment:
   \url{https://geofred.stlouisfed.org/map/?th=rdpu\&cc=5\&rc=false\&im=fractile\&sb\&lng=-90\&lat=40\&zm=4\&sl\&sv\&am=Average\&at=Not\%20Seasonally\%20Adjusted,\%20Monthly,\%20Percent\&sti=1224\&fq=Monthly\&rt=county\&un=lin\&dt=2019-08-01}
 \end{itemize}
-
-\small
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -1154,14 +1114,10 @@ Macro-economical datasets were sourced from the same website as Microsoft Excel 
 \end{Highlighting}
 \end{Shaded}
 
-\normalsize
-
 \hypertarget{list-of-variables}{%
 \section{List of variables}\label{list-of-variables}}
 
 This table presents the list of variables provided in the original dataset. The descriptions come from a spreadsheet attached with the dataset and, unfortunately, are not extremely precise and subject to interpretation. We added comments and/or particular interpretations in \emph{CAPITAL LETTERS}.
-
-\small
 
 \begin{longtable}[t]{>{\raggedright\arraybackslash}p{7cm}>{\raggedright\arraybackslash}p{7cm}}
 \caption{\label{tab:variable-description}Description of the dataset variables as provided in the dataset downloaded from Kaggle}\\
@@ -1178,185 +1134,445 @@ Variable Name & Description\\
 \endfoot
 \bottomrule
 \endlastfoot
+loanID & NOTE THIS IS NOT AN ORIGINAL VARIABLE. IT WAS ADDED FOR THE PURPOSE OF TRACKING LOANS INDIVIDUALLY AS AND WHEN NEEDED.\\
 loan\_amnt & The listed amount of the loan applied for by the borrower. If at some point in time, the credit department reduces the loan amount, then it will be reflected in this value.\\
 funded\_amnt & The total amount committed to that loan at that point in time.\\
 funded\_amnt\_inv & The total amount committed by investors for that loan at that point in time.\\
 term & The number of payments on the loan. Values are in months and can be either 36 or 60.\\
-int\_rate & Interest Rate on the loan\\
 \addlinespace
+int\_rate & Interest Rate on the loan\\
 installment & The monthly payment owed by the borrower if the loan originates.\\
 grade & LC assigned loan grade\\
 sub\_grade & LC assigned loan subgrade\\
 emp\_title & The job title supplied by the Borrower when applying for the loan.\\
-emp\_length & Employment length in years. Possible values are between 0 and 10 where 0 means less than one year and 10 means ten or more years.\\
 \addlinespace
+emp\_length & Employment length in years. Possible values are between 0 and 10 where 0 means less than one year and 10 means ten or more years.\\
 home\_ownership & The home ownership status provided by the borrower during registration or obtained from the credit report. Our values are: RENT, OWN, MORTGAGE, OTHER, NONE\\
 annual\_inc & The self-reported annual income provided by the borrower during registration. NOT USED AS A VARIABLE SINCE JOINT INCOME ALREADY INCLUDES IT.\\
 verification\_status & Indicates if income was verified by LC, not verified, or if the income source was verified\\
 issue\_d & The month which the loan was funded\\
-loan\_status & Current status of the loan\\
 \addlinespace
+loan\_status & Current status of the loan\\
 pymnt\_plan & Indicates if a payment plan has been put in place for the loan\\
 url & URL for the LC page with listing data.\\
 desc & Loan description provided by the borrower\\
 purpose & A category provided by the borrower for the loan request.\\
-title & The loan title provided by the borrower\\
 \addlinespace
+title & The loan title provided by the borrower\\
 zip\_code & The first 3 numbers of the zip code provided by the borrower in the loan application.\\
 addr\_state & The state provided by the borrower in the loan application\\
 dti & A ratio calculated using the borrower s total monthly debt payments on the total debt obligations, excluding mortgage and the requested LC loan, divided by the borrower s self-reported monthly income. NOT USED AS A VARIABLE. ONLY USE JOINT DTI.\\
 delinq\_2yrs & The number of 30+ days past-due incidences of delinquency in the borrower s credit file for the past 2 years\\
-earliest\_cr\_line & The month the borrower s earliest reported credit line was opened\\
 \addlinespace
+earliest\_cr\_line & The month the borrower s earliest reported credit line was opened\\
 inq\_last\_6mths & The number of inquiries in past 6 months (excluding auto and mortgage inquiries)\\
 mths\_since\_last\_delinq & The number of months since the borrower s last delinquency.\\
 mths\_since\_last\_record & The number of months since the last public record.\\
 open\_acc & The number of open credit lines in the borrower s credit file.\\
-pub\_rec & Number of derogatory public records\\
 \addlinespace
+pub\_rec & Number of derogatory public records\\
 revol\_bal & Total credit revolving balance\\
 revol\_util & Revolving line utilization rate, or the amount of credit the borrower is using relative to all available revolving credit.\\
 total\_acc & The total number of credit lines currently in the borrower s credit file\\
 initial\_list\_status & The initial listing status of the loan. Possible values are – W, F\\
-out\_prncp & Remaining outstanding principal for total amount funded\\
 \addlinespace
-out\_prncp\_inv & Remaining outstanding principal for portion of total amount funded by investors\\
+out\_prncp & Remaining outstanding principal for total amount funded. NOTE ONCE A LOAN IS REPAID OR CHARGED OFF, THIS AMOUNT BECOMES 0.\\
+out\_prncp\_inv & Remaining outstanding principal for portion of total amount funded by investors. NOTE ONCE A LOAN IS REPAID OR CHARGED OFF, THIS AMOUNT BECOMES 0.\\
 total\_pymnt & Payments received to date for total amount funded\\
 total\_pymnt\_inv & Payments received to date for portion of total amount funded by investors\\
-total\_rec\_prncp & Principal received to date\\
-total\_rec\_int & Interest received to date\\
+total\_rec\_prncp & Principal received to date. NOTE THIS AMOUNT WILL SHOW WHETHER A BORROWER DID NOT REPAY IN FULL\\
 \addlinespace
+total\_rec\_int & Interest received to date\\
 total\_rec\_late\_fee & Late fees received to date\\
-recoveries & Post charge off gross recovery\\
+recoveries & Post charge off gross recovery. NOTE IF A LOAN IS REPAID, THIS AMOUNT IS 0.\\
 collection\_recovery\_fee & Post charge off collection fee\\
 last\_pymnt\_d & Last month payment was received\\
-last\_pymnt\_amnt & Last total payment amount received\\
 \addlinespace
+last\_pymnt\_amnt & Last total payment amount received\\
 next\_pymnt\_d & Next scheduled payment date\\
 last\_credit\_pull\_d & The most recent month LC pulled credit for this loan\\
 collections\_12\_mths\_ex\_med & Number of collections in 12 months excluding medical collections\\
 mths\_since\_last\_major\_derog & Months since most recent 90-day or worse rating\\
-policy\_code & Publicly available policy\_code=1 / New products not publicly available policy\_code=2\\
 \addlinespace
+policy\_code & Publicly available policy\_code=1 / New products not publicly available policy\_code=2\\
 application\_type & Indicates whether the loan is an individual application or a joint application with two coborrowers\\
 annual\_inc\_joint & The combined self-reported annual income provided by the coborrowers during registration\\
 dti\_joint & A ratio calculated using the coborrowers total monthly payments on the total debt obligations, excluding mortgages and the requested LC loan, divided by the coborrowers combined self-reported monthly income\\
 verification\_status\_joint & Indicates if income was verified by LC, not verified, or if the income source was verified\\
-acc\_now\_delinq & The number of accounts on which the borrower is now delinquent.\\
 \addlinespace
+acc\_now\_delinq & The number of accounts on which the borrower is now delinquent.\\
 tot\_coll\_amt & Total collection amounts ever owed\\
 tot\_cur\_bal & Total current balance of all accounts\\
 open\_acc\_6m & Number of open trades in last 6 months\\
 open\_act\_il & Number of currently active installment trades\\
-open\_il\_12m & Number of installment accounts opened in past 12 months\\
 \addlinespace
+open\_il\_12m & Number of installment accounts opened in past 12 months\\
 open\_il\_24m & Number of installment accounts opened in past 24 months\\
 mths\_since\_rcnt\_il & Months since most recent instalment accounts opened\\
 total\_bal\_il & Total current balance of all installment accounts\\
 il\_util & Ratio of total current balance to high credit/credit limit on all install acct\\
-open\_rv\_12m & Number of revolving trades opened in past 12 months\\
 \addlinespace
+open\_rv\_12m & Number of revolving trades opened in past 12 months\\
 open\_rv\_24m & Number of revolving trades opened in past 24 months\\
 max\_bal\_bc & Maximum current balance owed on all revolving accounts\\
 all\_util & Balance to credit limit on all trades\\
 total\_rev\_hi\_lim & Total revolving high credit/credit limit\\
-inq\_fi & Number of personal finance inquiries\\
 \addlinespace
+inq\_fi & Number of personal finance inquiries\\
 total\_cu\_tl & Number of finance trades\\
 inq\_last\_12m & Number of credit inquiries in past 12 months\\
 acc\_open\_past\_24mths & Number of trades opened in past 24 months.\\
 avg\_cur\_bal & Average current balance of all accounts\\
-bc\_open\_to\_buy & Total open to buy on revolving bankcards.\\
 \addlinespace
+bc\_open\_to\_buy & Total open to buy on revolving bankcards.\\
 bc\_util & Ratio of total current balance to high credit/credit limit for all bankcard accounts.\\
 chargeoff\_within\_12\_mths & Number of charge-offs within 12 months\\
 delinq\_amnt & The past-due amount owed for the accounts on which the borrower is now delinquent.\\
 mo\_sin\_old\_il\_acct & Months since oldest bank instalment account opened\\
-mo\_sin\_old\_rev\_tl\_op & Months since oldest revolving account opened\\
 \addlinespace
+mo\_sin\_old\_rev\_tl\_op & Months since oldest revolving account opened\\
 mo\_sin\_rcnt\_rev\_tl\_op & Months since most recent revolving account opened\\
 mo\_sin\_rcnt\_tl & Months since most recent account opened\\
 mort\_acc & Number of mortgage accounts.\\
 mths\_since\_recent\_bc & Months since most recent bankcard account opened.\\
-mths\_since\_recent\_bc\_dlq & Months since most recent bankcard delinquency\\
 \addlinespace
+mths\_since\_recent\_bc\_dlq & Months since most recent bankcard delinquency\\
 mths\_since\_recent\_inq & Months since most recent inquiry.\\
 mths\_since\_recent\_revol\_delinq & Months since most recent revolving delinquency.\\
 num\_accts\_ever\_120\_pd & Number of accounts ever 120 or more days past due\\
 num\_actv\_bc\_tl & Number of currently active bankcard accounts\\
-num\_actv\_rev\_tl & Number of currently active revolving trades\\
 \addlinespace
+num\_actv\_rev\_tl & Number of currently active revolving trades\\
 num\_bc\_sats & Number of satisfactory bankcard accounts\\
 num\_bc\_tl & Number of bankcard accounts\\
 num\_il\_tl & Number of installment accounts\\
 num\_op\_rev\_tl & Number of open revolving accounts\\
-num\_rev\_accts & Number of revolving accounts\\
 \addlinespace
+num\_rev\_accts & Number of revolving accounts\\
 num\_rev\_tl\_bal\_gt\_0 & Number of revolving trades with balance >0\\
 num\_sats & Number of satisfactory accounts\\
 num\_tl\_120dpd\_2m & Number of accounts currently 120 days past due (updated in past 2 months)\\
 num\_tl\_30dpd & Number of accounts currently 30 days past due (updated in past 2 months)\\
-num\_tl\_90g\_dpd\_24m & Number of accounts 90 or more days past due in last 24 months\\
 \addlinespace
+num\_tl\_90g\_dpd\_24m & Number of accounts 90 or more days past due in last 24 months\\
 num\_tl\_op\_past\_12m & Number of accounts opened in past 12 months\\
 pct\_tl\_nvr\_dlq & Percent of trades never delinquent\\
 percent\_bc\_gt\_75 & Percentage of all bankcard accounts > 75\% of limit.\\
 pub\_rec\_bankruptcies & Number of public record bankruptcies\\
-tax\_liens & Number of tax liens\\
 \addlinespace
+tax\_liens & Number of tax liens\\
 tot\_hi\_cred\_lim & Total high credit/credit limit\\
 total\_bal\_ex\_mort & Total credit balance excluding mortgage\\
 total\_bc\_limit & Total bankcard high credit/credit limit\\
 total\_il\_high\_credit\_limit & Total installment high credit/credit limit\\
-revol\_bal\_joint & Total credit revolving balance\\
 \addlinespace
+revol\_bal\_joint & Total credit revolving balance\\
 sec\_app\_earliest\_cr\_line & Earliest credit line at time of application for the secondary applicant. VARIABLE NOT USED. WE RELY ON THE MAIN BORROWER IN THE FIRST INSTANCE.\\
 sec\_app\_inq\_last\_6mths & Credit inquiries in the last 6 months at time of application for the secondary applicant. VARIABLE NOT USED. WE RELY ON THE MAIN BORROWER IN THE FIRST INSTANCE.\\
 sec\_app\_mort\_acc & Number of mortgage accounts at time of application for the secondary applicant. VARIABLE NOT USED. WE RELY ON THE MAIN BORROWER IN THE FIRST INSTANCE.\\
 sec\_app\_open\_acc & Number of open trades at time of application for the secondary applicant. VARIABLE NOT USED. WE RELY ON THE MAIN BORROWER IN THE FIRST INSTANCE.\\
-sec\_app\_revol\_util & Ratio of total current balance to high credit/credit limit for all revolving accounts. VARIABLE NOT USED. WE RELY ON THE MAIN BORROWER IN THE FIRST INSTANCE.\\
 \addlinespace
+sec\_app\_revol\_util & Ratio of total current balance to high credit/credit limit for all revolving accounts. VARIABLE NOT USED. WE RELY ON THE MAIN BORROWER IN THE FIRST INSTANCE.\\
 sec\_app\_open\_act\_il & Number of currently active installment trades at time of application for the secondary applicant. VARIABLE NOT USED. WE RELY ON THE MAIN BORROWER IN THE FIRST INSTANCE.\\
 sec\_app\_num\_rev\_accts & Number of revolving accounts at time of application for the secondary applicant. VARIABLE NOT USED. WE RELY ON THE MAIN BORROWER IN THE FIRST INSTANCE.\\
 sec\_app\_chargeoff\_within\_12\_mths & Number of charge-offs within last 12 months at time of application for the secondary applicant. VARIABLE NOT USED. WE RELY ON THE MAIN BORROWER IN THE FIRST INSTANCE.\\
 sec\_app\_collections\_12\_mths\_ex\_med & Number of collections within last 12 months excluding medical collections at time of application for the secondary applicant. VARIABLE NOT USED. WE RELY ON THE MAIN BORROWER IN THE FIRST INSTANCE.\\
-sec\_app\_mths\_since\_last\_major\_derog & Months since most recent 90-day or worse rating at time of application for the secondary applicant. VARIABLE NOT USED. WE RELY ON THE MAIN BORROWER IN THE FIRST INSTANCE.\\
 \addlinespace
+sec\_app\_mths\_since\_last\_major\_derog & Months since most recent 90-day or worse rating at time of application for the secondary applicant. VARIABLE NOT USED. WE RELY ON THE MAIN BORROWER IN THE FIRST INSTANCE.\\
 hardship\_flag & Flags whether or not the borrower is on a hardship plan\\
 hardship\_type & Describes the hardship plan offering\\
 hardship\_reason & Describes the reason the hardship plan was offered\\
 hardship\_status & Describes if the hardship plan is active, pending, cancelled, completed, or broken\\
-deferral\_term & Amount of months that the borrower is expected to pay less than the contractual monthly payment amount due to a hardship plan\\
 \addlinespace
+deferral\_term & Amount of months that the borrower is expected to pay less than the contractual monthly payment amount due to a hardship plan\\
 hardship\_amount & The interest payment that the borrower has committed to make each month while they are on a hardship plan\\
 hardship\_start\_date & The start date of the hardship plan period\\
 hardship\_end\_date & The end date of the hardship plan period\\
 payment\_plan\_start\_date & The day the first hardship plan payment is due. For example, if a borrower has a hardship plan period of 3 months, the start date is the start of the three-month period in which the borrower is allowed to make interest-only payments.\\
-hardship\_length & The number of months the borrower will make smaller payments than normally obligated due to a hardship plan\\
 \addlinespace
+hardship\_length & The number of months the borrower will make smaller payments than normally obligated due to a hardship plan\\
 hardship\_dpd & Account days past due as of the hardship plan start date\\
 hardship\_loan\_status & Loan Status as of the hardship plan start date\\
 orig\_projected\_additional\_accrued\_interest & The original projected additional interest amount that will accrue for the given hardship payment plan as of the Hardship Start Date. This field will be null if the borrower has broken their hardship payment plan.\\
 hardship\_payoff\_balance\_amount & The payoff balance amount as of the hardship plan start date\\
-hardship\_last\_payment\_amount & The last payment amount as of the hardship plan start date\\
 \addlinespace
+hardship\_last\_payment\_amount & The last payment amount as of the hardship plan start date\\
 disbursement\_method & The method by which the borrower receives their loan. Possible values are: CASH, DIRECT\_PAY\\
 debt\_settlement\_flag & Flags whether or not the borrower, who has charged-off, is working with a debt-settlement company.\\
 debt\_settlement\_flag\_date & The most recent date that the Debt\_Settlement\_Flag has been set  \\
 settlement\_status & The status of the borrower’s settlement plan. Possible values are: COMPLETE, ACTIVE, BROKEN, CANCELLED, DENIED, DRAFT\\
-settlement\_date & The date that the borrower agrees to the settlement plan\\
 \addlinespace
+settlement\_date & The date that the borrower agrees to the settlement plan\\
 settlement\_amount & The loan amount that the borrower has agreed to settle for\\
 settlement\_percentage & The settlement amount as a percentage of the payoff balance amount on the loan\\
 settlement\_term & The number of months that the borrower will be on the settlement plan\\*
 \end{longtable}
 
-\normalsize
+\hypertarget{calculations-of-the-internal-rate-of-returns-and-month-to-default}{%
+\section{Calculations of the internal rate of returns and month-to-default}\label{calculations-of-the-internal-rate-of-returns-and-month-to-default}}
+
+The following shows two versions of the same code. The R version is provided because of the description of the assignment. However, the R version takes just under a full day to run. A Julia version, which is a direct translation of the R code, runs in about 150s (ca. 500x faster).
+
+\hypertarget{r-code}{%
+\subsection{R code}\label{r-code}}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{# }
+\CommentTok{# Calculate all the IRRs and month of default for all the loans. }
+\CommentTok{# }\AlertTok{WARNING}\CommentTok{: This takes around a full day to run!!!!}
+\CommentTok{# }
+\CommentTok{# The actual data was generated by the Julia version, with cross-checks.}
+\CommentTok{# Julia version takes about 150 sec on the same unoptimised code.}
+\CommentTok{# }
+\KeywordTok{local}\NormalTok{(\{}
+\NormalTok{  loansIRR <-}
+\StringTok{    }\NormalTok{loans }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{rowwise}\NormalTok{() }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{do}\NormalTok{(}\KeywordTok{calculateIRR}\NormalTok{(}\DataTypeTok{loanNumber =}\NormalTok{ .}\OperatorTok{$}\NormalTok{loanID,}
+                    \DataTypeTok{loan =}\NormalTok{ .}\OperatorTok{$}\NormalTok{funded_amnt, }\DataTypeTok{intRate =}\NormalTok{ .}\OperatorTok{$}\NormalTok{int_rate, }\DataTypeTok{term =}\NormalTok{ .}\OperatorTok{$}\NormalTok{term,}
+                    \DataTypeTok{totalPaid =}\NormalTok{ .}\OperatorTok{$}\NormalTok{total_pymnt, }\DataTypeTok{totalPrincipalPaid =}\NormalTok{ .}\OperatorTok{$}\NormalTok{total_rec_prncp,}
+                    \DataTypeTok{totalInterestPaid =}\NormalTok{ .}\OperatorTok{$}\NormalTok{total_rec_int,}
+                    \DataTypeTok{recoveries =}\NormalTok{ .}\OperatorTok{$}\NormalTok{recoveries, }\DataTypeTok{lateFees =}\NormalTok{ .}\OperatorTok{$}\NormalTok{total_rec_late_fee))}
+
+  \KeywordTok{saveRDS}\NormalTok{(loansIRR, }\StringTok{"datasets/lending_club_IRRs.rds"}\NormalTok{)}
+  
+\NormalTok{  \})}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{julia-translation}{%
+\subsection{Julia translation}\label{julia-translation}}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{######################################################################################################################}
+\CommentTok{##}
+\CommentTok{## Prepare datasets}
+\CommentTok{##}
+
+\CommentTok{## Previously saved from R with:}
+\CommentTok{##     lending_club <- readRDS("lending_club.rds"); write.csv(lending_club, "lending_club.rds")}
+\CommentTok{##}
+\CommentTok{## WARNING: 1.7GB on disk}
+\CommentTok{##}
+\NormalTok{using CSV}
+\NormalTok{lendingClub = CSV.read(}\StringTok{"datasets/lending_club.csv"}\NormalTok{; delim = }\StringTok{","}\NormalTok{)}
+
+
+
+\CommentTok{######################################################################################################################}
+\CommentTok{##}
+\CommentTok{## IRR calculations}
+\CommentTok{##}
+\CommentTok{## Given some numerical parameters describing a loan in the dataset, returns its Internal Rate}
+\CommentTok{## of Return.}
+\CommentTok{##}
+\CommentTok{## In the first instance, the function creates a schedule of payments.}
+\CommentTok{## In many cases, the schedule will be extremely simple: a series of 36 or 60 equal instalements.}
+\CommentTok{##}
+\CommentTok{## But in some cases, a loan repayment are accelerated. Therefore the total amount of interest will}
+\CommentTok{## be lower than expected (but this is good for the investor because highe interest rate over}
+\CommentTok{## shorter tenor.).}
+\CommentTok{##}
+\CommentTok{## In other cases, the borrower defaults. Overall payments are less than expected.}
+\CommentTok{##}
+\CommentTok{## Based on the limited information of the dataset, the function makes educated guesses on the exact schedule.}
+\CommentTok{##}
+\NormalTok{using DataFrames, Roots}
+
+\KeywordTok{function}\NormalTok{ calculateIRR(; loanNumber = }\FloatTok{1}\NormalTok{, loan = }\FloatTok{0.0}\NormalTok{, intRate = }\FloatTok{0.0}\NormalTok{, term = }\FloatTok{36}\NormalTok{,}
+\NormalTok{  totalPaid = }\FloatTok{0.0}\NormalTok{, totalPrincipalPaid = }\FloatTok{0.0}\NormalTok{, totalInterestPaid = }\FloatTok{0.0}\NormalTok{,}
+\NormalTok{  recoveries = }\FloatTok{0.0}\NormalTok{, lateFees = }\FloatTok{0.0}\NormalTok{,}
+\NormalTok{  showSchedule = false)}
+
+  \CommentTok{# number of monthly payments.}
+  \CommentTok{# It exceeds 60 months in case recoveries on a 60-month loan takes the schedule after 60 months.}
+\NormalTok{  nMonths = }\FloatTok{90}
+
+  \CommentTok{# Months after which a loan defaults (normal tenor if no default or early prepayment)}
+\NormalTok{  monthDefault = term}
+
+  \CommentTok{# Note: *100 /100 to calculate in cent because ceiling cannot specify significant digits.}
+\NormalTok{  installment = ceil(loan * intRate / }\FloatTok{12}\NormalTok{ / (}\FloatTok{1}\NormalTok{ - }\FloatTok{1}\NormalTok{ / (}\FloatTok{1}\NormalTok{ + intRate / }\FloatTok{12}\NormalTok{) ^ term), digits = }\FloatTok{2}\NormalTok{)}
+
+  \CommentTok{# We create a schedule}
+\NormalTok{  schedule = DataFrame(month = }\FloatTok{0}\NormalTok{:nMonths, monthlyPayment = }\FloatTok{0.0}\NormalTok{, totalPandI = }\FloatTok{0.0}\NormalTok{, totalI = }\FloatTok{0.0}\NormalTok{, totalP = }\FloatTok{0.0}\NormalTok{)}
+
+  \KeywordTok{for}\NormalTok{ i }\KeywordTok{in} \FloatTok{2}\NormalTok{:(nMonths + }\FloatTok{1}\NormalTok{)}
+    \CommentTok{# Get situation at the end of previous month}
+\NormalTok{    previousTotalPandI = schedule[i - }\FloatTok{1}\NormalTok{, :totalPandI]}
+\NormalTok{    previousTotalP     = schedule[i - }\FloatTok{1}\NormalTok{, :totalP]}
+\NormalTok{    previousTotalI     = schedule[i - }\FloatTok{1}\NormalTok{, :totalI]}
+
+    \CommentTok{# This is the beginning of a new month. First and foremost, the borrower is expected to pay the}
+    \CommentTok{# accrued interest on amount of principal outstanding.}
+    \CommentTok{# ceiling doesn't seem accept to accept significative digits.}
+\NormalTok{    accruedInterest = ceil((loan - previousTotalP) * intRate / }\FloatTok{12}\NormalTok{; digits = }\FloatTok{2}\NormalTok{)}
+
+    \CommentTok{# If that amount takes the schedule above the total amount of interest shown in the data set,}
+    \CommentTok{# we should stop the schedule at this point}
+    \KeywordTok{if}\NormalTok{ previousTotalI + accruedInterest > totalInterestPaid}
+
+      \CommentTok{# We stop the normal schedule at this date.}
+      \CommentTok{# Interest is paid (although less than scheduled)}
+\NormalTok{      schedule[i, :monthlyPayment] = totalInterestPaid - previousTotalI}
+
+      \CommentTok{# As well as whatever principal is left as per the dataset}
+\NormalTok{      schedule[i, :monthlyPayment] = schedule[i, :monthlyPayment] + totalPrincipalPaid - previousTotalP}
+
+      \CommentTok{# Then 3-month after the last payment date, recoveries and and later fees are paid}
+\NormalTok{      schedule[i + }\FloatTok{3}\NormalTok{, :monthlyPayment] = schedule[i + }\FloatTok{3}\NormalTok{, :monthlyPayment] + recoveries + lateFees}
+
+      \CommentTok{# Not really useful, but for completeness}
+\NormalTok{      schedule[i, :totalPandI] = totalPaid}
+\NormalTok{      schedule[i, :totalI]     = totalInterestPaid}
+\NormalTok{      schedule[i, :totalP]     = totalPrincipalPaid}
+
+      \CommentTok{# If total principal paid is less than borrower, then it is a default, and the monthDefault}
+      \CommentTok{# is adjusted.}
+      \KeywordTok{if}\NormalTok{ (totalPrincipalPaid < loan)}
+\NormalTok{        monthDefault = i}
+      \KeywordTok{end}
+
+      \CommentTok{# No more payments to add to the schedule}
+      \KeywordTok{break}
+
+    \KeywordTok{else}
+      \CommentTok{# Deal with normal schedule}
+\NormalTok{      schedule[i, :monthlyPayment] = installment}
+\NormalTok{      schedule[i, :totalPandI]     = schedule[i - }\FloatTok{1}\NormalTok{, :totalPandI] + installment}
+\NormalTok{      schedule[i, :totalI]         = schedule[i - }\FloatTok{1}\NormalTok{, :totalI]     + accruedInterest}
+\NormalTok{      schedule[i, :totalP]         = schedule[i - }\FloatTok{1}\NormalTok{, :totalP]     + installment - accruedInterest}
+    \KeywordTok{end}
+  \KeywordTok{end}
+
+  \CommentTok{# At this point schedule[, :monthlyPayment] contains the schedule of all payments, but needs to}
+  \CommentTok{# include the initial loan.}
+\NormalTok{  schedule[}\FloatTok{1}\NormalTok{, :monthlyPayment] = -loan}
+
+  \KeywordTok{if}\NormalTok{ (showSchedule)}
+\NormalTok{    print(schedule)}
+  \KeywordTok{end}
+
+\NormalTok{  cashFlow = schedule[:,:monthlyPayment]}
+
+\NormalTok{  NPV = }\KeywordTok{function}\NormalTok{(interest)}
+\NormalTok{    t = }\FloatTok{0}\NormalTok{:(length(cashFlow) - }\FloatTok{1}\NormalTok{)}
+    \KeywordTok{return}\NormalTok{ sum(cashFlow ./ (}\FloatTok{1}\NormalTok{ + interest) .^ t)}
+  \KeywordTok{end}
+
+\NormalTok{  rootInterest = }\KeywordTok{try}
+\NormalTok{                  round(}\FloatTok{12}\NormalTok{ * find_zero(NPV, (-}\FloatTok{0.9}\NormalTok{, }\FloatTok{1.0}\NormalTok{), Bisection(); xatol = }\FloatTok{0.000001}\NormalTok{); digits = }\FloatTok{4}\NormalTok{)}
+                \KeywordTok{catch}\NormalTok{ e}
+\NormalTok{                  NaN}
+                \KeywordTok{end}
+
+  \KeywordTok{return}\NormalTok{((}
+\NormalTok{    loanID = loanNumber,}
+\NormalTok{    IRR = rootInterest,}
+\NormalTok{    monthDefault = monthDefault}
+\NormalTok{  ))}
+\KeywordTok{end}
+
+
+\CommentTok{##}
+\CommentTok{## Calculate the IRR and repayment schedule of a particular loan identified by its loanID}
+\KeywordTok{function}\NormalTok{ loanNumberIRR(loanNumber)}
+\NormalTok{  l = lc[ lc[:, :Column1] .== loanNumber, :]}
+  \KeywordTok{global}\NormalTok{ lc}
+\NormalTok{  calculateIRR(loanNumber = l[}\FloatTok{1}\NormalTok{, :Column1],}
+\NormalTok{               loan = l[}\FloatTok{1}\NormalTok{, :funded_amnt], intRate = l[}\FloatTok{1}\NormalTok{, :int_rate], term =l[}\FloatTok{1}\NormalTok{, :tenor],}
+\NormalTok{               totalPaid = l[}\FloatTok{1}\NormalTok{, :total_pymnt], totalPrincipalPaid = l[}\FloatTok{1}\NormalTok{, :total_rec_prncp],}
+\NormalTok{               totalInterestPaid = l[}\FloatTok{1}\NormalTok{, :total_rec_int],}
+\NormalTok{               recoveries = l[}\FloatTok{1}\NormalTok{, :recoveries], lateFees = l[}\FloatTok{1}\NormalTok{, :total_rec_late_fee],}
+\NormalTok{               showSchedule = true)}
+\KeywordTok{end}
+
+
+\CommentTok{#######################################################################################################################}
+\CommentTok{##}
+\CommentTok{## Quick check}
+\CommentTok{##}
+\NormalTok{calculateIRR(loanNumber = }\FloatTok{1}\NormalTok{, loan = }\FloatTok{5600}\NormalTok{, intRate = }\FloatTok{0.1299}\NormalTok{, term = }\FloatTok{36}\NormalTok{,}
+\NormalTok{             totalPaid = }\FloatTok{6791.72}\NormalTok{, totalPrincipalPaid = }\FloatTok{5600}\NormalTok{, totalInterestPaid = }\FloatTok{1191.72}\NormalTok{,}
+\NormalTok{             recoveries = }\FloatTok{0}\NormalTok{, lateFees = }\FloatTok{0}\NormalTok{,}
+\NormalTok{             showSchedule = false)}
+
+\NormalTok{calculateIRR(loanNumber = }\FloatTok{1}\NormalTok{, loan = }\FloatTok{35000}\NormalTok{, intRate = }\FloatTok{0.1820}\NormalTok{, term = }\FloatTok{60}\NormalTok{,}
+\NormalTok{             totalPaid = }\FloatTok{26600.1}\NormalTok{, totalPrincipalPaid = }\FloatTok{3874.72}\NormalTok{, totalInterestPaid = }\FloatTok{5225.38}\NormalTok{,}
+\NormalTok{             recoveries = }\FloatTok{17500}\NormalTok{, lateFees = }\FloatTok{0.0}\NormalTok{,}
+\NormalTok{             showSchedule = false)}
+
+\NormalTok{calculateIRR(loanNumber = }\FloatTok{1734666}\NormalTok{, loan = }\FloatTok{35000}\NormalTok{, intRate = }\FloatTok{0.0797}\NormalTok{, term = }\FloatTok{36}\NormalTok{,}
+\NormalTok{             totalPaid = }\FloatTok{1057.04}\NormalTok{, totalPrincipalPaid = }\FloatTok{863.83}\NormalTok{, totalInterestPaid = }\FloatTok{193.72}\NormalTok{,}
+\NormalTok{             recoveries = }\FloatTok{0}\NormalTok{, lateFees = }\FloatTok{0}\NormalTok{,}
+\NormalTok{             showSchedule = false)}
+
+
+
+
+\CommentTok{##}
+\CommentTok{## Look for the loans which have gone to their end}
+\CommentTok{##}
+\NormalTok{indextmp = (lendingClub.loan_status .== }\StringTok{"Fully Paid"}\NormalTok{) .|}
+\NormalTok{           (lendingClub.loan_status .== }\StringTok{"Charged Off"}\NormalTok{) .|}
+\NormalTok{           (lendingClub.loan_status .== }\StringTok{"Does not meet the credit policy. Status:Charged Off"}\NormalTok{) .|}
+\NormalTok{           (lendingClub.loan_status .== }\StringTok{"Does not meet the credit policy. Status:Fully Paid"}\NormalTok{)}
+
+\CommentTok{## Create the dataset we will use - Should be the same as lending_club_reformatted_paid.rds}
+\NormalTok{lc = lendingClub[indextmp, :]}
+
+\CommentTok{## Select relevant variables to calculate profitability}
+\CommentTok{## Column1 contains the loanID's}
+\NormalTok{cols = [:Column1, :funded_amnt, :int_rate, :term,}
+\NormalTok{        :total_pymnt, :total_rec_prncp, :total_rec_int,}
+\NormalTok{        :recoveries, :total_rec_late_fee]}
+
+\NormalTok{lc = select(lc, cols)}
+
+\CommentTok{## Interest rates as percentage}
+\NormalTok{lc[:, :int_rate] = lc[:, :int_rate] ./ }\FloatTok{100}
+
+\CommentTok{## Create a new column}
+\NormalTok{lc[:tenor] = }\FloatTok{0}
+
+\CommentTok{## that will record the official loan tenor as a number (instead of string)}
+\NormalTok{lc[startswith.( lc[:, :term], }\StringTok{" 36"}\NormalTok{), :tenor] .= }\FloatTok{36}
+\NormalTok{lc[startswith.( lc[:, :term], }\StringTok{" 60"}\NormalTok{), :tenor] .= }\FloatTok{60}
+
+\CommentTok{## New data frame to store the results}
+\NormalTok{IRR_Result = DataFrame(loanID = zeros(}\DataTypeTok{Int64}\NormalTok{, nrow(lc)),}
+\NormalTok{                       IRR = zeros(}\DataTypeTok{Float64}\NormalTok{, nrow(lc)),}
+\NormalTok{                       monthDefault = zeros(}\DataTypeTok{Int64}\NormalTok{, nrow(lc)))}
+
+
+\CommentTok{# ~150 sec. to do the whole dataset}
+\NormalTok{@time }\KeywordTok{for}\NormalTok{ i }\KeywordTok{in} \FloatTok{1}\NormalTok{:nrow(lc)}
+  \KeywordTok{global}\NormalTok{ IRR_Result}
+
+  \CommentTok{# Use multiple-return-value}
+\NormalTok{  (IRR_Result[i, :loanID], IRR_Result[i, :IRR], IRR_Result[i, :monthDefault]) =}
+\NormalTok{      calculateIRR(}
+\NormalTok{          loanNumber = lc[i, :Column1],}
+\NormalTok{          loan = lc[i, :funded_amnt], intRate = lc[i, :int_rate], term =lc[i, :tenor],}
+\NormalTok{          totalPaid = lc[i, :total_pymnt], totalPrincipalPaid = lc[i, :total_rec_prncp],}
+\NormalTok{          totalInterestPaid = lc[i, :total_rec_int],}
+\NormalTok{          recoveries = lc[i, :recoveries], lateFees = lc[i, :total_rec_late_fee],}
+\NormalTok{          showSchedule = false)}
+\KeywordTok{end}
+
+
+\NormalTok{IRR_Result[}\FloatTok{1}\NormalTok{:}\FloatTok{10}\NormalTok{,:]}
+\CommentTok{# Check}
+\NormalTok{loanNumberIRR(}\FloatTok{171}\NormalTok{)}
+
+\NormalTok{CSV.write(}\StringTok{"datasets/loanIRR.csv"}\NormalTok{, IRR_Result)}
+\end{Highlighting}
+\end{Shaded}
 
 \hypertarget{system-version}{%
 \section{System version}\label{system-version}}
-
-\small
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
@@ -1378,8 +1594,6 @@ settlement\_term & The number of months that the borrower will be on the settlem
 \NormalTok{##                                    "emmanuel"}
 \end{Highlighting}
 \end{Shaded}
-
-\normalsize
 
 \bibliography{packages.bib,bibliography.bib}
 

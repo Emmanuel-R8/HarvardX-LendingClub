@@ -5,8 +5,8 @@ _publish.R
 
 _book
 _bookdown_files
-_main_cache
-_main_files
+*_cache
+*_files
 
 rsconnect
 *.log
@@ -19,6 +19,7 @@ old
 scratchpad.*
 
 datasets/simplemaps_uszips_basicv1.6
+datasets/lending_club.csv
 datasets/lending_club.rds
 datasets/lending_club.sqlite
 datasets/lending_club_reformatted.rds

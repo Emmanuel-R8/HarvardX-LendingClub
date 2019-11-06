@@ -26,6 +26,7 @@ ds_theme_set()
 # LendingClub data
 if (!exists("lending_club")) lending_club <- readRDS("datasets/lending_club_reformatted.rds")
 if (!exists("loans")) loans <- readRDS("datasets/lending_club_reformatted_paid.rds")
+if (!exists("loansIRR")) loansIRR <- read.csv("datasets/loanIRR.csv") %>% as_tibble()
 
 # Interest rate swaps
 if (!exists("RATES")) RATES <- readRDS("datasets/rates.rds")
@@ -45,31 +46,37 @@ if (!exists("unemploymentRate")) unemploymentRate <- readRDS("datasets/unemploym
 
 
 
-```{r population-weighted-stats}
+```{r needed-functions}
 ############################################################################################################
-## 
+##
 ## Given a date and a 3-digit zip, returns a triplet of:
 ##  - the unemployment rate
 ##  - the median income
 ##  - personal income
 ## for that ZIP.
-## 
+##
 ## The indicators are published by FIPS (Federal Information Processing Standard state code). A ZIP code
-## can cover several FIPS. In such a case, the function looks up all the relevant FIPS code and returns 
+## can cover several FIPS. In such a case, the function looks up all the relevant FIPS code and returns
 ## a population weighted average of the indicators.
-## 
-## 
+##
+##
 
 indicatorsFromZIPandDate <- function(zip3d, application_date) {
-
   require(tidyverse)
   require(lubridate)
-
-  emptyResult <-   tibble(unemployment = 0, medianIncome = 0, personalIncome = 0)
-
-    
-  if (!is.numeric(zip3d)) return(emptyResult)
-  if (!is.Date(application_date)) return(emptyResult)
+  
+  emptyResult <-
+    tibble(
+      unemployment = 0,
+      medianIncome = 0,
+      personalIncome = 0
+    )
+  
+  
+  if (!is.numeric(zip3d))
+    return(emptyResult)
+  if (!is.Date(application_date))
+    return(emptyResult)
   
   # Get all the FIPS with population
   populatedzips <- zipfips %>%
@@ -129,15 +136,173 @@ indicatorsFromZIPandDate <- function(zip3d, application_date) {
     personalIncome = sum(summ$population * summ$personalIncome) / (sum(summ$population))
   )
 }
+
+
+###################################################################################################
+#
+# Given some numerical parameters describing a loan in the dataset, returns its Internal Rate
+# of Return.
+#
+# In the first instance, the function creates a schedule of payments.
+# In many cases, the schedule will be extremely simple: a series of 36 or 60 equal instalements.
+#
+# But in some cases, a loan repayment are accelerated. Therefore the total amount of interest will
+# be lower than expected (but this is good for the investor because highe interest rate over
+# shorter tenor.).
+#
+# In other cases, the borrower defaults. Overall payments are less than expected.
+#
+# Based on the limited information of the dataset, the function makes educated guesses on the exact schedule.
+#
+# WARNING: THIS IS NOT OPTIMISED. RUNNING THIS FOR ALL LOANS (1.3 MLN OF THEM) TAKES CA.20 HOURS !!!!
+#
+calculateIRR <- function(loanNumber = 1,
+                         loan,
+                         intRate,
+                         term = 36,
+                         totalPaid,
+                         totalPrincipalPaid,
+                         totalInterestPaid,
+                         recoveries = 0,
+                         lateFees = 0,
+                         showSchedule = FALSE) {
+  require(tidyverse)
+  
+  # number of monthly payments.
+  # It exceeds 60 months in case recoveries on a 60-month loan takes the schedule after 60 months.
+  nMonths <- 90
+  
+  # Months after which a loan defaults (normal tenor if no default or early prepayment)
+  monthDefault = term
+  
+  # Note: *100 /100 to calculate in cent because ceiling cannot specify significant digits.
+  installment <-
+    ceiling(100 * loan * intRate / 12 / (1 - 1 / (1 + intRate / 12) ^ term)) / 100
+  
+  # We create a schedule
+  schedule <- tibble(
+    month = 0:nMonths,
+    monthlyPayment = 0.0,
+    totalPandI = 0.0,
+    totalI = 0.0,
+    totalP = 0.0
+  )
+  
+  for (i in 2:(nMonths + 2)) {
+    # Get situation at the end of previous month
+    previousTotalPandI <- as.numeric(schedule[i - 1, "totalPandI"])
+    previousTotalP     <- as.numeric(schedule[i - 1, "totalP"])
+    previousTotalI     <- as.numeric(schedule[i - 1, "totalI"])
+    
+    # This is the beginning of a new month. First and foremost, the borrower is expected to pay the
+    # accrued interest on amount of principal outstanding.
+    # ceiling doesn't seem accept to accept significative digits.
+    accruedInterest <-
+      ceiling(100 * (loan - previousTotalP) * intRate / 12) / 100
+    
+    # If that amount takes the schedule above the total amount of interest shown in the data set,
+    # we should stop the schedule at this point
+    if (previousTotalI + accruedInterest > totalInterestPaid) {
+      # We stop the normal schedule at this date.
+      # Interest is paid (although less than scheduled)
+      schedule[i, "monthlyPayment"] <-
+        totalInterestPaid - previousTotalI
+      
+      # As well as whatever principal is left as per the dataset
+      schedule[i, "monthlyPayment"] <-
+        schedule[i, "monthlyPayment"] + totalPrincipalPaid - previousTotalP
+      
+      # Then 3-month after the last payment date, recoveries and and later fees are paid
+      schedule[i + 3, "monthlyPayment"] <-
+        schedule[i + 3, "monthlyPayment"] + recoveries + lateFees
+      
+      # Not really useful, but for completeness
+      schedule[i, "totalPandI"] <- totalPaid
+      schedule[i, "totalI"]     <- totalInterestPaid
+      schedule[i, "totalP"]     <- totalPrincipalPaid
+      
+      # If total principal paid is less than borrower, then it is a default, and the monthDefault
+      # is adjusted.
+      if (totalPrincipalPaid < loan) {
+        monthDefault = i
+      }
+      
+      # No more payments to add to the schedule
+      break()
+      
+    } else {
+      # Deal with normal schedule
+      schedule[i, "monthlyPayment"] <- installment
+      schedule[i, "totalPandI"] <-
+        schedule[i - 1, "totalPandI"] + installment
+      schedule[i, "totalI"]     <-
+        schedule[i - 1, "totalI"]   + accruedInterest
+      schedule[i, "totalP"]     <-
+        schedule[i - 1, "totalP"]   + installment - accruedInterest
+    }
+  }
+  
+  # At this point schedule[, "monthlyPayment"] contains the schedule of all payments, but needs to
+  # include the initial loan.
+  schedule[1, "monthlyPayment"] <- -loan
+  
+  if (showSchedule) {
+    schedule %>% view()
+  }
+  
+  NPV <- function(interest, cashFlow) {
+    t = 0:(length(cashFlow) - 1)
+    sum(cashFlow / (1 + interest) ^ t)
+  }
+  
+  IRR <- function(CF) {
+    res <- NA
+    try({
+      res <- uniroot(NPV, c(-0.9, 1), cashFlow = CF)$root
+    },
+    silent = TRUE)
+    return(res)
+  }
+  
+  return(tibble(
+    loanID = loanNumber,
+    IRR = round(as.numeric(IRR(
+      schedule$monthlyPayment
+    ) * 12), digits = 4),
+    monthDefault = monthDefault
+  ))
+}
+
+loanNumberIRR <- function(loanNumber) {
+  require(tidyverse)
+  
+  l <- loans %>% filter(loanID == loanNumber)
+  calculateIRR(
+    loanNumber = l$loanID,
+    loan = l$funded_amnt, intRate = l$int_rate, term = l$term, 
+    totalPaid = l$total_pymnt, totalPrincipalPaid = l$total_rec_prncp, totalInterestPaid = l$total_rec_int, 
+    recoveries = l$recoveries, lateFees = l$total_rec_late_fee, 
+    showSchedule = TRUE
+  )
+}
+
+
 ```
 
 
 
 ```{r list-of-variables}
-# Generated from a LibreOffice spreadsheet for convenience purposes, then reformatted by RStudio.
+# Mostly generated from a LibreOffice spreadsheet for convenience purposes, then reformatted by RStudio.
 
 LC_variable <-
   tibble(
+    variable_name = 'loanID' ,
+    description = 'NOTE THIS IS NOT AN ORIGINAL VARIABLE. IT WAS ADDED FOR THE PURPOSE OF TRACKING LOANS INDIVIDUALLY AS AND WHEN NEEDED.',
+    inModel = TRUE,
+    inPrediction = FALSE,
+    inPricing = FALSE
+  ) %>%
+  add_row(
     variable_name = 'loan_amnt' ,
     description = 'The listed amount of the loan applied for by the borrower. If at some point in time, the credit department reduces the loan amount, then it will be reflected in this value.',
     inModel = TRUE,
@@ -168,7 +333,7 @@ LC_variable <-
   add_row(
     variable_name = 'int_rate' ,
     description = 'Interest Rate on the loan',
-    inModel = FALSE,
+    inModel = TRUE,
     inPrediction = TRUE,
     inPricing = TRUE
   ) %>%
@@ -377,17 +542,17 @@ LC_variable <-
   ) %>%
   add_row(
     variable_name = 'out_prncp' ,
-    description = 'Remaining outstanding principal for total amount funded',
+    description = 'Remaining outstanding principal for total amount funded. NOTE ONCE A LOAN IS REPAID OR CHARGED OFF, THIS AMOUNT BECOMES 0. ',
     inModel = FALSE,
-    inPrediction = TRUE,
-    inPricing = TRUE
+    inPrediction = FALSE,
+    inPricing = FALSE
   ) %>%
   add_row(
     variable_name = 'out_prncp_inv' ,
-    description = 'Remaining outstanding principal for portion of total amount funded by investors',
+    description = 'Remaining outstanding principal for portion of total amount funded by investors. NOTE ONCE A LOAN IS REPAID OR CHARGED OFF, THIS AMOUNT BECOMES 0. ',
     inModel = FALSE,
-    inPrediction = TRUE,
-    inPricing = TRUE
+    inPrediction = FALSE,
+    inPricing = FALSE
   ) %>%
   add_row(
     variable_name = 'total_pymnt' ,
@@ -405,7 +570,7 @@ LC_variable <-
   ) %>%
   add_row(
     variable_name = 'total_rec_prncp' ,
-    description = 'Principal received to date',
+    description = 'Principal received to date. NOTE THIS AMOUNT WILL SHOW WHETHER A BORROWER DID NOT REPAY IN FULL',
     inModel = FALSE,
     inPrediction = TRUE,
     inPricing = TRUE
@@ -426,10 +591,10 @@ LC_variable <-
   ) %>%
   add_row(
     variable_name = 'recoveries' ,
-    description = 'Post charge off gross recovery',
+    description = 'Post charge off gross recovery. NOTE IF A LOAN IS REPAID, THIS AMOUNT IS 0. ',
     inModel = FALSE,
-    inPrediction = TRUE,
-    inPricing = TRUE
+    inPrediction = FALSE,
+    inPricing = FALSE
   ) %>%
   add_row(
     variable_name = 'collection_recovery_fee' ,
@@ -1137,5 +1302,5 @@ LC_variable <-
     inModel = FALSE,
     inPrediction = FALSE,
     inPricing = FALSE
-  ) 
+  )
 ```

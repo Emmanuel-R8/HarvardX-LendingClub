@@ -103,7 +103,7 @@ $$
 \rightarrow  \text{Late 31 to 120 days} \rightarrow  \text{Default} \rightarrow  \text{Charged Off}
 $$
 
-Note that _Default_ precedes and is distinct from _Charged Off_ ^[See LendingClub FAQ at https://help.lendingclub.com/hc/en-us/articles/215488038]. A couple of things could happen to a loan in default: 
+Note that _Default_ precedes and is distinct from _Charged Off_ ^[See LendingClub FAQ at [](https://help.lendingclub.com/hc/en-us/articles/215488038) and help page [](https://help.lendingclub.com/hc/en-us/articles/216127897-What-happens-when-a-loan-is-charged-off-)]. A couple of things could happen to a loan in default: 
 
 + LC and the borrower restructure the loan with a new repayment schedule, where the borrower may repay a lesser amount over a longer period; or,
 
@@ -112,6 +112,10 @@ Note that _Default_ precedes and is distinct from _Charged Off_ ^[See LendingClu
 The dataset also describes situations where a borrower negotiated a restructuring of the repayment schedule in case of unexpected hardship (e.g. disaster, sudden unemployment). 
 
 Note that this progression of distinguishing default (event in time) and actual financial loss mirrors what banks and rating agencies do> The former is called the _Probability of Default_ (PD), the latter _Loss Given Default_ (LGD). Ratings change over time (in a process resembling a Markov Chains). LGD show some correlations with ratings. The dataset, although detailed, does not include the full life of each loan to conduct this sort of analysis (change of loan quality over time). This is an important reason why we decided to focus on the loan approval and expected return.
+
+> CHANGE: Debt-Settlement companies ^[https://help.lendingclub.com/hc/en-us/articles/115011819087-Debt-settlement-companies] that explains that debt settlement companies can step in, buy the debt and pay to LC.
+
+> CHANGE: What is the difference between a loan that is in “default” and a loan that has been “charged off”? ^[https://help.lendingclub.com/hc/en-us/articles/216127747]
 
 
 
@@ -220,7 +224,7 @@ grid.arrange(margin36, margin60, nrow = 1)
 The loans are approved for only two tenors, 3 and 5 years, with monthly repayments. Installments are calculated easily with the usual formula:
 
 $$
-Installment = Principal \times \frac{1}{1 - \frac{1}{(1+rate)^N}}
+Installment = Principal \times rate \times \frac{1}{1 - \frac{1}{(1+rate)^N}}
 $$
 
 
@@ -237,7 +241,7 @@ local({
     ) %>%
     select(PMT_delta)
   
-  mean(100 * installmentError$PMT_delta)
+  round(mean(100 * installmentError$PMT_delta), digits = 2)
 })
 ```
 
@@ -346,4 +350,21 @@ grid.arrange(loanBySubgrade1, loanBySubgrade2, ncol = 1)
 ```
 
  
+
+## Payment-related information
+
+> As mentioned previously, the descriptions of the dataset variables is at times incomplete or confusing. For the purpose of determining the cash flow of each individual loans, we have attempted to reconstruct the variables.
+>
+> We have verfied that:
+>
+> + installments are calculated as per the formula shown above, rounded to the next cent.
+> 
+> + total_pymnt = total_rec_prncp + total_rec_int + total_rec_late_fee + recoveries
+
+
+
+
+
+
+
 
