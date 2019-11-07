@@ -19,3 +19,10 @@ This report is organised as follows:
 
 + [XXXX]
 
+$$
+\begin{lstlisting}[label=some-code,caption=Some Code]
+public void here() {
+    goes().the().code()
+}
+\end{lstlisting}
+$$

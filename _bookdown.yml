@@ -12,6 +12,7 @@ rmd_files: [
   "03-dataset.Rmd",
   "04-responses.Rmd",
   "05-model.Rmd",
+  "07-conclusion.Rmd",
   "08-appendix.Rmd",
   "09-references.Rmd"
 ]

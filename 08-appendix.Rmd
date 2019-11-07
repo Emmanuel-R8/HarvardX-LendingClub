@@ -1,6 +1,6 @@
 # Appendix {-}
 
-## List of assumptions / limitations regarding the dataset
+## List of assumptions / limitations regarding the dataset {#list-assumptions}
 
 As mentioned during this report, we had to make numerous assumptions given the lack of clarity of the variable descriptions. 
 
@@ -12,7 +12,7 @@ As mentioned during this report, we had to make numerous assumptions given the l
 
 + _Recoveries_: Recoveries (if any) are assumed to be paid 3 months after the last scheduled payment date (variable `last_pymnt_d`)
 
-+ _Survival effect_: The dataset does not include applications that were rejected.
++ _Survival effect_: The dataset does not include applications that were rejected by the lender (for whatever reason) or by the borrower (for example because the interest rate quote is too high). It may also be the case that some actual loans were excluded as and when the dataset changed over the years.
 
 + LIBOR funding rate: we use the 3-Y and 5_Y. In reality, we should have used average tenor-weighted swap rates (i.e. ca. 1.5 Y and 2.5 Y). This requires a full swap curve and more calculation than necessary for our purpose. The principles of this report should not be significantly affted by this approximation. 
 
@@ -1281,7 +1281,7 @@ creditMargin_Result = DataFrame(loanID = zeros(Int64, nrow(lc)),
                                 monthDefault = zeros(Int64, nrow(lc)))
 
 
-# ~150 sec. to do the whole dataset
+# ~4,700 sec. to do the whole dataset
 @time for i in 1:nrow(lc)
   global creditMargin_Result
 

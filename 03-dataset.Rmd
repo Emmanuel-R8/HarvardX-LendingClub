@@ -1,22 +1,22 @@
 # Dataset
 
-The data is sourced as a _SQLite_ database that was imported as a `dataframe` with the `RSQLite` package. The variables were reformatted according to their respective types. 
+The data is sourced as a _SQLite_ database that downloaded from [@KaggleLC] and imported as a `tibble dataframe` with the `RSQLite` package. The variables were reformatted according to their respective types. 
 
-We also sourced US zip and FIPS codes, and macroeconomical data for possible geographical statistics. The source code for the data import and reformatting is given in appendix.
+[We also sourced US zip and FIPS codes, and macroeconomical data for possible geographical statistics. The source code for the data import and reformatting is given in appendix.]
 
 ## Preamble
 
-The LendingClub dataset, although rich, is difficult to interpret. The only explanation of what the variables mean comes from a spreadsheet attached to the dataset. The explanations are not precise and/or subject to conflicting interpretation. Despite serching the LendingClub website, no further original information was found. We collected a number of reasonable assumptions in Appendix. 
+The LendingClub dataset, although rich, is difficult to interpret. The only explanation of what the variables mean comes from a spreadsheet attached to the dataset. The explanations are not precise and/or subject to conflicting interpretation. Despite serching the LendingClub website, no further original information was found. We collected a number of reasonable assumptions in Appendix (see (List of Assumptions)[list-assumptions]). 
 
-The dataset has been used a number of times in the past by various people. One paper [@kim2019ensemble] mentions they used a dataset that included 110 variables, which is less than ours with 145 variables. The dataset has changed over time in ways we do not know.
+The dataset has been used a number of times in the past by various people. One paper [@kim2019ensemble] mentions they used a dataset that included 110 variables, which is less than ours with 145 variables. The dataset has changed over time in ways we do not know. For example, have loans been excluded because the full 145 veriables were not available?
 
 ## General presentation
 
-The original dataset is rich: it includes `r nrow(lending_club)` loan samples, each containing `r ncol(lending_club)` variables (after the identification variables filled with null values). The loans were issued from `r min(lending_club$issue_d)` to `r max(lending_club$issue_d)`. 
+The original dataset is large: it includes `r nrow(lending_club)` loan samples, each containing `r ncol(lending_club)` variables (after the identification variables filled with null values). The loans were issued from `r min(lending_club$issue_d)` to `r max(lending_club$issue_d)`. 
 
 ### Business volume
 
-The dataset represents a total of ca.$34bln in loan principals, which is a substantial share of the total amount stated to have been intermediated to date by LC (reported to be $50bln+). About 60% of the portfolio is fully repaid. See Table \@ref(tab:loan-per-status).
+The dataset represents a total of ca.$34bln in loan principals, which is a substantial share of the total amount stated to have been intermediated to date by LC (publicly reported to be $50bln+). About 55%/60% of the portfolio is fully repaid. See Table \@ref(tab:loan-per-status).
 
 ```{r loan-per-status}
 local({
@@ -44,6 +44,35 @@ local({
 
 Figure \@ref(fig:business-volume-per-month) plots the number, volume (cumulative principal amount) and average principal per loan. It shows that the business grew exponentially (in the common sense of the word) from inception until 2016. At this point, according to Wikipedia ^[source: https://en.wikipedia.org/wiki/LendingClub - Retrieval date 15 September 2019]:
 
+```{r business-volume-per-month,fig.cap="Business volume written per month",fig.fullwidth=TRUE}
+volume1 <- lending_club %>%
+  mutate(Monthly = ceiling_date(issue_d, unit = "month")) %>%
+  group_by(Monthly) %>%
+  summarise(Number_of_written_loans = n()) %>%
+  ggplot(aes(Monthly, Number_of_written_loans)) +
+  geom_line(color = "blue") +
+  ylab("Number of loans") + geom_smooth(color = "red", method = "loess")
+
+
+volume2 <- lending_club %>%
+  mutate(Monthly = ceiling_date(issue_d, unit = "month")) %>%
+  group_by(Monthly) %>%
+  summarise(Volume = sum(funded_amnt) / 1000000) %>%
+  ggplot(aes(Monthly, Volume)) +
+  geom_line(color = "blue") +
+  ylab("Volume of loans ($mln)") + geom_smooth(color = "red", method = "loess")
+
+
+volume3 <- lending_club %>%
+  mutate(Monthly = ceiling_date(issue_d, unit = "month")) %>%
+  group_by(Monthly) %>%
+  summarise(Average = mean(funded_amnt)) %>%
+  ggplot(aes(Monthly, Average)) +
+  geom_line(color = "blue") +
+  ylab("Average loan size ($ per loan)") + geom_smooth(color = "red", method = "loess")
+
+grid.arrange(volume1, volume2, volume3, nrow = 1)
+```
 
 " _Like other peer-to-peer lenders including Prosper, Sofi and Khutzpa.com, LendingClub experienced increasing difficulty attracting investors during early 2016. This led the firm to increase the interest rate it charges borrowers on three occasions during the first months of the year. The increase in interest rates and concerns over the impact of the slowing United States economy caused a large drop in LendingClub's share price._"
 
@@ -51,9 +80,9 @@ Figure \@ref(fig:business-volume-per-month) plots the number, volume (cumulative
 The number and volume of loans plotted have been aggregated by month. The growth is very smooth in the early years, and suddenly very volatile. As far as the first part of the dataset is concerned, a starting business could expect to be volatile and could witness a yearly cycle (expected from economic consumption figures) superimposed on the growth trend. This is not the case. 
 
 
-An interesting metric is that the average principal of loans has increased (see Figure \@ref(business-volume-per-month), on a sample of 100,000 loans). Partly, the increase in the early years could be interpreted success in confidence building. This metric plateau-ed in 2016 and decreased afterwards, but to a much lesser extent than the gross volume metrics. However, it is more volatile than the two previous metrics in the early years. 
+An interesting metric is that the average principal of loans has increased (see RHS Figure \@ref(fig:business-volume-per-month), on a sample of 100,000 loans). Partly, the increase in the early years could be interpreted success in improving marketing, distribution capabilities and confidence building. This metric plateau-ed in 2016 and decreased afterwards, but to a much lesser extent than the gross volume metrics. However, it is more volatile than the two previous metrics in the early years. 
 
-By the end of the dataset, all metrics have essentially recovered to their 2016 level.
+By the end of the dataset, those metrics have essentially recovered to their 2016 level.
 
 
 ### Loan lifecyle and status
@@ -111,7 +140,7 @@ Note that _Default_ precedes and is distinct from _Charged Off_ ^[See LendingClu
 
 The dataset also describes situations where a borrower negotiated a restructuring of the repayment schedule in case of unexpected hardship (e.g. disaster, sudden unemployment). 
 
-Note that this progression of distinguishing default (event in time) and actual financial loss mirrors what banks and rating agencies do> The former is called the _Probability of Default_ (PD), the latter _Loss Given Default_ (LGD). Ratings change over time (in a process resembling a Markov Chains). LGD show some correlations with ratings. The dataset, although detailed, does not include the full life of each loan to conduct this sort of analysis (change of loan quality over time). This is an important reason why we decided to focus on the loan approval and expected return.
+Note that this progression of distinguishing default (event in time) from actual financial loss mirrors what banks and rating agencies do. The former is called the _Probability of Default_ (PD), the latter _Loss Given Default_ (LGD). Ratings change over time (in a process resembling Markov Chains). LGD show some correlations with ratings. The dataset, although detailed, does not include the full life of each loan to conduct this sort of analysis (change of loan quality over time). This is an important reason why we decided to focus on the loan approval and expected return.
 
 > CHANGE: Debt-Settlement companies ^[https://help.lendingclub.com/hc/en-us/articles/115011819087-Debt-settlement-companies] that explains that debt settlement companies can step in, buy the debt and pay to LC.
 
@@ -141,15 +170,16 @@ Based on this information, the loan is approved or not. Approval includes the fi
 
 Figure \@ref(fig:interest-rate-table) ^[source: https://www.lendingclub.com/investing/investor-education/interest-rates-and-fees] shows the predetermined interest rate depending on the initial rating as of July 2019. 
 
-```{r interest-rate-table, fig.cap="Interest rates given rating",fig.height=5,cache=FALSE}
+```{r interest-rate-table,fig.cap="Interest rates given rating",out.height=5,cache=FALSE}
 knitr::include_graphics("images/interest-rates-jul2019.png")
 ```
 
 At the date of this report, the ratings range from `A` (the best) down to `D`, each split in 5 sub-ratings. However, LC previously also intermediated loans rated F or G (until 6 November 2017) and E (until 30 June 2019) ^[See https://www.lendingclub.com/info/demand-and-credit-profile.action]. This explains that such ratings are in the dataset. We will assume that the ratings in the dataset are the rating at the time of approval and that, even if loans are re-rated by LC, the dataset does not reflect it.
 
-Figures \@ref(fig:interest-over-time) shows the change in interest rate over time for different ratings and separated for each tenor. (Each figure is on a sample of 100,000 loans.) For each rating, we can see several parallel lines which correspond to the 5 sub-rating of each rating. We note that the range of interest rates has substantial widened over time. That is, the risk premium necessary to attract potential investors has had to substantially increase. In the most recent years, the highest rates exceed 30% which is higher than many credit cards.3-year loans are, unsurprinsingly, considered safer (more A-rated, less G-rated). Identical ratings attract identical rates of interest.
+Figures \@ref(fig:interest-over-time) shows the change in interest rate over time for different ratings and separated for each tenor. (Each figure is on a sample of 100,000 loans.) For each rating, we can see several parallel lines which correspond to the 5 sub-rating of each rating. We note that the range of interest rates has substantial widened over time. That is, the risk premium necessary to attract potential investors has had to substantially increase. In the most recent years, the highest rates exceed 30% which is higher than many credit cards.3-year loans are naturally considered safer (more A-rated, less G-rated). Identical ratings attract identical rates of interest.
 
-```{r interest-over-time, fig.cap="Interest rate per grade over time"}
+```{r interest-over-time,fig.cap="Interest rate per grade over time"}
+
 interest36 <- loans %>%
   sample_n(100000) %>%
   filter(term == 36) %>%
@@ -169,12 +199,13 @@ interest60 <- loans %>%
   ylab("Interest rate")
 
 grid.arrange(interest36, interest60, nrow = 1)
+
 ```
 
-By comparison, we plot the 3-year (in red) and 5-year (in blue) bank swap rates in Figure \@(fig:swap-rates). We see that the swap curve has flattened in recent times (3-year and 5-y rates are almost identical). We also can see that in broad terms the interest rates charged reflect those underlying swap rates. It is therefore most relevant to examine the credit margins added to the swap rates.
+By comparison, we plot the 3-year (in red) and 5-year (in blue) bank swap rates in Figure \@ref(fig:swap-rates). We see that the swap curve has flattened in recent times (3-year and 5-y rates are almost identical). We also can see that in broad terms the interest rates charged reflect those underlying swap rates. It is therefore most relevant to examine the credit margins added to the swap rates.
 
 
-```{r swap-rates, fig.cap="Historical Swap Rates"}
+```{r swap-rates,fig.cap="Historical Swap Rates"}
 RATES %>%
   filter(DATE >= ymd("2008-01-01")) %>%
   ggplot(aes(DATE, RATE3Y, RATE5Y)) +
@@ -185,7 +216,7 @@ RATES %>%
 
 Figures \@ref(fig:margin-over-time) shows the change in credit margin over time for different ratings and separated for each tenor. (Each figure is on a sample of 100,000 loans.) As above, for each rating, we can see several parallel lines which correspond to the 5 sub-rating of each rating. We note that the range of credit margins has widened over time but less than the interest rates. Identical ratings attract identical credit margins.
 
-```{r margin-over-time, fig.cap="Credit margins per grade over time"}
+```{r margin-over-time,fig.cap="Credit margins per grade over time"}
 margin36 <-
   loans %>%
   filter(term == 36) %>%
@@ -221,7 +252,7 @@ grid.arrange(margin36, margin60, nrow = 1)
 
 ### Payments
 
-The loans are approved for only two tenors, 3 and 5 years, with monthly repayments. Installments are calculated easily with the usual formula:
+The loans are approved for only two tenors, 3 and 5 years, with monthly repayments. Installments are calculated easily with the standard formula:
 
 $$
 Installment = Principal \times rate \times \frac{1}{1 - \frac{1}{(1+rate)^N}}
@@ -252,35 +283,6 @@ We here present the dataset in a bit more details The full list of variable is g
 
 ### General
 
-```{r business-volume-per-month, fig.cap="Business volume written per month", fig.fullwidth=TRUE}
-volume1 <- lending_club %>%
-  mutate(Monthly = ceiling_date(issue_d, unit = "month")) %>%
-  group_by(Monthly) %>%
-  summarise(Number_of_written_loans = n()) %>%
-  ggplot(aes(Monthly, Number_of_written_loans)) +
-  geom_line(color = "blue") +
-  ylab("Number of loans") + geom_smooth(color = "red", method = "loess")
-
-
-volume2 <- lending_club %>%
-  mutate(Monthly = ceiling_date(issue_d, unit = "month")) %>%
-  group_by(Monthly) %>%
-  summarise(Volume = sum(funded_amnt) / 1000000) %>%
-  ggplot(aes(Monthly, Volume)) +
-  geom_line(color = "blue") +
-  ylab("Volume of loans ($mln)") + geom_smooth(color = "red", method = "loess")
-
-
-volume3 <- lending_club %>%
-  mutate(Monthly = ceiling_date(issue_d, unit = "month")) %>%
-  group_by(Monthly) %>%
-  summarise(Average = mean(funded_amnt)) %>%
-  ggplot(aes(Monthly, Average)) +
-  geom_line(color = "blue") +
-  ylab("Average loan size ($ per loan)") + geom_smooth(color = "red", method = "loess")
-
-grid.arrange(volume1, volume2, volume3, nrow = 1)
-```
 
 
 ### Identification

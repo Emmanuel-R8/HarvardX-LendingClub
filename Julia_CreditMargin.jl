@@ -242,7 +242,7 @@ creditMargin_Result = DataFrame(loanID = zeros(Int64, nrow(lc)),
                                 monthDefault = zeros(Int64, nrow(lc)))
 
 
-# ~150 sec. to do the whole dataset
+# 4,700 sec. to do the whole dataset
 @time for i in 1:nrow(lc)
   global creditMargin_Result
 

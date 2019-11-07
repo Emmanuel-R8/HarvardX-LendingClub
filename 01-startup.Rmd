@@ -45,7 +45,6 @@ if (!exists("medianIncome")) medianIncome <- readRDS("datasets/medianincome.rds"
 if (!exists("personalIncome")) personalIncome <- readRDS("datasets/personalincome.rds")
 if (!exists("unemploymentRate")) unemploymentRate <- readRDS("datasets/unemployment.rds")
 
-
 ```
 
 
