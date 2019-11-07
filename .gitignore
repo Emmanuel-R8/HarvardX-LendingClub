@@ -7,6 +7,7 @@ _book
 _bookdown_files
 *_cache
 *_files
+profile*
 
 rsconnect
 *.log

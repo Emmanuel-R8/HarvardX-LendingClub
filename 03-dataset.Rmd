@@ -361,10 +361,3 @@ grid.arrange(loanBySubgrade1, loanBySubgrade2, ncol = 1)
 > 
 > + total_pymnt = total_rec_prncp + total_rec_int + total_rec_late_fee + recoveries
 
-
-
-
-
-
-
-

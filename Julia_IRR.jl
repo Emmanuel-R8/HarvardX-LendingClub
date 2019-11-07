@@ -50,7 +50,7 @@ function calculateIRR(; loanNumber = 1, loan = 0.0, intRate = 0.0, term = 36,
   installment = ceil(loan * intRate / 12 / (1 - 1 / (1 + intRate / 12) ^ term), digits = 2)
 
   # We create a schedule
-  schedule = DataFrame(month = 0:nMonths, monthlyPayment = 0.0, 
+  schedule = DataFrame(month = 0:nMonths, monthlyPayment = 0.0,
                        totalPandI = 0.0, totalI = 0.0, totalP = 0.0)
 
   for i in 2:(nMonths + 1)
@@ -61,11 +61,15 @@ function calculateIRR(; loanNumber = 1, loan = 0.0, intRate = 0.0, term = 36,
 
     # This is the beginning of a new month. First and foremost, the borrower is expected to pay the
     # accrued interest on amount of principal outstanding.
-    # ceiling doesn't seem accept to accept significative digits.
+    # The installment is expected to cover that amount of interest and the rest goes to
+    # reducing the principal due outstanding.
     accruedInterest = ceil((loan - previousTotalP) * intRate / 12; digits = 2)
+    decreasePrincipal = installment - accruedInterest
 
     # If that amount takes the schedule above the total amount of interest shown in the data set,
     # we should stop the schedule at this point
+    # This is a shortcut since we could have a payment higher than the interest due, but not enough
+    # to cover the expected principal repayment. However, it works well in practice.
     if previousTotalI + accruedInterest > totalInterestPaid
 
       # We stop the normal schedule at this date.
@@ -111,11 +115,22 @@ function calculateIRR(; loanNumber = 1, loan = 0.0, intRate = 0.0, term = 36,
 
   cashFlow = schedule[:,:monthlyPayment]
 
-  NPV = function(interest)
+  ##
+  ## Finding the IRR is equivalent to finding the root such that the NPV of the cash flow is zero.
+  ## Julia has a function (see below) called `find_zero` to do that which requires a function to
+  ## be zeroed. This helper function is defined as NPV.
+  ##
+  function NPV(interest)
     t = 0:(length(cashFlow) - 1)
+
+    ## If you are new to Julia, note the dot before the operation. This indicates that the
+    ## operation has to be done element-wise (called `broadcasting` in Julia-ese).
+    ## Otherwise, Julia would try to divide one vector by another vector, which makes no sense.
+    ## This is also exactly the approach taken in Matlab/Octave.
     return sum(cashFlow ./ (1 + interest) .^ t)
   end
 
+  ## Finds the root, catching any problems which would instead return the R equivalent of NA
   rootInterest = try
                   round(12 * find_zero(NPV, (-0.9, 1.0), Bisection(); xatol = 0.000001); digits = 4)
                 catch e
@@ -132,6 +147,7 @@ end
 
 ##
 ## Calculate the IRR and repayment schedule of a particular loan identified by its loanID
+##
 function loanNumberIRR(loanNumber)
   l = lc[ lc[:, :Column1] .== loanNumber, :]
   global lc
@@ -151,7 +167,7 @@ end
 calculateIRR(loanNumber = 1, loan = 5600, intRate = 0.1299, term = 36,
              totalPaid = 6791.72, totalPrincipalPaid = 5600, totalInterestPaid = 1191.72,
              recoveries = 0, lateFees = 0,
-             showSchedule = false)
+             showSchedule = true)
 
 calculateIRR(loanNumber = 1, loan = 35000, intRate = 0.1820, term = 60,
              totalPaid = 26600.1, totalPrincipalPaid = 3874.72, totalInterestPaid = 5225.38,

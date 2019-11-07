@@ -26,7 +26,10 @@ ds_theme_set()
 # LendingClub data
 if (!exists("lending_club")) lending_club <- readRDS("datasets/lending_club_reformatted.rds")
 if (!exists("loans")) loans <- readRDS("datasets/lending_club_reformatted_paid.rds")
-if (!exists("loansIRR")) loansIRR <- read.csv("datasets/loanIRR.csv") %>% as_tibble()
+
+# Response variables
+if (!exists("LoansIRR")) LoansIRR <- read.csv("datasets/LoanIRR.csv") %>% as_tibble()
+if (!exists("LoanMargin")) LoanMargin <- read.csv("datasets/CreditMargins.csv") %>% as_tibble()
 
 # Interest rate swaps
 if (!exists("RATES")) RATES <- readRDS("datasets/rates.rds")
@@ -41,6 +44,7 @@ if (!exists("zipfips")) zipfips <- readRDS("datasets/kaggleCodes.rds")
 if (!exists("medianIncome")) medianIncome <- readRDS("datasets/medianincome.rds")
 if (!exists("personalIncome")) personalIncome <- readRDS("datasets/personalincome.rds")
 if (!exists("unemploymentRate")) unemploymentRate <- readRDS("datasets/unemployment.rds")
+
 
 ```
 

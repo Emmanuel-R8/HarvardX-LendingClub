@@ -132,7 +132,7 @@
   \postauthor{\par}
       \predate{\centering\large\emph}
   \postdate{\par}
-    \date{November 06, 2019}
+    \date{November 07, 2019}
 
 % Additional packages for Kable Extra
 \usepackage{caption}
@@ -479,6 +479,89 @@ We have verfied that:
 \end{itemize}
 \end{quote}
 
+\hypertarget{internal-rate-of-return-and-credit-margins}{%
+\chapter{Internal Rate of Return and Credit Margins}\label{internal-rate-of-return-and-credit-margins}}
+
+In this section, we describe the responses that we will generate for each loan and that will be used in the modeling section.
+
+As indicated in the introduction, our purpose is to test a model that predicts the financial risk of a loan.
+
+\hypertarget{important-warning}{%
+\section{Important warning}\label{important-warning}}
+
+The calculations presented here are simplistic. Although they bear some resemblance to what financial institutions do. The literature on credit assessment and pricing is very rich and very complex. Finding the optimal capital allocation to particular risks while at the same time satisfying internal risk policies and regulatory requirements is a problem that financial institutions have still tackle in full. Investing in a loan is not only a matter of assessing the risk of a particular borrower, but also assessing systemic risks (which exist across all borrowers), risks associated with funding the loan (interest, currency and liquidity markets), each requiring a risk assessment and pricing.
+
+In other words, nobody would, let alone should, make any investment decision based on the calculation below.
+
+\hypertarget{background}{%
+\section{Background}\label{background}}
+
+This subsection can be skipped by anybody with basic financial knowledge.
+
+A bird in hand or two in the bush; a penny today or a pound tomorrow. What is the pricing of delaying obtaining owning something? This is what pricing a loan is about. A lender could keep his/her cash in hand, or lend it and have it in hand later. He/she would accept this in exchange for receiving a bit more: this is the rate of interest.
+
+There are borrowers that one can see as completely safe (risk-free) such as central banks or governments of strong economies. A lender always has the possibility to lend to them instead of a more risky borrower. Therefore, a lender would require a higher interest rate than risk-free. The additional interest that a lender requires is commensurate with the risk of the borrower not repaying (called \emph{credit worthiness}) and is called the \emph{credit margin}.
+
+For each individual borrower, a financial institution (an \emph{FI}) would assess information provided by the borrower and massive amounts of historical data to answer the question: considering historical borrowers with a profile similar to the applicant's, what is the probability of not getting principal and interest back? And, in case the borrower stops paying and using additional courses of action (such as seizing and selling assets), what is the total loss that could be expected on average?
+
+Making that assessment, the FI would require an interest rate which would roughly be the sum of:
+
+\begin{itemize}
+\item
+  the risk-free rate;
+\item
+  a margin to cover the average loss of similar borrowers (see the important footnote\footnote{It is important to realise that the average margin only brings the borrower back to having made no money at all on average: the additional income from the credit margin will be spent to cover average losses. In addition, we present the credit margin as income against borrower-specific losses. It does not address a lot of other risks such as correlation risks: a borrower might default because the economy as a whole gets worse, in which case many borrowers will default. This is a cyclical systemic risk similar to the 2007 US real estate crisis.});
+\item
+  a margin to cover all the operational costs of running their operations; and,
+\item
+  a margin to remunerate the capital allocated by the FI (banking regulations require all banks to allocate an amount of capital against any risk taken; those are stipulated in a number of complex rules).
+\end{itemize}
+
+Said crudely, this total is the amount for the FI to get out of bed and look at a loan. Although this sounds like an exact science (for some definition of the word), it is not. At the end of the day, the FI will also have to contend with the competition, market liquidity (if there is a lot of money available to be lent, it brings prices down) and, critically, whether would at all be interested in accepting that cost. This already make the dataset not random: many loans do not exist merely because the rate of interest was considered too high (this is not dissimilar to \emph{survival effects} where some data did not survive through the history of a dataset\footnote{A well-known example is historical stock prices which disappear when companies are de-listed or go bankrupt.}).
+
+\hypertarget{internal-rate-of-return}{%
+\section{Internal Rate of Return}\label{internal-rate-of-return}}
+
+For the purpose of this report, we will simplify things enormously: we will only consider the first two components of the interest rate. The risk-free rate and the credit margin that would cover the cost of default/losses of individual borrowers.
+
+The modeling exercise will focus on trying to approximate \emph{on average} the credit margin given the information provided by the borrower.
+
+With respect to a given loan and its cash flow, two calculations are important here: the Net Present Value (\emph{NPV}) and the Internal Rate of Return (\emph{IRR}). If we remember that an FI is indifferent to holding a principal \(P\) today or receiving it with an annual interest a year later (i.e. \(P \times (1 + r)\) where \(r\) is the annual rate of interest), we can say that any amount \(CF_1\) received in a year is equivalent to \(CF_0 = \frac{CF_1}{1 + r}\) today. More generally, a steam of future cash receipts is worth:
+
+\[NPV(r) = \sum_{Year \space i = 1}^{Year = n}\frac{CF_i}{(1 + r)^i}\]
+
+The amount \(NPV(r)\) is called the \emph{Net Present Value} of the cash flow discounted at the rate \(r\). Given that the LendingClub repayments are monthly, the formula becomes:
+
+\[NPV(r) = \sum_{Month \space i = 1}^{Month = 12 \times n}\frac{CF_i}{(1 + \frac{r}{12})^i}\]
+
+If we now have a day 1 cash flow \(CF_0\), we can calculate:
+
+\[CF_0 - \sum_{Year \space i = 1}^{Year = n}\frac{CF_i}{(1 + r)^i}\]
+
+However, for any given \(CF_0\), there is no reason that it would equal the NPV of the future cash flow (i.e no reason why the difference would be equal to zero). But this is an equation depending on \(r\). If we can find a value of \(r\) that zeroes this formula, it is called the internal rate of return of the cash flow:
+
+\[CF_0 - \sum_{Year \space i = 1}^{Year = n}\frac{CF_i}{(1 + IRR(CF))^i} = 0\]
+
+or for monthly cash flow:
+
+\[CF_0 - \sum_{Month \space i = 1}^{Month = 12 \times n}\frac{CF_i}{(1 + \frac{IRR(r)}{12})^i}\]
+
+\hypertarget{dataset-1}{%
+\section{Dataset}\label{dataset-1}}
+
+\hypertarget{calculation}{%
+\subsection{Calculation}\label{calculation}}
+
+We used the dataset to calculate the IRR of each loan. We used the following information for the dataset: \texttt{funded\_amnt}(loan amount funded), \texttt{int\_rate} (all-in interest rate), \texttt{term} (tenor of the loan in months), \texttt{total\_pymnt} (total cumulative amount received from the borrower), \texttt{total\_rec\_prncp} (amount repaid allocated to principal repayment), \texttt{total\_rec\_int} (amount repaid allocated to interest payment), \texttt{recoveries} (any amount recovered later from the borrower) and \texttt{total\_rec\_late\_fee} (any late payments fees paid by the borrower).
+
+From that information, we recreated a cash for each loan. The R code is presented in appendix. Unfortunately, this code takes close to a full day to run on the entire dataset of completed loans (i.e.~excluding all ongoing loans). This is just impractical for anybody to run to check this report and the resulting dataset is included in the Github repository. To make things practical, the dataset was actually created by Julia code. It is a direct translation of the R code with a similar syntax (therefore very easy to follow). The Julia code runs about 500 times quicker (this is not a typo), or about 3 minutes. We appreciate that this is the departure from the assignment description.
+
+Similarly, we calculate the credit margin required by each loan noting that:
+
+\[ \text{Risk-free} + \text{Credit Margin} = IRR(loan)\]
+
+Again, this was coded in Julia (we did not write any R code for this calculation). The code is in appendix, and we believe easy to follow.
+
 \hypertarget{modelling}{%
 \chapter{Modelling}\label{modelling}}
 
@@ -528,6 +611,8 @@ As mentioned during this report, we had to make numerous assumptions given the l
   \emph{Recoveries}: Recoveries (if any) are assumed to be paid 3 months after the last scheduled payment date (variable \texttt{last\_pymnt\_d})
 \item
   \emph{Survival effect}: The dataset does not include applications that were rejected.
+\item
+  LIBOR funding rate: we use the 3-Y and 5\_Y. In reality, we should have used average tenor-weighted swap rates (i.e.~ca. 1.5 Y and 2.5 Y). This requires a full swap curve and more calculation than necessary for our purpose. The principles of this report should not be significantly affted by this approximation.
 \end{itemize}
 
 We do hope that LendingClub investors receive information of much better quality!
@@ -548,7 +633,7 @@ We used different sources of information:
   Macro data from the same source.
 \end{itemize}
 
-We here show the code used to prepare the data.
+We here show the code used to prepare the data. It was automatically formatted by \emph{RStudio}.
 
 \hypertarget{lendinclub-dataset}{%
 \subsection{LendinClub dataset}\label{lendinclub-dataset}}
@@ -1318,6 +1403,158 @@ The following shows two versions of the same code. The R version is provided bec
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
+\CommentTok{###################################################################################################}
+\CommentTok{#}
+\CommentTok{# Given some numerical parameters describing a loan in the dataset, returns its Internal Rate}
+\CommentTok{# of Return.}
+\CommentTok{#}
+\CommentTok{# In the first instance, the function creates a schedule of payments.}
+\CommentTok{# In many cases, the schedule will be extremely simple: a series of 36 or 60 equal instalements.}
+\CommentTok{#}
+\CommentTok{# But in some cases, a loan repayment are accelerated. Therefore the total amount of interest will}
+\CommentTok{# be lower than expected (but this is good for the investor because highe interest rate over}
+\CommentTok{# shorter tenor.).}
+\CommentTok{#}
+\CommentTok{# In other cases, the borrower defaults. Overall payments are less than expected.}
+\CommentTok{#}
+\CommentTok{# Based on the limited information of the dataset, the function makes educated guesses on the exact schedule.}
+\CommentTok{#}
+\CommentTok{# }\AlertTok{WARNING}\CommentTok{: THIS IS NOT OPTIMISED. RUNNING THIS FOR ALL LOANS (1.3 MLN OF THEM) TAKES CA.20 HOURS !!!!}
+\CommentTok{#}
+\NormalTok{calculateIRR <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(}\DataTypeTok{loanNumber =} \DecValTok{1}\NormalTok{,}
+\NormalTok{                         loan,}
+\NormalTok{                         intRate,}
+                         \DataTypeTok{term =} \DecValTok{36}\NormalTok{,}
+\NormalTok{                         totalPaid,}
+\NormalTok{                         totalPrincipalPaid,}
+\NormalTok{                         totalInterestPaid,}
+                         \DataTypeTok{recoveries =} \DecValTok{0}\NormalTok{,}
+                         \DataTypeTok{lateFees =} \DecValTok{0}\NormalTok{,}
+                         \DataTypeTok{showSchedule =} \OtherTok{FALSE}\NormalTok{) \{}
+  \KeywordTok{require}\NormalTok{(tidyverse)}
+  
+  \CommentTok{# number of monthly payments.}
+  \CommentTok{# It exceeds 60 months in case recoveries on a 60-month loan takes the schedule after 60 months.}
+\NormalTok{  nMonths <-}\StringTok{ }\DecValTok{90}
+  
+  \CommentTok{# Months after which a loan defaults (normal tenor if no default or early prepayment)}
+\NormalTok{  monthDefault =}\StringTok{ }\NormalTok{term}
+  
+  \CommentTok{# Note: *100 /100 to calculate in cent because ceiling cannot specify significant digits.}
+\NormalTok{  installment <-}
+\StringTok{    }\KeywordTok{ceiling}\NormalTok{(}\DecValTok{100} \OperatorTok{*}\StringTok{ }\NormalTok{loan }\OperatorTok{*}\StringTok{ }\NormalTok{intRate }\OperatorTok{/}\StringTok{ }\DecValTok{12} \OperatorTok{/}\StringTok{ }\NormalTok{(}\DecValTok{1} \OperatorTok{-}\StringTok{ }\DecValTok{1} \OperatorTok{/}\StringTok{ }\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\NormalTok{intRate }\OperatorTok{/}\StringTok{ }\DecValTok{12}\NormalTok{) }\OperatorTok{^}\StringTok{ }\NormalTok{term)) }\OperatorTok{/}\StringTok{ }\DecValTok{100}
+  
+  \CommentTok{# We create a schedule}
+\NormalTok{  schedule <-}\StringTok{ }\KeywordTok{tibble}\NormalTok{(}
+    \DataTypeTok{month =} \DecValTok{0}\OperatorTok{:}\NormalTok{nMonths,}
+    \DataTypeTok{monthlyPayment =} \FloatTok{0.0}\NormalTok{,}
+    \DataTypeTok{totalPandI =} \FloatTok{0.0}\NormalTok{,}
+    \DataTypeTok{totalI =} \FloatTok{0.0}\NormalTok{,}
+    \DataTypeTok{totalP =} \FloatTok{0.0}
+\NormalTok{  )}
+  
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{2}\OperatorTok{:}\NormalTok{(nMonths }\OperatorTok{+}\StringTok{ }\DecValTok{2}\NormalTok{)) \{}
+    \CommentTok{# Get situation at the end of previous month}
+\NormalTok{    previousTotalPandI <-}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(schedule[i }\OperatorTok{-}\StringTok{ }\DecValTok{1}\NormalTok{, }\StringTok{"totalPandI"}\NormalTok{])}
+\NormalTok{    previousTotalP     <-}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(schedule[i }\OperatorTok{-}\StringTok{ }\DecValTok{1}\NormalTok{, }\StringTok{"totalP"}\NormalTok{])}
+\NormalTok{    previousTotalI     <-}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(schedule[i }\OperatorTok{-}\StringTok{ }\DecValTok{1}\NormalTok{, }\StringTok{"totalI"}\NormalTok{])}
+    
+    \CommentTok{# This is the beginning of a new month. First and foremost, the borrower is expected to pay the}
+    \CommentTok{# accrued interest on amount of principal outstanding.}
+    \CommentTok{# ceiling doesn't seem accept to accept significative digits.}
+\NormalTok{    accruedInterest <-}
+\StringTok{      }\KeywordTok{ceiling}\NormalTok{(}\DecValTok{100} \OperatorTok{*}\StringTok{ }\NormalTok{(loan }\OperatorTok{-}\StringTok{ }\NormalTok{previousTotalP) }\OperatorTok{*}\StringTok{ }\NormalTok{intRate }\OperatorTok{/}\StringTok{ }\DecValTok{12}\NormalTok{) }\OperatorTok{/}\StringTok{ }\DecValTok{100}
+    
+    \CommentTok{# If that amount takes the schedule above the total amount of interest shown in the data set,}
+    \CommentTok{# we should stop the schedule at this point}
+    \ControlFlowTok{if}\NormalTok{ (previousTotalI }\OperatorTok{+}\StringTok{ }\NormalTok{accruedInterest }\OperatorTok{>}\StringTok{ }\NormalTok{totalInterestPaid) \{}
+      \CommentTok{# We stop the normal schedule at this date.}
+      \CommentTok{# Interest is paid (although less than scheduled)}
+\NormalTok{      schedule[i, }\StringTok{"monthlyPayment"}\NormalTok{] <-}
+\StringTok{        }\NormalTok{totalInterestPaid }\OperatorTok{-}\StringTok{ }\NormalTok{previousTotalI}
+      
+      \CommentTok{# As well as whatever principal is left as per the dataset}
+\NormalTok{      schedule[i, }\StringTok{"monthlyPayment"}\NormalTok{] <-}
+\StringTok{        }\NormalTok{schedule[i, }\StringTok{"monthlyPayment"}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{totalPrincipalPaid }\OperatorTok{-}\StringTok{ }\NormalTok{previousTotalP}
+      
+      \CommentTok{# Then 3-month after the last payment date, recoveries and and later fees are paid}
+\NormalTok{      schedule[i }\OperatorTok{+}\StringTok{ }\DecValTok{3}\NormalTok{, }\StringTok{"monthlyPayment"}\NormalTok{] <-}
+\StringTok{        }\NormalTok{schedule[i }\OperatorTok{+}\StringTok{ }\DecValTok{3}\NormalTok{, }\StringTok{"monthlyPayment"}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{recoveries }\OperatorTok{+}\StringTok{ }\NormalTok{lateFees}
+      
+      \CommentTok{# Not really useful, but for completeness}
+\NormalTok{      schedule[i, }\StringTok{"totalPandI"}\NormalTok{] <-}\StringTok{ }\NormalTok{totalPaid}
+\NormalTok{      schedule[i, }\StringTok{"totalI"}\NormalTok{]     <-}\StringTok{ }\NormalTok{totalInterestPaid}
+\NormalTok{      schedule[i, }\StringTok{"totalP"}\NormalTok{]     <-}\StringTok{ }\NormalTok{totalPrincipalPaid}
+      
+      \CommentTok{# If total principal paid is less than borrower, then it is a default, and the monthDefault}
+      \CommentTok{# is adjusted.}
+      \ControlFlowTok{if}\NormalTok{ (totalPrincipalPaid }\OperatorTok{<}\StringTok{ }\NormalTok{loan) \{}
+\NormalTok{        monthDefault =}\StringTok{ }\NormalTok{i}
+\NormalTok{      \}}
+      
+      \CommentTok{# No more payments to add to the schedule}
+      \ControlFlowTok{break}\NormalTok{()}
+      
+\NormalTok{    \} }\ControlFlowTok{else}\NormalTok{ \{}
+      \CommentTok{# Deal with normal schedule}
+\NormalTok{      schedule[i, }\StringTok{"monthlyPayment"}\NormalTok{] <-}\StringTok{ }\NormalTok{installment}
+\NormalTok{      schedule[i, }\StringTok{"totalPandI"}\NormalTok{] <-}
+\StringTok{        }\NormalTok{schedule[i }\OperatorTok{-}\StringTok{ }\DecValTok{1}\NormalTok{, }\StringTok{"totalPandI"}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{installment}
+\NormalTok{      schedule[i, }\StringTok{"totalI"}\NormalTok{]     <-}
+\StringTok{        }\NormalTok{schedule[i }\OperatorTok{-}\StringTok{ }\DecValTok{1}\NormalTok{, }\StringTok{"totalI"}\NormalTok{]   }\OperatorTok{+}\StringTok{ }\NormalTok{accruedInterest}
+\NormalTok{      schedule[i, }\StringTok{"totalP"}\NormalTok{]     <-}
+\StringTok{        }\NormalTok{schedule[i }\OperatorTok{-}\StringTok{ }\DecValTok{1}\NormalTok{, }\StringTok{"totalP"}\NormalTok{]   }\OperatorTok{+}\StringTok{ }\NormalTok{installment }\OperatorTok{-}\StringTok{ }\NormalTok{accruedInterest}
+\NormalTok{    \}}
+\NormalTok{  \}}
+  
+  \CommentTok{# At this point schedule[, "monthlyPayment"] contains the schedule of all payments, but needs to}
+  \CommentTok{# include the initial loan.}
+\NormalTok{  schedule[}\DecValTok{1}\NormalTok{, }\StringTok{"monthlyPayment"}\NormalTok{] <-}\StringTok{ }\OperatorTok{-}\NormalTok{loan}
+  
+  \ControlFlowTok{if}\NormalTok{ (showSchedule) \{}
+\NormalTok{    schedule }\OperatorTok{%>%}\StringTok{ }\KeywordTok{view}\NormalTok{()}
+\NormalTok{  \}}
+  
+\NormalTok{  NPV <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(interest, cashFlow) \{}
+\NormalTok{    t =}\StringTok{ }\DecValTok{0}\OperatorTok{:}\NormalTok{(}\KeywordTok{length}\NormalTok{(cashFlow) }\OperatorTok{-}\StringTok{ }\DecValTok{1}\NormalTok{)}
+    \KeywordTok{sum}\NormalTok{(cashFlow }\OperatorTok{/}\StringTok{ }\NormalTok{(}\DecValTok{1} \OperatorTok{+}\StringTok{ }\NormalTok{interest) }\OperatorTok{^}\StringTok{ }\NormalTok{t)}
+\NormalTok{  \}}
+  
+\NormalTok{  IRR <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(CF) \{}
+\NormalTok{    res <-}\StringTok{ }\OtherTok{NA}
+    \KeywordTok{try}\NormalTok{(\{}
+\NormalTok{      res <-}\StringTok{ }\KeywordTok{uniroot}\NormalTok{(NPV, }\KeywordTok{c}\NormalTok{(}\OperatorTok{-}\FloatTok{0.9}\NormalTok{, }\DecValTok{1}\NormalTok{), }\DataTypeTok{cashFlow =}\NormalTok{ CF)}\OperatorTok{$}\NormalTok{root}
+\NormalTok{    \},}
+    \DataTypeTok{silent =} \OtherTok{TRUE}\NormalTok{)}
+    \KeywordTok{return}\NormalTok{(res)}
+\NormalTok{  \}}
+  
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{tibble}\NormalTok{(}
+    \DataTypeTok{loanID =}\NormalTok{ loanNumber,}
+    \DataTypeTok{IRR =} \KeywordTok{round}\NormalTok{(}\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{IRR}\NormalTok{(}
+\NormalTok{      schedule}\OperatorTok{$}\NormalTok{monthlyPayment}
+\NormalTok{    ) }\OperatorTok{*}\StringTok{ }\DecValTok{12}\NormalTok{), }\DataTypeTok{digits =} \DecValTok{4}\NormalTok{),}
+    \DataTypeTok{monthDefault =}\NormalTok{ monthDefault}
+\NormalTok{  ))}
+\NormalTok{\}}
+
+\NormalTok{loanNumberIRR <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(loanNumber) \{}
+  \KeywordTok{require}\NormalTok{(tidyverse)}
+  
+\NormalTok{  l <-}\StringTok{ }\NormalTok{loans }\OperatorTok{%>%}\StringTok{ }\KeywordTok{filter}\NormalTok{(loanID }\OperatorTok{==}\StringTok{ }\NormalTok{loanNumber)}
+  \KeywordTok{calculateIRR}\NormalTok{(}
+    \DataTypeTok{loanNumber =}\NormalTok{ l}\OperatorTok{$}\NormalTok{loanID,}
+    \DataTypeTok{loan =}\NormalTok{ l}\OperatorTok{$}\NormalTok{funded_amnt, }\DataTypeTok{intRate =}\NormalTok{ l}\OperatorTok{$}\NormalTok{int_rate, }\DataTypeTok{term =}\NormalTok{ l}\OperatorTok{$}\NormalTok{term, }
+    \DataTypeTok{totalPaid =}\NormalTok{ l}\OperatorTok{$}\NormalTok{total_pymnt, }\DataTypeTok{totalPrincipalPaid =}\NormalTok{ l}\OperatorTok{$}\NormalTok{total_rec_prncp, }\DataTypeTok{totalInterestPaid =}\NormalTok{ l}\OperatorTok{$}\NormalTok{total_rec_int, }
+    \DataTypeTok{recoveries =}\NormalTok{ l}\OperatorTok{$}\NormalTok{recoveries, }\DataTypeTok{lateFees =}\NormalTok{ l}\OperatorTok{$}\NormalTok{total_rec_late_fee, }
+    \DataTypeTok{showSchedule =} \OtherTok{TRUE}
+\NormalTok{  )}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
 \CommentTok{# }
 \CommentTok{# Calculate all the IRRs and month of default for all the loans. }
 \CommentTok{# }\AlertTok{WARNING}\CommentTok{: This takes around a full day to run!!!!}
@@ -1341,12 +1578,15 @@ The following shows two versions of the same code. The R version is provided bec
 \end{Highlighting}
 \end{Shaded}
 
-\hypertarget{julia-translation}{%
-\subsection{Julia translation}\label{julia-translation}}
+\hypertarget{julia-code}{%
+\subsection{Julia code}\label{julia-code}}
+
+\hypertarget{translation-of-irr}{%
+\subsubsection{Translation of IRR}\label{translation-of-irr}}
 
 \begin{Shaded}
 \begin{Highlighting}[numbers=left,,]
-\CommentTok{######################################################################################################################}
+\CommentTok{####################################################################################################}
 \CommentTok{##}
 \CommentTok{## Prepare datasets}
 \CommentTok{##}
@@ -1361,7 +1601,7 @@ The following shows two versions of the same code. The R version is provided bec
 
 
 
-\CommentTok{######################################################################################################################}
+\CommentTok{####################################################################################################}
 \CommentTok{##}
 \CommentTok{## IRR calculations}
 \CommentTok{##}
@@ -1377,7 +1617,8 @@ The following shows two versions of the same code. The R version is provided bec
 \CommentTok{##}
 \CommentTok{## In other cases, the borrower defaults. Overall payments are less than expected.}
 \CommentTok{##}
-\CommentTok{## Based on the limited information of the dataset, the function makes educated guesses on the exact schedule.}
+\CommentTok{## Based on the limited information of the dataset, the function makes educated guesses on the exact}
+\CommentTok{## schedule.}
 \CommentTok{##}
 \NormalTok{using DataFrames, Roots}
 
@@ -1397,7 +1638,8 @@ The following shows two versions of the same code. The R version is provided bec
 \NormalTok{  installment = ceil(loan * intRate / }\FloatTok{12}\NormalTok{ / (}\FloatTok{1}\NormalTok{ - }\FloatTok{1}\NormalTok{ / (}\FloatTok{1}\NormalTok{ + intRate / }\FloatTok{12}\NormalTok{) ^ term), digits = }\FloatTok{2}\NormalTok{)}
 
   \CommentTok{# We create a schedule}
-\NormalTok{  schedule = DataFrame(month = }\FloatTok{0}\NormalTok{:nMonths, monthlyPayment = }\FloatTok{0.0}\NormalTok{, totalPandI = }\FloatTok{0.0}\NormalTok{, totalI = }\FloatTok{0.0}\NormalTok{, totalP = }\FloatTok{0.0}\NormalTok{)}
+\NormalTok{  schedule = DataFrame(month = }\FloatTok{0}\NormalTok{:nMonths, monthlyPayment = }\FloatTok{0.0}\NormalTok{,}
+\NormalTok{                       totalPandI = }\FloatTok{0.0}\NormalTok{, totalI = }\FloatTok{0.0}\NormalTok{, totalP = }\FloatTok{0.0}\NormalTok{)}
 
   \KeywordTok{for}\NormalTok{ i }\KeywordTok{in} \FloatTok{2}\NormalTok{:(nMonths + }\FloatTok{1}\NormalTok{)}
     \CommentTok{# Get situation at the end of previous month}
@@ -1407,11 +1649,15 @@ The following shows two versions of the same code. The R version is provided bec
 
     \CommentTok{# This is the beginning of a new month. First and foremost, the borrower is expected to pay the}
     \CommentTok{# accrued interest on amount of principal outstanding.}
-    \CommentTok{# ceiling doesn't seem accept to accept significative digits.}
+    \CommentTok{# The installment is expected to cover that amount of interest and the rest goes to}
+    \CommentTok{# reducing the principal due outstanding.}
 \NormalTok{    accruedInterest = ceil((loan - previousTotalP) * intRate / }\FloatTok{12}\NormalTok{; digits = }\FloatTok{2}\NormalTok{)}
+\NormalTok{    decreasePrincipal = installment - accruedInterest}
 
     \CommentTok{# If that amount takes the schedule above the total amount of interest shown in the data set,}
     \CommentTok{# we should stop the schedule at this point}
+    \CommentTok{# This is a shortcut since we could have a payment higher than the interest due, but not enough}
+    \CommentTok{# to cover the expected principal repayment. However, it works well in practice.}
     \KeywordTok{if}\NormalTok{ previousTotalI + accruedInterest > totalInterestPaid}
 
       \CommentTok{# We stop the normal schedule at this date.}
@@ -1490,14 +1736,14 @@ The following shows two versions of the same code. The R version is provided bec
 \KeywordTok{end}
 
 
-\CommentTok{#######################################################################################################################}
+\CommentTok{####################################################################################################}
 \CommentTok{##}
 \CommentTok{## Quick check}
 \CommentTok{##}
 \NormalTok{calculateIRR(loanNumber = }\FloatTok{1}\NormalTok{, loan = }\FloatTok{5600}\NormalTok{, intRate = }\FloatTok{0.1299}\NormalTok{, term = }\FloatTok{36}\NormalTok{,}
 \NormalTok{             totalPaid = }\FloatTok{6791.72}\NormalTok{, totalPrincipalPaid = }\FloatTok{5600}\NormalTok{, totalInterestPaid = }\FloatTok{1191.72}\NormalTok{,}
 \NormalTok{             recoveries = }\FloatTok{0}\NormalTok{, lateFees = }\FloatTok{0}\NormalTok{,}
-\NormalTok{             showSchedule = false)}
+\NormalTok{             showSchedule = true)}
 
 \NormalTok{calculateIRR(loanNumber = }\FloatTok{1}\NormalTok{, loan = }\FloatTok{35000}\NormalTok{, intRate = }\FloatTok{0.1820}\NormalTok{, term = }\FloatTok{60}\NormalTok{,}
 \NormalTok{             totalPaid = }\FloatTok{26600.1}\NormalTok{, totalPrincipalPaid = }\FloatTok{3874.72}\NormalTok{, totalInterestPaid = }\FloatTok{5225.38}\NormalTok{,}
@@ -1568,6 +1814,279 @@ The following shows two versions of the same code. The R version is provided bec
 \NormalTok{loanNumberIRR(}\FloatTok{171}\NormalTok{)}
 
 \NormalTok{CSV.write(}\StringTok{"datasets/loanIRR.csv"}\NormalTok{, IRR_Result)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{credit-margins}{%
+\subsubsection{Credit margins}\label{credit-margins}}
+
+\begin{Shaded}
+\begin{Highlighting}[numbers=left,,]
+\CommentTok{####################################################################################################}
+\CommentTok{##}
+\CommentTok{## Prepare datasets}
+\CommentTok{##}
+
+\CommentTok{## Previously saved from R with:}
+\CommentTok{##     lending_club <- readRDS("lending_club.rds"); write.csv(lending_club, "lending_club.rds")}
+\CommentTok{##}
+\CommentTok{## WARNING: 1.7GB on disk}
+\CommentTok{##}
+\NormalTok{using CSV}
+\NormalTok{lendingClub = CSV.read(}\StringTok{"datasets/lending_club.csv"}\NormalTok{; delim = }\StringTok{","}\NormalTok{)}
+
+
+
+\CommentTok{####################################################################################################}
+\CommentTok{##}
+\CommentTok{## CREDIT MARGIN}
+\CommentTok{##}
+\CommentTok{## This method of approximating the credit margin is far less sophisticated than what FI's do.}
+\CommentTok{##}
+\CommentTok{## We need to calculate what the credit margin should be on a defaulted loan to get a nil NPV.}
+\CommentTok{##}
+\CommentTok{## On a risk free loan the CF will be P+I at risk-free on _both_ borrowing and lending sides.}
+\CommentTok{##}
+\CommentTok{##  On a defaulted loan, the CF will be:}
+\CommentTok{##      borrowing unchanged = P&I at risk-free}
+\CommentTok{##    and}
+\CommentTok{##      lending P&I at (risk-free + credit margin) until before default, then recoveries+fees.}
+\CommentTok{##}
+\CommentTok{## The principal amortisation profile depends on the credit margin used. We will arbitrarily use}
+\CommentTok{## 20% which is a conservative assumption.}
+\CommentTok{##}
+\CommentTok{## credit risk on that CF should be nil with the right margin when discounted at risk-free.}
+\CommentTok{##}
+\CommentTok{## The function is very similar to the IRR calculation.}
+\CommentTok{##}
+
+\NormalTok{using DataFrames, Roots}
+
+\CommentTok{# number of monthly payments to model}
+\CommentTok{# It exceeds 60 months in case recoveries on a 60-month loan takes the schedule after 60 months.}
+\KeywordTok{const}\NormalTok{ nMonths = }\FloatTok{90}
+
+
+
+\CommentTok{# Sculpt credit foncier profiles over 36 and 60 months at 20% per annum.}
+\CommentTok{# The profile is expressed as percentage of loan amount}
+\KeywordTok{function}\NormalTok{ CreateCreditFoncier(;n = }\FloatTok{36}\NormalTok{, riskFree = }\FloatTok{0.0}\NormalTok{)}
+
+\NormalTok{  instalment = }\FloatTok{1}\NormalTok{ * riskFree/}\FloatTok{12}\NormalTok{ * }\FloatTok{1}\NormalTok{ / (}\FloatTok{1}\NormalTok{ - }\FloatTok{1}\NormalTok{ / (}\FloatTok{1}\NormalTok{ + riskFree/}\FloatTok{12}\NormalTok{) ^ n)}
+
+  \CommentTok{# We create a schedule}
+\NormalTok{  schedule = DataFrame(month = }\FloatTok{0}\NormalTok{:nMonths, payment = }\FloatTok{0.0}\NormalTok{)}
+
+  \CommentTok{# Add the day 1 principal outlay}
+\NormalTok{  schedule[}\FloatTok{1}\NormalTok{,       :payment] = -}\FloatTok{1}
+\NormalTok{  schedule[}\FloatTok{2}\NormalTok{:(n+}\FloatTok{1}\NormalTok{), :payment] = instalment}
+
+  \KeywordTok{return}\NormalTok{(schedule)}
+\KeywordTok{end}
+
+
+\CommentTok{# Solve for the credit margin}
+\KeywordTok{function}\NormalTok{ CreditMargin(; loanNumber = }\FloatTok{1}\NormalTok{, loan = }\FloatTok{1000.0}\NormalTok{, intRate = }\FloatTok{0.05}\NormalTok{, term = }\FloatTok{36}\NormalTok{,}
+\NormalTok{  totalPaid = }\FloatTok{1000.0}\NormalTok{, totalPrincipalPaid = }\FloatTok{700.0}\NormalTok{, totalInterestPaid = }\FloatTok{50.0}\NormalTok{,}
+\NormalTok{  recoveries = }\FloatTok{0.0}\NormalTok{, lateFees = }\FloatTok{0.0}\NormalTok{,}
+\NormalTok{  riskFree = }\FloatTok{0.01}\NormalTok{,}
+\NormalTok{  showSchedule = false)}
+
+  \CommentTok{# Months after which a loan defaults (normal tenor if no default or early prepayment)}
+\NormalTok{  monthDefault = term}
+
+  \CommentTok{# Monthly instlment}
+\NormalTok{  instalment = ceil(loan * intRate/}\FloatTok{12}\NormalTok{ / (}\FloatTok{1}\NormalTok{ - }\FloatTok{1}\NormalTok{ / (}\FloatTok{1}\NormalTok{ + intRate/}\FloatTok{12}\NormalTok{) ^ term), digits = }\FloatTok{2}\NormalTok{)}
+
+  \CommentTok{# Create a blank schedule}
+\NormalTok{  schedule = DataFrame(month = }\FloatTok{0}\NormalTok{:nMonths, monthlyPayment = }\FloatTok{0.0}\NormalTok{,}
+\NormalTok{                       principalPayment = }\FloatTok{0.0}\NormalTok{,}
+\NormalTok{                       totalPandI = }\FloatTok{0.0}\NormalTok{, totalI = }\FloatTok{0.0}\NormalTok{, totalP = }\FloatTok{0.0}\NormalTok{)}
+
+  \KeywordTok{for}\NormalTok{ i }\KeywordTok{in} \FloatTok{2}\NormalTok{:(nMonths + }\FloatTok{1}\NormalTok{)}
+    \CommentTok{# Get situation at the end of previous month}
+\NormalTok{    previousTotalPandI = schedule[i - }\FloatTok{1}\NormalTok{, :totalPandI]}
+\NormalTok{    previousTotalP     = schedule[i - }\FloatTok{1}\NormalTok{, :totalP]}
+\NormalTok{    previousTotalI     = schedule[i - }\FloatTok{1}\NormalTok{, :totalI]}
+
+    \CommentTok{# This is the beginning of a new month. First and foremost, the borrower is expected to pay the}
+    \CommentTok{# accrued interest on amount of principal outstanding.}
+    \CommentTok{# The instalment is expected to cover that amount of interest and the rest goes to}
+    \CommentTok{# reducing the principal due outstanding.}
+\NormalTok{    accruedInterest = ceil((loan - previousTotalP) * intRate/}\FloatTok{12}\NormalTok{; digits = }\FloatTok{2}\NormalTok{)}
+\NormalTok{    decreasePrincipal = instalment - accruedInterest}
+
+    \CommentTok{# If that amount takes the schedule above the total amount of interest shown in the data set,}
+    \CommentTok{# we should stop the schedule at this point}
+    \CommentTok{# This is a shortcut since we could have a payment higher than the interest due, but not enough}
+    \CommentTok{# to cover the expected principal repayment. However, it works well in practice.}
+    \KeywordTok{if}\NormalTok{ previousTotalI + accruedInterest > totalInterestPaid}
+
+      \CommentTok{# We stop the normal schedule at this date.}
+      \CommentTok{# Interest is paid (although less than scheduled)}
+\NormalTok{      schedule[i, :monthlyPayment] = totalInterestPaid - previousTotalI}
+
+      \CommentTok{# Whatever principal is left as per the dataset}
+\NormalTok{      schedule[i, :monthlyPayment] += totalPrincipalPaid - previousTotalP}
+
+      \CommentTok{# Then 3-month after the last payment date, recoveries and and later fees are paid}
+\NormalTok{      schedule[i + }\FloatTok{3}\NormalTok{, :principalPayment] += recoveries + lateFees}
+
+      \CommentTok{# Not really useful, but for completeness}
+\NormalTok{      schedule[i, :totalPandI] = totalPaid}
+\NormalTok{      schedule[i, :totalI]     = totalInterestPaid}
+\NormalTok{      schedule[i, :totalP]     = totalPrincipalPaid}
+
+      \CommentTok{# If total principal paid is less than borrower, then it is a default, and the monthDefault}
+      \CommentTok{# is adjusted.}
+      \KeywordTok{if}\NormalTok{ (totalPrincipalPaid < loan)}
+\NormalTok{        monthDefault = i}
+      \KeywordTok{end}
+
+      \CommentTok{# No more payments to add to the schedule}
+      \KeywordTok{break}
+
+    \KeywordTok{else}
+      \CommentTok{# Deal with normal schedule}
+\NormalTok{      schedule[i, :monthlyPayment]   = instalment}
+\NormalTok{      schedule[i, :principalPayment] = decreasePrincipal}
+\NormalTok{      schedule[i, :totalPandI]       = schedule[i-}\FloatTok{1}\NormalTok{, :totalPandI] + instalment}
+\NormalTok{      schedule[i, :totalI]           = schedule[i-}\FloatTok{1}\NormalTok{, :totalI]     + accruedInterest}
+\NormalTok{      schedule[i, :totalP]           = schedule[i-}\FloatTok{1}\NormalTok{, :totalP]     + decreasePrincipal}
+    \KeywordTok{end}
+  \KeywordTok{end}
+
+  \CommentTok{# At this point schedule[, :monthlyPayment] contains the schedule of all payments, but needs to}
+  \CommentTok{# include the initial loan.}
+\NormalTok{  schedule[}\FloatTok{1}\NormalTok{, :principalPayment] = -loan}
+
+  \KeywordTok{if}\NormalTok{ (showSchedule)}
+\NormalTok{    println(}\StringTok{"Payments"}\NormalTok{)}
+\NormalTok{    println(schedule)}
+  \KeywordTok{end}
+
+  \CommentTok{# Principal profile on the borrowing side}
+\NormalTok{  creditFoncier = round.(CreateCreditFoncier(n = term, riskFree = riskFree)[:, :payment] .* loan;}
+\NormalTok{                                             digits = }\FloatTok{2}\NormalTok{)}
+
+  \CommentTok{# For a given margin, calculate the _net_ NPV between the what is borrowed at the risk-free rate}
+  \CommentTok{# and what is earned on the loan principal profile (possibly shortned because of default)}
+  \CommentTok{# carrying an interest of risk-free + credit margin}
+  \KeywordTok{function}\NormalTok{ NetNPV(margin)}
+    \CommentTok{# We need to store the calculated interest}
+\NormalTok{    interestSchedule = DataFrame(month = }\FloatTok{0}\NormalTok{:nMonths, interestPayment = }\FloatTok{0.0}\NormalTok{)}
+
+    \CommentTok{# For each month, calculate the amount of interest with the credit margin}
+    \KeywordTok{for}\NormalTok{ i }\KeywordTok{in} \FloatTok{2}\NormalTok{:(monthDefault + }\FloatTok{1}\NormalTok{)}
+\NormalTok{      outstandingPrincipal = sum(schedule[}\FloatTok{1}\NormalTok{:(i - }\FloatTok{1}\NormalTok{), :principalPayment])}
+\NormalTok{      interestSchedule[i, :interestPayment] =}
+\NormalTok{            -round((riskFree + margin)/}\FloatTok{12}\NormalTok{ * outstandingPrincipal; digits = }\FloatTok{2}\NormalTok{)}
+    \KeywordTok{end}
+
+    \CommentTok{# Net final cashflow is:}
+    \CommentTok{#     total principal and interest cashflow on the lending side}
+    \CommentTok{# less}
+    \CommentTok{#     borrowing profile}
+\NormalTok{    cashFlow = schedule[:, :principalPayment] .+ interestSchedule[:, :interestPayment]}
+\NormalTok{    cashFlow = cashFlow .- creditFoncier}
+
+    \KeywordTok{return}\NormalTok{ sum(cashFlow ./ (}\FloatTok{1}\NormalTok{ + riskFree/}\FloatTok{12}\NormalTok{) .^ (}\FloatTok{0}\NormalTok{:nMonths))}
+  \KeywordTok{end}
+
+  \CommentTok{# rootInterest = round(find_zero(NetNPV, (-0.5, 10), Bisection()); digits = 6)}
+\NormalTok{  rootInterest = }\KeywordTok{try}
+\NormalTok{                   rootInterest = round(find_zero(NetNPV, (-}\FloatTok{0.5}\NormalTok{, }\FloatTok{10}\NormalTok{), Bisection()); digits = }\FloatTok{6}\NormalTok{)}
+                 \KeywordTok{catch}\NormalTok{ e}
+\NormalTok{                   NaN}
+                 \KeywordTok{end}
+
+
+  \KeywordTok{return}\NormalTok{((}
+\NormalTok{    loanID = loanNumber,}
+\NormalTok{    creditMargin = rootInterest,}
+\NormalTok{    monthDefault = monthDefault}
+\NormalTok{  ))}
+\KeywordTok{end}
+
+
+\CommentTok{####################################################################################################}
+\CommentTok{##}
+\CommentTok{## Quick check}
+\CommentTok{##}
+\NormalTok{CreditMargin(loanNumber = }\FloatTok{1}\NormalTok{, loan = }\FloatTok{5600}\NormalTok{, intRate = }\FloatTok{0.1299}\NormalTok{, term = }\FloatTok{36}\NormalTok{,}
+\NormalTok{             totalPaid = }\FloatTok{6791.72}\NormalTok{, totalPrincipalPaid = }\FloatTok{5600}\NormalTok{, totalInterestPaid = }\FloatTok{1191.72}\NormalTok{,}
+\NormalTok{             recoveries = }\FloatTok{0}\NormalTok{, lateFees = }\FloatTok{0}\NormalTok{,}
+\NormalTok{             riskFree = }\FloatTok{0.02}\NormalTok{, showSchedule = false)}
+
+\NormalTok{CreditMargin(loanNumber = }\FloatTok{1}\NormalTok{, loan = }\FloatTok{35000}\NormalTok{, intRate = }\FloatTok{0.1820}\NormalTok{, term = }\FloatTok{60}\NormalTok{,}
+\NormalTok{             totalPaid = }\FloatTok{26600.1}\NormalTok{, totalPrincipalPaid = }\FloatTok{3874.72}\NormalTok{, totalInterestPaid = }\FloatTok{5225.38}\NormalTok{,}
+\NormalTok{             recoveries = }\FloatTok{17500}\NormalTok{, lateFees = }\FloatTok{0.0}\NormalTok{,}
+\NormalTok{             riskFree = }\FloatTok{0.02}\NormalTok{, showSchedule = true)}
+
+\NormalTok{CreditMargin(loanNumber = }\FloatTok{1734666}\NormalTok{, loan = }\FloatTok{35000}\NormalTok{, intRate = }\FloatTok{0.0797}\NormalTok{, term = }\FloatTok{36}\NormalTok{,}
+\NormalTok{             totalPaid = }\FloatTok{1057.04}\NormalTok{, totalPrincipalPaid = }\FloatTok{863.83}\NormalTok{, totalInterestPaid = }\FloatTok{193.72}\NormalTok{,}
+\NormalTok{             recoveries = }\FloatTok{0}\NormalTok{, lateFees = }\FloatTok{0}\NormalTok{,}
+\NormalTok{             riskFree = }\FloatTok{0.02}\NormalTok{, showSchedule = true)}
+
+
+\CommentTok{##}
+\CommentTok{## Look for the loans which have gone to their end}
+\CommentTok{##}
+\NormalTok{indextmp = (lendingClub.loan_status .== }\StringTok{"Fully Paid"}\NormalTok{) .|}
+\NormalTok{           (lendingClub.loan_status .== }\StringTok{"Charged Off"}\NormalTok{) .|}
+\NormalTok{           (lendingClub.loan_status .== }\StringTok{"Does not meet the credit policy. Status:Charged Off"}\NormalTok{) .|}
+\NormalTok{           (lendingClub.loan_status .== }\StringTok{"Does not meet the credit policy. Status:Fully Paid"}\NormalTok{)}
+
+\CommentTok{## Create the dataset we will use - Should be the same as lending_club_reformatted_paid.rds}
+\NormalTok{lc = lendingClub[indextmp, :]}
+
+\CommentTok{## Select relevant variables to calculate profitability}
+\CommentTok{## Column1 contains the loanID's}
+\NormalTok{cols = [:Column1, :funded_amnt, :int_rate, :term,}
+\NormalTok{        :total_pymnt, :total_rec_prncp, :total_rec_int,}
+\NormalTok{        :recoveries, :total_rec_late_fee]}
+
+\NormalTok{lc = select(lc, cols)}
+
+\CommentTok{## Interest rates as percentage}
+\NormalTok{lc[!, :int_rate] = lc[!, :int_rate] ./ }\FloatTok{100}
+
+\CommentTok{## Create a new column}
+\NormalTok{lc[:tenor] = }\FloatTok{0}
+
+\CommentTok{## that will record the official loan tenor as a number (instead of string)}
+\NormalTok{lc[startswith.( lc[!, :term], }\StringTok{" 36"}\NormalTok{), :tenor] .= }\FloatTok{36}
+\NormalTok{lc[startswith.( lc[!, :term], }\StringTok{" 60"}\NormalTok{), :tenor] .= }\FloatTok{60}
+
+\CommentTok{## New data frame to store the results}
+\NormalTok{creditMargin_Result = DataFrame(loanID = zeros(}\DataTypeTok{Int64}\NormalTok{, nrow(lc)),}
+\NormalTok{                                creditMargin = zeros(}\DataTypeTok{Float64}\NormalTok{, nrow(lc)),}
+\NormalTok{                                monthDefault = zeros(}\DataTypeTok{Int64}\NormalTok{, nrow(lc)))}
+
+
+\CommentTok{# ~150 sec. to do the whole dataset}
+\NormalTok{@time }\KeywordTok{for}\NormalTok{ i }\KeywordTok{in} \FloatTok{1}\NormalTok{:nrow(lc)}
+  \KeywordTok{global}\NormalTok{ creditMargin_Result}
+
+  \CommentTok{# Use multiple-return-value}
+  \CommentTok{# 1h17m runtime}
+\NormalTok{  (creditMargin_Result[i, :loanID],}
+\NormalTok{   creditMargin_Result[i, :creditMargin],}
+\NormalTok{   creditMargin_Result[i, :monthDefault]) =}
+\NormalTok{      CreditMargin(}
+\NormalTok{          loanNumber = lc[i, :Column1],}
+\NormalTok{          loan = lc[i, :funded_amnt], intRate = lc[i, :int_rate], term =lc[i, :tenor],}
+\NormalTok{          totalPaid = lc[i, :total_pymnt], totalPrincipalPaid = lc[i, :total_rec_prncp],}
+\NormalTok{          totalInterestPaid = lc[i, :total_rec_int],}
+\NormalTok{          recoveries = lc[i, :recoveries], lateFees = lc[i, :total_rec_late_fee],}
+\NormalTok{          riskFree = }\FloatTok{0.02}\NormalTok{,}
+\NormalTok{          showSchedule = false)}
+\KeywordTok{end}
+
+
+\NormalTok{creditMargin_Result[}\FloatTok{1}\NormalTok{:}\FloatTok{10}\NormalTok{,:]}
+
+\NormalTok{CSV.write(}\StringTok{"datasets/CreditMargins.csv"}\NormalTok{, creditMargin_Result)}
 \end{Highlighting}
 \end{Shaded}
 

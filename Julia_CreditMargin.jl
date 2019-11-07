@@ -1,4 +1,4 @@
- ####################################################################################################
+####################################################################################################
 ##
 ## Prepare datasets
 ##
@@ -15,42 +15,68 @@ lendingClub = CSV.read("datasets/lending_club.csv"; delim = ",")
 
 ####################################################################################################
 ##
-## IRR calculations
+## CREDIT MARGIN
 ##
-## Given some numerical parameters describing a loan in the dataset, returns its Internal Rate
-## of Return.
+## This method of approximating the credit margin is far less sophisticated than what FI's do.
 ##
-## In the first instance, the function creates a schedule of payments.
-## In many cases, the schedule will be extremely simple: a series of 36 or 60 equal instalements.
+## We need to calculate what the credit margin should be on a defaulted loan to get a nil NPV.
 ##
-## But in some cases, a loan repayment are accelerated. Therefore the total amount of interest will
-## be lower than expected (but this is good for the investor because highe interest rate over
-## shorter tenor.).
+## On a risk free loan the CF will be P+I at risk-free on _both_ borrowing and lending sides.
 ##
-## In other cases, the borrower defaults. Overall payments are less than expected.
+##  On a defaulted loan, the CF will be:
+##      borrowing unchanged = P&I at risk-free
+##    and
+##      lending P&I at (risk-free + credit margin) until before default, then recoveries+fees.
 ##
-## Based on the limited information of the dataset, the function makes educated guesses on the exact
-## schedule.
+## The principal amortisation profile depends on the credit margin used. We will arbitrarily use
+## 20% which is a conservative assumption.
 ##
+## credit risk on that CF should be nil with the right margin when discounted at risk-free.
+##
+## The function is very similar to the IRR calculation.
+##
+
 using DataFrames, Roots
 
-function calculateIRR(; loanNumber = 1, loan = 0.0, intRate = 0.0, term = 36,
-  totalPaid = 0.0, totalPrincipalPaid = 0.0, totalInterestPaid = 0.0,
-  recoveries = 0.0, lateFees = 0.0,
-  showSchedule = false)
+# number of monthly payments to model
+# It exceeds 60 months in case recoveries on a 60-month loan takes the schedule after 60 months.
+const nMonths = 90
 
-  # number of monthly payments.
-  # It exceeds 60 months in case recoveries on a 60-month loan takes the schedule after 60 months.
-  nMonths = 90
+
+
+# Sculpt credit foncier profiles over 36 and 60 months at 20% per annum.
+# The profile is expressed as percentage of loan amount
+function CreateCreditFoncier(;n = 36, riskFree = 0.0)
+
+  instalment = 1 * riskFree/12 * 1 / (1 - 1 / (1 + riskFree/12) ^ n)
+
+  # We create a schedule
+  schedule = DataFrame(month = 0:nMonths, payment = 0.0)
+
+  # Add the day 1 principal outlay
+  schedule[1,       :payment] = -1
+  schedule[2:(n+1), :payment] = instalment
+
+  return(schedule)
+end
+
+
+# Solve for the credit margin
+function CreditMargin(; loanNumber = 1, loan = 1000.0, intRate = 0.05, term = 36,
+  totalPaid = 1000.0, totalPrincipalPaid = 700.0, totalInterestPaid = 50.0,
+  recoveries = 0.0, lateFees = 0.0,
+  riskFree = 0.01,
+  showSchedule = false)
 
   # Months after which a loan defaults (normal tenor if no default or early prepayment)
   monthDefault = term
 
-  # Note: *100 /100 to calculate in cent because ceiling cannot specify significant digits.
-  installment = ceil(loan * intRate / 12 / (1 - 1 / (1 + intRate / 12) ^ term), digits = 2)
+  # Monthly instlment
+  instalment = ceil(loan * intRate/12 / (1 - 1 / (1 + intRate/12) ^ term), digits = 2)
 
-  # We create a schedule
-  schedule = DataFrame(month = 0:nMonths, monthlyPayment = 0.0, 
+  # Create a blank schedule
+  schedule = DataFrame(month = 0:nMonths, monthlyPayment = 0.0,
+                       principalPayment = 0.0,
                        totalPandI = 0.0, totalI = 0.0, totalP = 0.0)
 
   for i in 2:(nMonths + 1)
@@ -61,22 +87,26 @@ function calculateIRR(; loanNumber = 1, loan = 0.0, intRate = 0.0, term = 36,
 
     # This is the beginning of a new month. First and foremost, the borrower is expected to pay the
     # accrued interest on amount of principal outstanding.
-    # ceiling doesn't seem accept to accept significative digits.
-    accruedInterest = ceil((loan - previousTotalP) * intRate / 12; digits = 2)
+    # The instalment is expected to cover that amount of interest and the rest goes to
+    # reducing the principal due outstanding.
+    accruedInterest = ceil((loan - previousTotalP) * intRate/12; digits = 2)
+    decreasePrincipal = instalment - accruedInterest
 
     # If that amount takes the schedule above the total amount of interest shown in the data set,
     # we should stop the schedule at this point
+    # This is a shortcut since we could have a payment higher than the interest due, but not enough
+    # to cover the expected principal repayment. However, it works well in practice.
     if previousTotalI + accruedInterest > totalInterestPaid
 
       # We stop the normal schedule at this date.
       # Interest is paid (although less than scheduled)
       schedule[i, :monthlyPayment] = totalInterestPaid - previousTotalI
 
-      # As well as whatever principal is left as per the dataset
-      schedule[i, :monthlyPayment] = schedule[i, :monthlyPayment] + totalPrincipalPaid - previousTotalP
+      # Whatever principal is left as per the dataset
+      schedule[i, :monthlyPayment] += totalPrincipalPaid - previousTotalP
 
       # Then 3-month after the last payment date, recoveries and and later fees are paid
-      schedule[i + 3, :monthlyPayment] = schedule[i + 3, :monthlyPayment] + recoveries + lateFees
+      schedule[i + 3, :principalPayment] += recoveries + lateFees
 
       # Not really useful, but for completeness
       schedule[i, :totalPandI] = totalPaid
@@ -94,53 +124,64 @@ function calculateIRR(; loanNumber = 1, loan = 0.0, intRate = 0.0, term = 36,
 
     else
       # Deal with normal schedule
-      schedule[i, :monthlyPayment] = installment
-      schedule[i, :totalPandI]     = schedule[i - 1, :totalPandI] + installment
-      schedule[i, :totalI]         = schedule[i - 1, :totalI]     + accruedInterest
-      schedule[i, :totalP]         = schedule[i - 1, :totalP]     + installment - accruedInterest
+      schedule[i, :monthlyPayment]   = instalment
+      schedule[i, :principalPayment] = decreasePrincipal
+      schedule[i, :totalPandI]       = schedule[i-1, :totalPandI] + instalment
+      schedule[i, :totalI]           = schedule[i-1, :totalI]     + accruedInterest
+      schedule[i, :totalP]           = schedule[i-1, :totalP]     + decreasePrincipal
     end
   end
 
   # At this point schedule[, :monthlyPayment] contains the schedule of all payments, but needs to
   # include the initial loan.
-  schedule[1, :monthlyPayment] = -loan
+  schedule[1, :principalPayment] = -loan
 
   if (showSchedule)
-    print(schedule)
+    println("Payments")
+    println(schedule)
   end
 
-  cashFlow = schedule[:,:monthlyPayment]
+  # Principal profile on the borrowing side
+  creditFoncier = round.(CreateCreditFoncier(n = term, riskFree = riskFree)[:, :payment] .* loan;
+                                             digits = 2)
 
-  NPV = function(interest)
-    t = 0:(length(cashFlow) - 1)
-    return sum(cashFlow ./ (1 + interest) .^ t)
+  # For a given margin, calculate the _net_ NPV between the what is borrowed at the risk-free rate
+  # and what is earned on the loan principal profile (possibly shortned because of default)
+  # carrying an interest of risk-free + credit margin
+  function NetNPV(margin)
+    # We need to store the calculated interest
+    interestSchedule = DataFrame(month = 0:nMonths, interestPayment = 0.0)
+
+    # For each month, calculate the amount of interest with the credit margin
+    for i in 2:(monthDefault + 1)
+      outstandingPrincipal = sum(schedule[1:(i - 1), :principalPayment])
+      interestSchedule[i, :interestPayment] =
+            -round((riskFree + margin)/12 * outstandingPrincipal; digits = 2)
+    end
+
+    # Net final cashflow is:
+    #     total principal and interest cashflow on the lending side
+    # less
+    #     borrowing profile
+    cashFlow = schedule[:, :principalPayment] .+ interestSchedule[:, :interestPayment]
+    cashFlow = cashFlow .- creditFoncier
+
+    return sum(cashFlow ./ (1 + riskFree/12) .^ (0:nMonths))
   end
 
+  # rootInterest = round(find_zero(NetNPV, (-0.5, 10), Bisection()); digits = 6)
   rootInterest = try
-                  round(12 * find_zero(NPV, (-0.9, 1.0), Bisection(); xatol = 0.000001); digits = 4)
-                catch e
-                  NaN
-                end
+                   rootInterest = round(find_zero(NetNPV, (-0.5, 10), Bisection()); digits = 6)
+                 catch e
+                   NaN
+                 end
+
 
   return((
     loanID = loanNumber,
-    IRR = rootInterest,
+    creditMargin = rootInterest,
     monthDefault = monthDefault
   ))
-end
-
-
-##
-## Calculate the IRR and repayment schedule of a particular loan identified by its loanID
-function loanNumberIRR(loanNumber)
-  l = lc[ lc[:, :Column1] .== loanNumber, :]
-  global lc
-  calculateIRR(loanNumber = l[1, :Column1],
-               loan = l[1, :funded_amnt], intRate = l[1, :int_rate], term =l[1, :tenor],
-               totalPaid = l[1, :total_pymnt], totalPrincipalPaid = l[1, :total_rec_prncp],
-               totalInterestPaid = l[1, :total_rec_int],
-               recoveries = l[1, :recoveries], lateFees = l[1, :total_rec_late_fee],
-               showSchedule = true)
 end
 
 
@@ -148,20 +189,20 @@ end
 ##
 ## Quick check
 ##
-calculateIRR(loanNumber = 1, loan = 5600, intRate = 0.1299, term = 36,
+CreditMargin(loanNumber = 1, loan = 5600, intRate = 0.1299, term = 36,
              totalPaid = 6791.72, totalPrincipalPaid = 5600, totalInterestPaid = 1191.72,
              recoveries = 0, lateFees = 0,
-             showSchedule = false)
+             riskFree = 0.02, showSchedule = false)
 
-calculateIRR(loanNumber = 1, loan = 35000, intRate = 0.1820, term = 60,
+CreditMargin(loanNumber = 1, loan = 35000, intRate = 0.1820, term = 60,
              totalPaid = 26600.1, totalPrincipalPaid = 3874.72, totalInterestPaid = 5225.38,
              recoveries = 17500, lateFees = 0.0,
-             showSchedule = false)
+             riskFree = 0.02, showSchedule = true)
 
-calculateIRR(loanNumber = 1734666, loan = 35000, intRate = 0.0797, term = 36,
+CreditMargin(loanNumber = 1734666, loan = 35000, intRate = 0.0797, term = 36,
              totalPaid = 1057.04, totalPrincipalPaid = 863.83, totalInterestPaid = 193.72,
              recoveries = 0, lateFees = 0,
-             showSchedule = false)
+             riskFree = 0.02, showSchedule = true)
 
 
 
@@ -186,44 +227,41 @@ cols = [:Column1, :funded_amnt, :int_rate, :term,
 lc = select(lc, cols)
 
 ## Interest rates as percentage
-lc[:, :int_rate] = lc[:, :int_rate] ./ 100
+lc[!, :int_rate] = lc[!, :int_rate] ./ 100
 
 ## Create a new column
 lc[:tenor] = 0
 
 ## that will record the official loan tenor as a number (instead of string)
-lc[startswith.( lc[:, :term], " 36"), :tenor] .= 36
-lc[startswith.( lc[:, :term], " 60"), :tenor] .= 60
+lc[startswith.( lc[!, :term], " 36"), :tenor] .= 36
+lc[startswith.( lc[!, :term], " 60"), :tenor] .= 60
 
 ## New data frame to store the results
-IRR_Result = DataFrame(loanID = zeros(Int64, nrow(lc)),
-                       IRR = zeros(Float64, nrow(lc)),
-                       monthDefault = zeros(Int64, nrow(lc)))
+creditMargin_Result = DataFrame(loanID = zeros(Int64, nrow(lc)),
+                                creditMargin = zeros(Float64, nrow(lc)),
+                                monthDefault = zeros(Int64, nrow(lc)))
 
 
 # ~150 sec. to do the whole dataset
 @time for i in 1:nrow(lc)
-  global IRR_Result
+  global creditMargin_Result
 
   # Use multiple-return-value
-  (IRR_Result[i, :loanID], IRR_Result[i, :IRR], IRR_Result[i, :monthDefault]) =
-      calculateIRR(
+  # 1h17m runtime
+  (creditMargin_Result[i, :loanID],
+   creditMargin_Result[i, :creditMargin],
+   creditMargin_Result[i, :monthDefault]) =
+      CreditMargin(
           loanNumber = lc[i, :Column1],
           loan = lc[i, :funded_amnt], intRate = lc[i, :int_rate], term =lc[i, :tenor],
           totalPaid = lc[i, :total_pymnt], totalPrincipalPaid = lc[i, :total_rec_prncp],
           totalInterestPaid = lc[i, :total_rec_int],
           recoveries = lc[i, :recoveries], lateFees = lc[i, :total_rec_late_fee],
+          riskFree = 0.02,
           showSchedule = false)
 end
 
 
-IRR_Result[1:10,:]
-# Check
-loanNumberIRR(171)
+creditMargin_Result[1:10,:]
 
-CSV.write("datasets/loanIRR.csv", IRR_Result)
-
-
-
-
-
+CSV.write("datasets/CreditMargins.csv", creditMargin_Result)
