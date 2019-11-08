@@ -170,7 +170,7 @@ Based on this information, the loan is approved or not. Approval includes the fi
 
 Figure \@ref(fig:interest-rate-table) ^[source: https://www.lendingclub.com/investing/investor-education/interest-rates-and-fees] shows the predetermined interest rate depending on the initial rating as of July 2019. 
 
-```{r interest-rate-table,fig.cap="Interest rates given rating",out.height=5,cache=FALSE}
+```{r interest-rate-table,fig.cap="Interest rates given rating"}
 knitr::include_graphics("images/interest-rates-jul2019.png")
 ```
 

@@ -4,12 +4,14 @@
 ##
 
 ## Previously saved from R with:
-##     lending_club <- readRDS("lending_club.rds"); write.csv(lending_club, "lending_club.rds")
+##     lending_club <- readRDS("lending_club_reformatted.rds")
+##     library(readr)
+##     write.csv(lending_club, "LendingClub.csv")
 ##
-## WARNING: 1.7GB on disk
+## WARNING: 1.3GB on disk
 ##
 using CSV
-lendingClub = CSV.read("datasets/lending_club.csv"; delim = ",")
+lendingClub = CSV.read("datasets/LendingClub.csv"; delim = ",")
 
 
 
@@ -151,7 +153,7 @@ end
 function loanNumberIRR(loanNumber)
   l = lc[ lc[:, :Column1] .== loanNumber, :]
   global lc
-  calculateIRR(loanNumber = l[1, :Column1],
+  calculateIRR(loanNumber = l[1, :loanID],
                loan = l[1, :funded_amnt], intRate = l[1, :int_rate], term =l[1, :tenor],
                totalPaid = l[1, :total_pymnt], totalPrincipalPaid = l[1, :total_rec_prncp],
                totalInterestPaid = l[1, :total_rec_int],
@@ -195,7 +197,7 @@ lc = lendingClub[indextmp, :]
 
 ## Select relevant variables to calculate profitability
 ## Column1 contains the loanID's
-cols = [:Column1, :funded_amnt, :int_rate, :term,
+cols = [:loanID, :funded_amnt, :int_rate, :term,
         :total_pymnt, :total_rec_prncp, :total_rec_int,
         :recoveries, :total_rec_late_fee]
 
@@ -203,13 +205,6 @@ lc = select(lc, cols)
 
 ## Interest rates as percentage
 lc[:, :int_rate] = lc[:, :int_rate] ./ 100
-
-## Create a new column
-lc[:tenor] = 0
-
-## that will record the official loan tenor as a number (instead of string)
-lc[startswith.( lc[:, :term], " 36"), :tenor] .= 36
-lc[startswith.( lc[:, :term], " 60"), :tenor] .= 60
 
 ## New data frame to store the results
 IRR_Result = DataFrame(loanID = zeros(Int64, nrow(lc)),
@@ -224,8 +219,8 @@ IRR_Result = DataFrame(loanID = zeros(Int64, nrow(lc)),
   # Use multiple-return-value
   (IRR_Result[i, :loanID], IRR_Result[i, :IRR], IRR_Result[i, :monthDefault]) =
       calculateIRR(
-          loanNumber = lc[i, :Column1],
-          loan = lc[i, :funded_amnt], intRate = lc[i, :int_rate], term =lc[i, :tenor],
+          loanNumber = lc[i, :loanID],
+          loan = lc[i, :funded_amnt], intRate = lc[i, :int_rate], term = lc[i, :term],
           totalPaid = lc[i, :total_pymnt], totalPrincipalPaid = lc[i, :total_rec_prncp],
           totalInterestPaid = lc[i, :total_rec_int],
           recoveries = lc[i, :recoveries], lateFees = lc[i, :total_rec_late_fee],

@@ -1,5 +1,5 @@
 --- 
-title: "Lending Club"
+title: "LendingClub Loans Pricing"
 subtitle: "HarvardX - PH125.9x Data Science Capstone"
 author: "Emmanuel Rialland - https://github.com/Emmanuel_R8"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
@@ -43,7 +43,7 @@ bookdown::render_book("00-index.Rmd", output_format = "bookdown::pdf_book")
 ```
 
 
-```{r knitr-options,echo=FALSE,message=FALSE}
+```{r knitr-options,eval=TRUE,echo=FALSE,message=FALSE}
 ###################################################################################################
 ## GLOBAL SETUP
 ##
@@ -58,6 +58,7 @@ knitr::opts_chunk$set(
 # expressly stated.
 knitr::opts_chunk$set(
   # Chunks
+  eval = TRUE,
   cache = TRUE,
   echo = FALSE,
   message = FALSE,
@@ -66,7 +67,6 @@ knitr::opts_chunk$set(
   # Graphics
   out.width = "70%",
   fig.align = "center",
-  #   fig.show = 'hold',
   fig.height = 3,
   dev = "png",
 

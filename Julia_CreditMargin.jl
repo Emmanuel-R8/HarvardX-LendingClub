@@ -4,13 +4,15 @@
 ##
 
 ## Previously saved from R with:
-##     lending_club <- readRDS("lending_club.rds"); write.csv(lending_club, "lending_club.rds")
+##     lending_club <- readRDS("lending_club_reformatted.rds")
+##     library(readr)
+##     write.csv(lending_club, "LendingClub.csv")
 ##
-## WARNING: 1.7GB on disk
+## WARNING: 1.3GB on disk
 ##
 using CSV
-lendingClub = CSV.read("datasets/lending_club.csv"; delim = ",")
-
+lendingClub = CSV.read("datasets/LendingClub.csv"; delim = ",")
+RATES = CSV.read("datasets/Rates.csv"; delim = ",")
 
 
 ####################################################################################################
@@ -215,26 +217,23 @@ indextmp = (lendingClub.loan_status .== "Fully Paid") .|
            (lendingClub.loan_status .== "Does not meet the credit policy. Status:Charged Off") .|
            (lendingClub.loan_status .== "Does not meet the credit policy. Status:Fully Paid")
 
-## Create the dataset we will use - Should be the same as lending_club_reformatted_paid.rds
-lc = lendingClub[indextmp, :]
-
 ## Select relevant variables to calculate profitability
 ## Column1 contains the loanID's
-cols = [:Column1, :funded_amnt, :int_rate, :term,
+cols = [:loanID, :issue_d, :funded_amnt, :int_rate, :term,
         :total_pymnt, :total_rec_prncp, :total_rec_int,
         :recoveries, :total_rec_late_fee]
 
-lc = select(lc, cols)
+## Create the dataset we will use - Should be the same as lending_club_reformatted_paid.rds
+lc = select(lendingClub[indextmp, :], cols)
 
 ## Interest rates as percentage
-lc[!, :int_rate] = lc[!, :int_rate] ./ 100
+lc[!, :int_rate] = lc[:, :int_rate] ./ 100
 
-## Create a new column
-lc[:tenor] = 0
+## Add the risk-free LIBOR rates
+lc = join(lc, RATES, on = :issue_d => :DATE, kind = :left)
 
-## that will record the official loan tenor as a number (instead of string)
-lc[startswith.( lc[!, :term], " 36"), :tenor] .= 36
-lc[startswith.( lc[!, :term], " 60"), :tenor] .= 60
+# Select the appropriate (sort of) depending on tenor.
+lc[!, :risk_free] = ifelse.((lc[:, :term] .== 36) .== 1, lc[:, :RATE3Y], lc[:, :RATE5Y])
 
 ## New data frame to store the results
 creditMargin_Result = DataFrame(loanID = zeros(Int64, nrow(lc)),
@@ -252,12 +251,12 @@ creditMargin_Result = DataFrame(loanID = zeros(Int64, nrow(lc)),
    creditMargin_Result[i, :creditMargin],
    creditMargin_Result[i, :monthDefault]) =
       CreditMargin(
-          loanNumber = lc[i, :Column1],
-          loan = lc[i, :funded_amnt], intRate = lc[i, :int_rate], term =lc[i, :tenor],
+          loanNumber = lc[i, :loanID],
+          loan = lc[i, :funded_amnt], intRate = lc[i, :int_rate], term =lc[i, :term],
           totalPaid = lc[i, :total_pymnt], totalPrincipalPaid = lc[i, :total_rec_prncp],
           totalInterestPaid = lc[i, :total_rec_int],
           recoveries = lc[i, :recoveries], lateFees = lc[i, :total_rec_late_fee],
-          riskFree = 0.02,
+          riskFree = lc[i, :risk_free],
           showSchedule = false)
 end
 
