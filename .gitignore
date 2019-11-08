@@ -8,6 +8,7 @@ _bookdown_files
 *_cache
 *_files
 profile*
+HarvardX-LendingClub.Rmd
 
 rsconnect
 *.log
@@ -23,6 +24,7 @@ datasets/simplemaps_uszips_basicv1.6
 datasets/lending_club.csv
 datasets/lending_club.rds
 datasets/lending_club.sqlite
+datasets/lending_club.rds
+datasets/LendingClub.csv
 datasets/lending_club_reformatted.rds
 datasets/lending_club_reformatted_paid.rds
-
