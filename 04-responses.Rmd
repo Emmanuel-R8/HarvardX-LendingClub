@@ -2,22 +2,22 @@
 
 In this section, we describe the response variables that we will generate for each loan and that will be used in the modeling section.
 
-As indicated in the introduction, our purpose is to test a model that predicts the financial risk of a loan. 
+As indicated in the introduction, our purpose is to test a model that predicts the financial risk of a loan.
 
 ## Important warning
 
-The calculations presented here are simplistic. Although they bear some resemblance to what financial institutions (_FIs_) do. The literature on credit assessment and pricing is very rich and very complex. Finding the optimal capital allocation to particular risks while at the same time satisfying internal risk policies and regulatory requirements is a problem that financial institutions have yet to solve in full. Investing in a loan is not only a matter of assessing the risk of a particular borrower, but also assessing systemic risks (which exist across all borrowers), risks associated with funding the loan (interest, currency and liquidity markets), each requiring a risk assessment and pricing. 
+The calculations presented here are simplistic. Although they bear some resemblance to what financial institutions (_FIs_) do. The literature on credit assessment and pricing is very rich and very complex. Finding the optimal capital allocation to particular risks while at the same time satisfying internal risk policies and regulatory requirements is a problem that financial institutions have yet to solve in full. Investing in a loan is not only a matter of assessing the risk of a particular borrower, but also assessing systemic risks (which exist across all borrowers), risks associated with funding the loan (interest, currency and liquidity markets), each requiring a risk assessment and pricing.
 
-In other words, nobody would, let alone should, make any investment decision based on the calculations below. 
+In other words, nobody would, let alone should, make any investment decision based on the calculations below.
 
 
 ## Background
 
-This subsection can be skipped by anybody with basic financial knowledge. 
+This subsection can be skipped by anybody with basic financial knowledge.
 
-A bird in hand or two in the bush; a penny today or a pound tomorrow. What is the price of delaying obtaining and owning something? This is what pricing a loan is about. A lender could keep his/her cash in hand, or lend it and have it in hand later. He/she would accept this in exchange for receiving a bit more: this is the rate of interest. 
+A bird in hand or two in the bush; a penny today or a pound tomorrow. What is the price of delaying obtaining and owning something? This is what pricing a loan is about. A lender could keep his/her cash in hand, or lend it and have it in hand later. He/she would accept this in exchange for receiving a bit more: this is the rate of interest.
 
-There are borrowers that one can see as completely safe (risk-free) such as central banks or governments of strong economies. A lender always has the possibility to lend to them instead of a more risky borrower. Therefore, a lender would require a higher interest rate than risk-free. The additional interest that a lender requires is commensurate with the risk of the borrower not repaying (called _credit worthiness_) and is called the _credit margin_. 
+There are borrowers that one can see as completely safe (risk-free) such as central banks or governments of strong economies. A lender always has the possibility to lend to them instead of a more risky borrower. Therefore, a lender would require a higher interest rate than risk-free. The additional interest that a lender requires is commensurate with the risk of the borrower not repaying (called _credit worthiness_) and is called the _credit margin_.
 
 For each individual borrower, an FI would assess information provided by the borrower and massive amounts of historical data to answer the question: considering historical borrowers with a profile similar to the applicant's, what is the probability of not getting principal and interest back (PD)? And, in case the borrower stops paying and using additional courses of action (such as seizing and selling assets), what is the total loss that could be expected on average (LGD)?
 
@@ -27,11 +27,11 @@ Making that assessment, the FI would require an interest rate which would roughl
 
 + a margin to cover the average loss of similar borrowers (see the important footnote^[It is important to realise that the average margin only brings the borrower back to having made no money at all on average: the additional income from the credit margin will be spent to cover average losses. In addition, we present the credit margin as income against borrower-specific losses. It does not address a lot of other risks such as correlation risks: a borrower might default because the economy as a whole gets worse, in which case many borrowers will default. This is a cyclical systemic risk similar to the 2007 US real estate crisis.]);
 
-+ a margin to cover all the operational costs of running their operations; and, 
++ a margin to cover all the operational costs of running their operations; and,
 
 + a margin to remunerate the capital allocated by the FI (banking regulations require all banks to allocate an amount of capital against any risk taken; those are stipulated in a number of complex rules).
 
-Said crudely, this total is the amount for the FI to get out of bed and look at a loan. Although this sounds like an exact science (for some definition of the word), it is not. At the end of the day, the FI will also have to contend with the competition, market liquidity (if there is a lot of money available to be lent, it brings prices down) and, critically, whether the borrower would at all be interested in accepting that cost. 
+Said crudely, this total is the amount for the FI to get out of bed and look at a loan. Although this sounds like an exact science (for some definition of the word), it is not. At the end of the day, the FI will also have to contend with the competition, market liquidity (if there is a lot of money available to be lent, it brings prices down) and, critically, whether the borrower would at all be interested in accepting that cost.
 
 Note that the dataset is distorted by this additional survival effect: the application information of many loans does not appear merely because the rate of interest was considered too high (this is not dissimilar to _survival effects_ where some data did not survive through the history of a dataset^[A well-known example is historical stock prices which disappear when companies are de-listed or go bankrupt.]).
 
@@ -73,6 +73,56 @@ Similarly, we calculate the credit margin required by each loan noting that:
 
 $$ \text{Risk-free} + \text{Credit Margin} = IRR(loan)$$
 
-Again, this was coded in Julia. The Julia code here takes about 1h20min to run. On the assumptions that the equivalent R code would take therefore about 25 days to run through the full dataset, we did not write any R code for this calculation. The code is in appendix, and we believe easy to follow.
+As noted in the previous section, risk-free rates change over time. When solving for the credit margin, we use the relevant risk-free rate. 
+
+Again, this was coded in Julia. The Julia code here takes about 1h20min to run. On the assumptions that the equivalent R code would take therefore almost 30 days to run through the full dataset, we did not write any R code for this calculation. The code is in appendix, and we believe easy to follow.
+
+Figure \@ref(fig:credit-margin-over-time) shows the evolution of credit margins over time grouped by ratings. The plots are made with a random sample of 300,000 loans.
+
+```{r credit-margin-over-time,fig.cap="Credit margins per grade over time"}
+
+creditMargin36 <- 
+  LoanMargin %>%
+  sample_n(300000) %>%
+  left_join(loans, term, by = "loanID") %>% 
+  filter(is.numeric(creditMargin) & (term == 36)) %>% 
+  ggplot(aes(issue_d, int_rate, col = grade)) +
+  geom_point(alpha = 0.25, size = 0.4) +
+  ggtitle("Credit margin per grade over time \n 3-year loans") +
+  xlab("Funding date") +
+  ylab("Interest rate")
+
+creditMargin60 <- 
+  LoanMargin %>%
+  sample_n(300000) %>%
+  left_join(loans, term, by = "loanID") %>% 
+  filter(is.numeric(creditMargin) & (term == 60)) %>% 
+  ggplot(aes(issue_d, int_rate, col = grade)) +
+  geom_point(alpha = 0.25, size = 0.4) +
+  ggtitle("Credit margin per grade over time \n 5-year loans") +
+  xlab("Funding date") +
+  ylab("Interest rate")
+
+grid.arrange(creditMargin36, creditMargin60, nrow = 1)
+
+```
+
+
+We notice long periods where certain margins remain very stable which indicate that _both_ the initial pricing was constant _and_ that the proportion of default remains very low. 
+
+The graphs show considerations that are relevant to the modeling": 
+
++ The margins clearly change over time. Predictions will require to account for time [probably in a non-linear fashion].
+
++ For a given rating, it widens and narrows over time. The changes happen in multiples that depends on the ratings: 
+    
+    - For high quality / low margin loans: the changes are multiples of the margin, for example going from roughly 3% to 6/7%. 
+    
+    - Although the range of change is wide, those changes do not happen very often, especially in the later years.
+    
+    - By comparison, for low quality / high margin loans, the range of change is smaller, but more frequent and volatile. 
+    
++ In other words, the relation between loan quality (its rating) and its pricing (the credit margin) will significantly non-linear. 
+
 
 

@@ -15,8 +15,8 @@ Any model will require training in batch (e.g. stochastic gradient descent) or o
 The diagram \@ref(fig:scikit-map)^[Source: https://scikit-learn.org/stable/tutorial/machine_learning_map/index.html] shows a useful decision tree.
 
 
-```{r scikit-map, fig.cap="Scikit Learn algorithm cheat-sheet",fig.height=5,cache=FALSE}
-knitr::include_graphics("images/scikit-learn-mlmap.png")
+```{r scikit-map, fig.cap="Scikit Learn algorithm cheat-sheet",output.width="70%",cache=FALSE}
+knitr::include_graphics("images/scikit-learn-mlmap.png", auto_pdf = TRUE)
 ```
 
 

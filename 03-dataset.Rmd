@@ -170,8 +170,8 @@ Based on this information, the loan is approved or not. Approval includes the fi
 
 Figure \@ref(fig:interest-rate-table) ^[source: https://www.lendingclub.com/investing/investor-education/interest-rates-and-fees] shows the predetermined interest rate depending on the initial rating as of July 2019. 
 
-```{r interest-rate-table,fig.cap="Interest rates given rating"}
-knitr::include_graphics("images/interest-rates-jul2019.png")
+```{r interest-rate-table,fig.cap="Interest rates given rating",output.width="70%",cache=FALSE}
+knitr::include_graphics("images/interest-rates-jul2019.png", auto_pdf = TRUE)
 ```
 
 At the date of this report, the ratings range from `A` (the best) down to `D`, each split in 5 sub-ratings. However, LC previously also intermediated loans rated F or G (until 6 November 2017) and E (until 30 June 2019) ^[See https://www.lendingclub.com/info/demand-and-credit-profile.action]. This explains that such ratings are in the dataset. We will assume that the ratings in the dataset are the rating at the time of approval and that, even if loans are re-rated by LC, the dataset does not reflect it.
@@ -337,14 +337,14 @@ loanSizeSummary <-
 loanBySubgrade1 <-
   loanSizeSummary %>%
   ggplot(aes(x = sub_grade, Funded)) +
-  geom_point() +
+  geom_point(col = "blue") +
   xlab("Sub grade") +
   ylab("Funded amount ($mln)")
 
 loanBySubgrade2 <-
   loanSizeSummary %>%
   ggplot(aes(x = sub_grade, y = Proportion)) +
-  geom_point() +
+  geom_point(col = "blue") +
   xlab("Sub grade") +
   ylab("Share repaid (%)")
 

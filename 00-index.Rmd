@@ -17,7 +17,7 @@ output:
     theme: united
     
 documentclass: report
-geometry: "a4paper,left=2.5cm,right=2.5cm,top=3cm,bottom=3cm"
+geometry: "a4paper,left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm"
 lot: yes
 lof: yes
 
@@ -37,9 +37,17 @@ description: "HarvardX - PH125.9x Data Science Capstone"
 
 ```{r rebuild-command,eval=FALSE,echo=FALSE,message=FALSE,warning=FALSE}
 ###################################################################################################
-## To rebuild the document
 ##
-bookdown::render_book("00-index.Rmd", output_format = "bookdown::pdf_book")
+## To rebuild the document.
+## 
+## Note: Experience has shown that generating the pdf is brittle. Running this command from a
+## separate prompt at the command line seems more reliable. This might be due to interaction
+## between the generation process and RStudio.
+##
+
+## FROM THE COMMAND LINE (Linux) in the project directory (where the Rmd files are)
+R --no-restore --no-save \
+  -e 'rm(list = ls(all.names = TRUE)); bookdown::render_book("00-index.Rmd", output_format = "bookdown::pdf_book")'
 ```
 
 
@@ -65,21 +73,19 @@ knitr::opts_chunk$set(
   warning = FALSE,
 
   # Graphics
-  out.width = "70%",
+  out.width = "70% \\textwidth",
   fig.align = "center",
-  fig.height = 3,
-  dev = "png",
+  # fig.height = 3,
+  dev = "pdf",
 
   # Text size
   size = "small"
 )
 
-# automatically create a bib database for R packages
-knitr::write_bib(c(.packages(), "bookdown", "knitr", "rmarkdown"), "packages.bib")
-
 # Modify the size of the code chunks
 # https://stackoverflow.com/questions/25646333/code-chunk-font-size-in-rmarkdown-with-knitr-and-latex
 def.chunk.hook <- knitr::knit_hooks$get("chunk")
+
 knitr::knit_hooks$set(chunk = function(x, options) {
   x <- def.chunk.hook(x, options)
   ifelse(options$size != "normalsize", paste0("\n \\", options$size, "\n\n", x, "\n\n \\normalsize"), x)

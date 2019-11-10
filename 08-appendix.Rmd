@@ -587,7 +587,7 @@ local({
 This table presents the list of variables provided in the original dataset. The descriptions come from a spreadsheet attached with the dataset and, unfortunately, are not extremely precise and subject to interpretation. We added comments and/or particular interpretations in _CAPITAL LETTERS_.
 
 
-```{r variable-description,cache=FALSE}
+```{r variable-description,cache=TRUE}
 LC_variable %>%
   select(variable_name, description) %>% 
   

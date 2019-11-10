@@ -4,19 +4,29 @@ library(lubridate)
 
 # Load data
 if (!exists("loans")) loans <- readRDS("datasets/lending_club_reformatted_paid.rds")
-if (!exists("loansIRR")) loansIRR <- read.csv("datasets/loanIRR.csv") %>% as_tibble()
+if (!exists("loansIRR"))
+  loansIRR <- read.csv("datasets/LoanIRR.csv") %>% as_tibble()
+
+if (!exists("loansCreditMargin"))
+  loansCreditMargin <- read.csv("datasets/CreditMargins.csv") %>%
+    as_tibble() %>%
+    select(-monthDefault)
+
 nSamples <- nrow(loans)
 
 
-loans <- loans %>%
-  # add IRR calculations
+loansWorkingSet <- loans %>%
+  # add IRR and credit margins calculations
   left_join(loansIRR, by = "loanID") %>%
+  left_join(loansCreditMargin, by = "loanID") %>%
 
   # add a % principal loss variable
   mutate(principal_loss_pct = (funded_amnt - total_rec_prncp) / funded_amnt)
 
+
 # Select the variables checked in 01-startup.Rmd
 varList <- c(LC_variable[LC_variable$inModel == TRUE, "variable_name"])$variable_name
+varList <- c(varList, "grade_num", "sub_grade_num", "principal_loss_pct", "creditMargin")
 
 
 #################################################################################################
@@ -24,7 +34,7 @@ varList <- c(LC_variable[LC_variable$inModel == TRUE, "variable_name"])$variable
 ## Prepare a dataset with ONLY the predictors
 ##
 loansPredictors <-
-  loans %>%
+  loansWorkingSet %>%
 
   # Keep the chosen predictors
   select(varList) %>%
@@ -33,14 +43,22 @@ loansPredictors <-
   select(-"addr_state") %>%
 
   ##
-  ## Dates to numeric
+  ## Dates to numeric, in 'decimal' years since 2000
   ##
   mutate_at(c("issue_d", "earliest_cr_line"), function(d) {
-    return(year(d) + month(d) / 12)
+    return(year(d) - 2000 + (month(d) - 1) / 12)
   }) %>%
+
+  ## Add polynomials of the dates to model the time-trend shape
+  mutate(issue_d2 = issue_d ^ 2,
+         issue_d3 = issue_d ^ 3,
+         earliest_cr_line2 = earliest_cr_line ^ 2,
+         earliest_cr_line3 = earliest_cr_line ^ 3) %>%
 
   # Fill missing values
   mutate_all(~replace(., is.na(.), 0))
+
+
 
 
 #################################################################################################
@@ -94,52 +112,52 @@ modelX <-
   select(-purpose)
 
 
-# Seed
+# Create training / test sets 80%/20%
+proportionTraining <- 0.8
 set.seed(42)
-sample005 <- sample(1:nSamples, floor(nSamples * 0.005), replace = FALSE)
-sample01  <- sample(1:nSamples, floor(nSamples * 0.01), replace = FALSE)
-sample05  <- sample(1:nSamples, floor(nSamples * 0.05), replace = FALSE)
-sample10  <- sample(1:nSamples, floor(nSamples * 0.10), replace = FALSE)
-sample20  <- sample(1:nSamples, floor(nSamples * 0.20), replace = FALSE)
-
-loans005 <- loansPredictors %>% slice(sample005)
-loans01  <- loansPredictors %>% slice(sample01)
-loans05  <- loansPredictors %>% slice(sample05)
-loans10  <- loansPredictors %>% slice(sample10)
-loans20  <- loansPredictors %>% slice(sample20)
-
-model005 <- modelX %>% slice(sample005)
-model01  <- modelX %>% slice(sample01)
-model05  <- modelX %>% slice(sample05)
-model10  <- modelX %>% slice(sample10)
-model20  <- modelX %>% slice(sample20)
-
-G01 <- loans %>% select(sub_grade_num) %>% slice(sample01)
-G05 <- loans %>% select(sub_grade_num) %>% slice(sample05)
-G10 <- loans %>% select(sub_grade_num) %>% slice(sample10)
-G20 <- loans %>% select(sub_grade_num) %>% slice(sample20)
-
-loss01 <- loans %>% select(principal_loss_pct) %>% slice(sample01)
-loss05 <- loans %>% select(principal_loss_pct) %>% slice(sample01)
-loss10 <- loans %>% select(principal_loss_pct) %>% slice(sample01)
-loss20 <- loans %>% select(principal_loss_pct) %>% slice(sample01)
+sampleTraining  <- sample(1:nSamples, floor(nSamples * proportionTraining), replace = FALSE)
+loansTraining <- loansPredictors %>% slice( sampleTraining)
+loansTest <-     loansPredictors %>% slice(-sampleTraining)
 
 
-#
-# This method of approximating the credit margin is far less sophisticated than what FI's do.
-# Need to calculate what should the credit margin be on a defaulted loan
-#
-# CF principal is -L the amortising P
-#
-# On a risk free loan the CF will be P+LIBOR on borrowing side / ditto on lending side
-#
-# On a defaulted loan, the CF will be:
-#  borrowing = P + P&I @ LIBOR / lending P + P&I @ (LIBOR + credit margin) for less than tenor + decreased P
-#
-# The P amortisation profile depends on the credit margin used. We will arbitrarily use 20%.
-#
-# credit risk on that CF should be nil with the right margin.
-#
+# Subsets of the training set
+set.seed(42)
+nSamplesTraining <- nrow(loansTraining)
+sample005 <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.005), replace = FALSE)
+sample01  <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.01),  replace = FALSE)
+sample05  <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.05),  replace = FALSE)
+sample10  <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.10),  replace = FALSE)
+sample20  <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.20),  replace = FALSE)
+
+loans005 <- loansTraining %>% slice(sample005)
+loans01  <- loansTraining %>% slice(sample01)
+loans05  <- loansTraining %>% slice(sample05)
+loans10  <- loansTraining %>% slice(sample10)
+loans20  <- loansTraining %>% slice(sample20)
+
+model005 <- modelX %>% slice(sampleTraining) %>% slice(sample005)
+model01  <- modelX %>% slice(sampleTraining) %>% slice(sample01)
+model05  <- modelX %>% slice(sampleTraining) %>% slice(sample05)
+model10  <- modelX %>% slice(sampleTraining) %>% slice(sample10)
+model20  <- modelX %>% slice(sampleTraining) %>% slice(sample20)
+
+G005 <- modelX %>% select(sub_grade_num) %>% slice(sample005)
+G01  <- modelX %>% select(sub_grade_num) %>% slice(sample01)
+G05  <- modelX %>% select(sub_grade_num) %>% slice(sample05)
+G10  <- modelX %>% select(sub_grade_num) %>% slice(sample10)
+G20  <- modelX %>% select(sub_grade_num) %>% slice(sample20)
+
+loss005 <- loansTraining %>% select(principal_loss_pct) %>% slice(sample005)
+loss01  <- loansTraining %>% select(principal_loss_pct) %>% slice(sample01)
+loss05  <- loansTraining %>% select(principal_loss_pct) %>% slice(sample05)
+loss10  <- loansTraining %>% select(principal_loss_pct) %>% slice(sample10)
+loss20  <- loansTraining %>% select(principal_loss_pct) %>% slice(sample20)
+
+CM005  <- loansTraining %>% select(creditMargin) %>% slice(sample005)
+CM01   <- loansTraining %>% select(creditMargin) %>% slice(sample01)
+CM05   <- loansTraining %>% select(creditMargin) %>% slice(sample05)
+CM10   <- loansTraining %>% select(creditMargin) %>% slice(sample10)
+CM20   <- loansTraining %>% select(creditMargin) %>% slice(sample20)
 
 
 
@@ -170,6 +188,8 @@ trainKMEANS <- train(x = model01, y = Y01$sub_grade_num,
 # 17000 sec.
 # Best result = 32 predictors
 {
+  tictoc::tic()
+
   require(caret)
   require(Rborist)
   require(doParallel)
@@ -177,72 +197,161 @@ trainKMEANS <- train(x = model01, y = Y01$sub_grade_num,
   cl <- makePSOCKcluster(4)
   registerDoParallel(cl)
 
-  tictoc::tic()
-
-  trainRF <- train(x = loans01, y = loss01$principal_loss_pct,
+  loansTmp <- loans005 %>% select(-creditMargin, principal_loss_pct)
+  trainRF <- train(x = loansTmp, y = CM005$creditMargin,
                    method = "Rborist",
                    nSamp = 2500,
                    trControl = trainControl(method = "cv"))
 
-  tictoc::toc()
   stopCluster(cl)
+  tictoc::toc()
 
   print(trainRF)
-
-  #################################################################################################
-  # Random Forest
-  #
-  # IF RESPONSE IS THE SUB-GRADE
-  #
-  # 13063 samples
-  # 63 predictor
-  #
-  # No pre-processing
-  # Resampling: Cross-Validated (10 fold, repeated 1 times)
-  # Summary of sample sizes: 11756, 11757, 11757, 11757, 11758, 11757, ...
-  # Resampling results across tuning parameters:
-  #
-  #   predFixed  RMSE       Rsquared   MAE
-  # 2         1.0217915  0.4787036  0.8070386
-  # 32         0.9217696  0.4984839  0.7231087
-  # 63         0.9235622  0.4944814  0.7241667
-  #
-  # Tuning parameter 'minNode' was held constant at a value of 3
-  # RMSE was used to select the optimal model using the smallest value.
-  # The final values used for the model were predFixed = 32 and minNode = 3.
-  #
-
-  #################################################################################################
-  # Random Forest
-  #
-  # IF RESPONSE IS THE PRINCIPAL LOSS (in %)
-  #
-  # 13063 samples
-  # 65 predictor
-  #
-  # No pre-processing
-  # Resampling: Cross-Validated (10 fold)
-  # Summary of sample sizes: 11756, 11757, 11757, 11758, 11756, 11756, ...
-  # Resampling results across tuning parameters:
-  #
-  #   predFixed  RMSE       Rsquared    MAE
-  # 2         0.2824622  0.09468031  0.2166095
-  # 33         0.2812666  0.09767208  0.2120904
-  # 65         0.2820000  0.09485043  0.2124572
-  #
-  # Tuning parameter 'minNode' was held constant at a value of 3
-  # RMSE was used to select the optimal model using the smallest value.
-  # The final values used for the model were predFixed = 33 and minNode = 3.
-  #
+  varImp(trainRF)
 }
+#################################################################################################
+# Random Forest
+#
+# IF RESPONSE IS THE SUB-GRADE
+#
+# 13063 samples
+# 63 predictor
+#
+# No pre-processing
+# Resampling: Cross-Validated (10 fold, repeated 1 times)
+# Summary of sample sizes: 11756, 11757, 11757, 11757, 11758, 11757, ...
+# Resampling results across tuning parameters:
+#
+#   predFixed  RMSE       Rsquared   MAE
+# 2         1.0217915  0.4787036  0.8070386
+# 32         0.9217696  0.4984839  0.7231087
+# 63         0.9235622  0.4944814  0.7241667
+#
+# Tuning parameter 'minNode' was held constant at a value of 3
+# RMSE was used to select the optimal model using the smallest value.
+# The final values used for the model were predFixed = 32 and minNode = 3.
+#
 
-
-
+#################################################################################################
+# Random Forest
+#
+# IF RESPONSE IS THE PRINCIPAL LOSS (in %)
+#
+# 13063 samples
+# 65 predictor
+#
+# No pre-processing
+# Resampling: Cross-Validated (10 fold)
+# Summary of sample sizes: 11756, 11757, 11757, 11758, 11756, 11756, ...
+# Resampling results across tuning parameters:
+#
+#   predFixed  RMSE       Rsquared    MAE
+# 2         0.2824622  0.09468031  0.2166095
+# 33         0.2812666  0.09767208  0.2120904
+# 65         0.2820000  0.09485043  0.2124572
+#
+# Tuning parameter 'minNode' was held constant at a value of 3
+# RMSE was used to select the optimal model using the smallest value.
+# The final values used for the model were predFixed = 33 and minNode = 3.
+#
+#
+#################################################################################################
+# Random Forest
+#
+# IF RESPONSE IS THE CREDIT MARGIN (in %)
+# BUT: principal loss and credit margins were in the predictors
+#
+#
+# 10450 samples
+# 73 predictor
+#
+# No pre-processing
+# Resampling: Cross-Validated (10 fold)
+# Summary of sample sizes: 9404, 9405, 9405, 9405, 9405, 9405, ...
+# Resampling results across tuning parameters:
+#
+#   predFixed  RMSE        Rsquared   MAE
+# 2         0.38465362  0.7490979  0.189267621
+# 37         0.04906856  0.9926129  0.013818872
+# 73         0.01188224  0.9995688  0.001378399
+#
+# Tuning parameter 'minNode' was held constant at a value of 3
+# RMSE was used to select the optimal model using the smallest value.
+# The final values used for the model were predFixed = 73 and minNode = 3.
+#
+# 6642 sec.
+#
 
 
 
 # .
 # Best result = 32 predictors
+
+
+
+#################################################################################################
+#
+# 8008.441 sec elapsed
+#
+# Random Forest
+#
+# ON
+#
+# loansTmp <- loans005 %>% select(-creditMargin, principal_loss_pct)
+# trainRF <- train(x = loansTmp, y = CM005$creditMargin,
+#                  method = "Rborist",
+#                  nSamp = 2500,
+#                  trControl = trainControl(method = "cv"))
+#
+#
+# 5225 samples
+# 72 predictor
+#
+# No pre-processing
+# Resampling: Cross-Validated (10 fold)
+# Summary of sample sizes: 4704, 4702, 4704, 4702, 4701, 4703, ...
+# Resampling results across tuning parameters:
+#
+#   predFixed  RMSE       Rsquared   MAE
+# 2         0.4449010  0.4494987  0.21419547
+# 37         0.1864721  0.8824442  0.09965741
+# 72         0.1688334  0.9004621  0.09087179
+#
+# Tuning parameter 'minNode' was held constant at a value of 3
+# RMSE was used to select the optimal model using the smallest value.
+# The final values used for the model were predFixed = 72 and minNode = 3.
+# Rborist variable importance
+#
+# only 20 most important variables shown (out of 72)
+#
+# Overall
+# percent_bc_gt_75           100.0000
+# term                         4.0345
+# total_il_high_credit_limit   0.6672
+# mo_sin_old_il_acct           0.5140
+# pub_rec_bankruptcies         0.5113
+# tax_liens                    0.4631
+# num_tl_120dpd_2m             0.3957
+# int_rate                     0.3929
+# loan_amnt                    0.3790
+# sub_grade_num                0.3747
+# principal_loss_pct           0.3612
+# open_rv_12m                  0.3385
+# num_bc_tl                    0.3336
+# avg_cur_bal                  0.2823
+# acc_now_delinq               0.2798
+# total_acc                    0.2701
+# loanID                       0.2673
+# inq_last_6mths               0.2381
+# verification_status_joint    0.2249
+# tot_hi_cred_lim              0.2033
+# Warning message:
+#   Setting row names on a tibble is deprecated.
+
+
+
+
+
 {
   require(caret)
   require(Rborist)
