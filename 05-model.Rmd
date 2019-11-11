@@ -6,22 +6,17 @@ At the outset, the dataset presents a number of challenges:
 
 + The number of observations is very large. 
 
-+ The possible number of predictors is fairly large.
++ The possible number of predictors is large (partially due to one-hot encoding of categorical values).
 
 + As shown in the previous section, credit margins have changed over time. This is clearly related to the wider US economic environment. Financial hardship is a key driver for some of the loans. Availability of disposable income is important to assess the ability to repay. Therefore, the cost of living, which varies from state to state, seems relevant. 
 
-Any model will require training in batch (e.g. stochastic gradient descent) or online. Our untested intuition is that online methods are not adapted to a skewed dataset: the number of defaults/write-offs is fairly low for high quality ratings. 
 
-The diagram \@ref(fig:scikit-map)^[Source: https://scikit-learn.org/stable/tutorial/machine_learning_map/index.html] shows a useful decision tree.
+## Introduction
 
+The dataset was randomly split into training and validation sets (80/20 ratio).
 
-```{r scikit-map, fig.cap="Scikit Learn algorithm cheat-sheet",output.width="70%",cache=FALSE}
-knitr::include_graphics("images/scikit-learn-mlmap.png", auto_pdf = TRUE)
-```
+We initiated the exploration of potential models with Principal Component Analysis, Linear Regression, Extreme Boosting and Random Forest. No model could be trained on the full set. We therefore came to limit the training set on a random sample of 0.1% (1 thousandth) of the initial full set.
 
-
+Any model will require training in batch (e.g. stochastic gradient descent) or online. Our untested intuition is that online methods are not adapted to an unbalanced dataset: the number of defaults/write-offs is fairly low for high quality ratings. However, the dataset is evidently a time series which points to online training. We will not explore that line of investigation, although exploring that tension would be an interesting subject.
 
 
-
-
- 
