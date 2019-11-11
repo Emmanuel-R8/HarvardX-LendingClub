@@ -8,8 +8,8 @@ if (!exists("loansIRR"))
   loansIRR <- read.csv("datasets/LoanIRR.csv") %>% as_tibble()
 
 if (!exists("loansCreditMargin"))
-  loansCreditMargin <- read.csv("datasets/CreditMargins.csv") %>%
-    as_tibble() %>%
+  loansCreditMargin <- read.csv("datasets/CreditMargins.csv") %>% as_tibble() %>%
+    # Remove monthDefault since already in IRR dataframe
     select(-monthDefault)
 
 nSamples <- nrow(loans)
@@ -26,7 +26,10 @@ loansWorkingSet <- loans %>%
 
 # Select the variables checked in 01-startup.Rmd
 varList <- c(LC_variable[LC_variable$inModel == TRUE, "variable_name"])$variable_name
-varList <- c(varList, "grade_num", "sub_grade_num", "principal_loss_pct", "creditMargin")
+varList <- c(varList, "grade_num", "sub_grade_num", "principal_loss_pct", "creditMargin", "monthDefault")
+
+# Make sure that some variables are NOT in included in the training set
+varRemove <- c("")
 
 
 #################################################################################################
@@ -37,10 +40,12 @@ loansPredictors <-
   loansWorkingSet %>%
 
   # Keep the chosen predictors
-  select(varList) %>%
+  # Use one_of() to avoid errors if column does not exist
+  select(one_of(varList)) %>%
+  select(-one_of(varRemove)) %>%
 
   # [TODO] FOR THE MOMENT UNTIL MACRODATA IS FIXED
-  select(-"addr_state") %>%
+  select(-one_of("addr_state")) %>%
 
   ##
   ## Dates to numeric, in 'decimal' years since 2000
@@ -118,6 +123,8 @@ set.seed(42)
 sampleTraining  <- sample(1:nSamples, floor(nSamples * proportionTraining), replace = FALSE)
 loansTraining <- loansPredictors %>% slice( sampleTraining)
 loansTest <-     loansPredictors %>% slice(-sampleTraining)
+modelTraining <- modelX %>% slice( sampleTraining)
+modelTest <-     modelX %>% slice(-sampleTraining)
 
 
 # Subsets of the training set
@@ -347,6 +354,49 @@ trainKMEANS <- train(x = model01, y = Y01$sub_grade_num,
 # tot_hi_cred_lim              0.2033
 # Warning message:
 #   Setting row names on a tibble is deprecated.
+
+
+
+# 17000 sec.
+# Best result = 32 predictors
+{
+  tictoc::tic()
+
+  require(caret)
+  require(xgboost)
+  require(doParallel)
+
+  cl <- makePSOCKcluster(4)
+  registerDoParallel(cl)
+
+  loansTmp <- model005 %>% select(-creditMargin, principal_loss_pct, monthDefault)
+  trainXGB <- train(x = loansTmp, y = CM005$creditMargin,
+                    method="xgbTree",
+                    preProcess = "pca",
+                    trControl = trainControl(method = "cv"))
+
+  stopCluster(cl)
+  tictoc::toc()
+
+  #confusionMatrix(predict(trainXGB, val_test_data[, -1]), val_test_data$outcome)
+
+  print(trainXGB)
+  varImp(trainXGB)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

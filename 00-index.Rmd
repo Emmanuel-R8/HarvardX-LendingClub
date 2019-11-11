@@ -46,8 +46,11 @@ description: "HarvardX - PH125.9x Data Science Capstone"
 ##
 
 ## FROM THE COMMAND LINE (Linux) in the project directory (where the Rmd files are)
-R --no-restore --no-save \
-  -e 'rm(list = ls(all.names = TRUE)); bookdown::render_book("00-index.Rmd", output_format = "bookdown::pdf_book")'
+## 
+## THE `rebuild-pdf.sh` script CONTAINS THIS COMMAND:
+## 
+## R --no-restore --no-save \
+##   -e 'rm(list = ls(all.names = TRUE)); bookdown::render_book("00-index.Rmd", output_format = "bookdown::pdf_book")'
 ```
 
 
@@ -62,6 +65,11 @@ knitr::opts_chunk$set(
   class.output = c("numberLines lineAnchors chunkout")
 )
 
+# A4 format dimensions for png pictures
+A4width <- 8.3
+A4height <- 11.7
+
+
 # knitr global settings - By default, the final document will not include source code unless
 # expressly stated.
 knitr::opts_chunk$set(
@@ -72,8 +80,12 @@ knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE,
 
+  # filepaths
+  fig.path =   'build/figure/graphics-', 
+  cache.path = 'build/cache/graphics-', 
+  
   # Graphics
-  out.width = "70% \\textwidth",
+  out.width = "70%",
   fig.align = "center",
   # fig.height = 3,
   dev = "pdf",

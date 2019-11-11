@@ -1,6 +1,7 @@
 .Rproj.user
 .Rhistory
 .RData
+.ipynb*
 _publish.R
 
 _book
@@ -19,6 +20,8 @@ Research
 old
 
 scratchpad.*
+
+build/
 
 datasets/simplemaps_uszips_basicv1.6
 datasets/lending_club.csv
