@@ -45,12 +45,9 @@ description: "HarvardX - PH125.9x Data Science Capstone"
 ## between the generation process and RStudio.
 ##
 
-## FROM THE COMMAND LINE (Linux) in the project directory (where the Rmd files are)
+## FROM THE COMMAND LINE (Linux) in the project directory (where the Rmd files are), RUN
+## `rebuild-book.sh` to build the pdf and gitbook.
 ## 
-## THE `rebuild-pdf.sh` script CONTAINS THIS COMMAND:
-## 
-## R --no-restore --no-save \
-##   -e 'rm(list = ls(all.names = TRUE)); bookdown::render_book("00-index.Rmd", output_format = "bookdown::pdf_book")'
 ```
 
 
@@ -88,11 +85,20 @@ knitr::opts_chunk$set(
   out.width = "70%",
   fig.align = "center",
   # fig.height = 3,
-  dev = "pdf",
 
   # Text size
   size = "small"
 )
+
+
+if (knitr::is_html_output()) {
+  knitr::opts_chunk$set(dev = "png")
+} else {
+  knitr::opts_chunk$set(dev = "pdf")
+}
+
+
+
 
 # Modify the size of the code chunks
 # https://stackoverflow.com/questions/25646333/code-chunk-font-size-in-rmarkdown-with-knitr-and-latex
