@@ -1,4 +1,4 @@
-# Internal Rate of Return and Credit Margins
+# Internal Rate of Return, Credit Margins and Net Present Values
 
 In this section, we describe the response variables that we will generate for each loan and that will be used in the rest of this report.
 
@@ -63,6 +63,10 @@ $$CF_0 - \sum_{Month \space i = 1}^{Month = 12 \times n}\frac{CF_i}{(1 + \frac{I
 
 ## Dataset calculation
 
+For each loan. we calculated the IRR, credit margin and NPV. The calculations were performed in Julia due to R's slow performance on such a large dataset. For this reason, the resulting datasets are available on the GitHub repository as gzipped CSV files.
+
+### IRR
+
 We used the dataset to calculate the IRR of each loan. We used the following information for the dataset: `funded_amnt`(loan amount funded), `int_rate` (all-in interest rate), `term` (tenor of the loan in months), `total_pymnt` (total cumulative amount received from the borrower), `total_rec_prncp` (amount repaid allocated to principal repayment), `total_rec_int` (amount repaid allocated to interest payment), `recoveries` (any amount recovered later from the borrower) and `total_rec_late_fee` (any late payments fees paid by the borrower).
 
 From that information, we recreated a cash flow for each loan. The R code is presented in appendix. Unfortunately, this code takes close to a full day to run on the entire dataset of completed loans (i.e. excluding all ongoing loans). This is just impractical for anybody to run to check this report and the resulting IRR results dataset is included in the Github repository. To make things practical, the dataset was actually created using code in Julia^[https://julialang.org/]. It is a direct translation of the R code, with a similar syntax (therefore very easy to follow). The Julia code runs about 500 times quicker (this is not a typo), or about 3 minutes. We appreciate that this is the departure from the assignment description.
@@ -71,7 +75,17 @@ Similarly, we calculate the credit margin required by each loan noting that:
 
 $$ \text{Risk-free} + \text{Credit Margin} = IRR(loan)$$
 
+### Credit Margins
+
 As noted in the previous section, risk-free rates change over time. When solving for the credit margin, we use the relevant risk-free rate. 
 
 Again, this was coded in Julia. The Julia code here takes about 1h20min to run. On the assumptions that the equivalent R code would take therefore almost 30 days to run through the full dataset, we did not write any R code for this calculation. The code is in appendix, and we believe easy to follow.
+
+
+### NPV
+
+
+We also calculated the NPV of each loan. Again, this was coded in Julia. The code is in appendix.
+
+We calculate both the NPV as an absolute dollar amount and as a portion of the original 
 

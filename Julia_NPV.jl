@@ -10,9 +10,16 @@
 ##
 ## WARNING: 1.3GB on disk
 ##
-using CSV
-lendingClub = CSV.read("datasets/LendingClub.csv"; delim = ",")
-RATES = CSV.read("datasets/Rates.csv"; delim = ",")
+using CSV, GZip
+
+lendingClub = GZip.open("datasets/LendingClub.csv.gz", "r") do fileHandler
+    CSV.read(fileHandler)
+end
+
+RATES = GZip.open("datasets/Rates.csv.gz", "r") do fileHandler
+    CSV.read(fileHandler)
+end
+
 
 
 ####################################################################################################
