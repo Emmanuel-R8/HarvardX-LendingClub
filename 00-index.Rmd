@@ -98,8 +98,6 @@ if (knitr::is_html_output()) {
 }
 
 
-
-
 # Modify the size of the code chunks
 # https://stackoverflow.com/questions/25646333/code-chunk-font-size-in-rmarkdown-with-knitr-and-latex
 def.chunk.hook <- knitr::knit_hooks$get("chunk")

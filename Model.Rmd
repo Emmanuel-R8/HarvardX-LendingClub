@@ -137,8 +137,10 @@ loansTraining <- loansPredictors %>% slice( sampleTraining)
 loansTest <-     loansPredictors %>% slice(-sampleTraining)
 modelTraining <- modelX %>% slice( sampleTraining)
 modelTest <-     modelX %>% slice(-sampleTraining)
+```
 
 
+```{r}
 # Subsets of the training set
 set.seed(42)
 nSamplesTraining <- nrow(loansTraining)

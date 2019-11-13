@@ -1,0 +1,525 @@
+# Dataset
+
+The data is sourced as a _SQLite_ database that downloaded from [@KaggleLC] and imported as a `tibble dataframe` with the `RSQLite` package. The variables were reformatted according to their respective types. 
+
+[We also sourced US zip and FIPS codes, and macroeconomical data for possible geographical statistics. The source code for the data import and reformatting is given in appendix.]
+
+## Preamble
+
+The LendingClub dataset, although rich, is difficult to interpret. The only explanation of what the variables mean comes from a spreadsheet attached to the dataset. The explanations are not precise and/or subject to conflicting interpretation. Despite serching the LendingClub website, no further original information was found. We collected a number of reasonable assumptions in Appendix (see (List of Assumptions)[list-assumptions]). 
+
+The dataset has been used a number of times in the past by various people. One paper [@kim2019ensemble] mentions they used a dataset that included 110 variables, which is less than ours with 145 variables. The dataset has changed over time in ways we do not know. For example, have loans been excluded because the full 145 veriables were not available?
+
+## General presentation
+
+The original dataset is large: it includes `r nrow(lending_club)` loan samples, each containing `r ncol(lending_club)` variables (after the identification variables filled with null values). The loans were issued from `r min(lending_club$issue_d)` to `r max(lending_club$issue_d)`. 
+
+### Business volume
+
+The dataset represents a total of ca.$34bln in loan principals, which is a substantial share of the total amount stated to have been intermediated to date by LC (publicly reported to be $50bln+). About 55%/60% of the portfolio is fully repaid. See Table \@ref(tab:loan-per-status).
+
+```{r loan-per-status}
+local({
+  nloans <- nrow(lending_club)
+  
+  lending_club %>%
+    group_by(loan_status) %>%
+    summarise(Number = n()) %>%
+    mutate(Proportion = round(100 * Number / nloans, 3)) %>%
+    kable(
+      "latex",
+      caption = "Number of loans per status",
+      booktabs = T,
+      # longtable = T,
+      col.names = c("Loan status", "Count", "Proportion (%)")
+    ) %>%
+    kable_styling(latex_options = c("repeat_header")) %>%
+    column_spec(1, width = "8.5cm") %>%
+    column_spec(2, width = "2.5cm") %>%
+    column_spec(3, width = "3.5cm")
+})
+```
+
+
+
+Figure \@ref(fig:business-volume-per-month) plots the number, volume (cumulative principal amount) and average principal per loan. It shows that the business grew exponentially (in the common sense of the word) from inception until 2016. At this point, according to Wikipedia ^[source: https://en.wikipedia.org/wiki/LendingClub - Retrieval date 15 September 2019]:
+
+```{r business-volume-per-month,fig.cap="Business volume written per month",fig.fullwidth=TRUE}
+volume1 <- lending_club %>%
+  mutate(Monthly = ceiling_date(issue_d, unit = "month")) %>%
+  group_by(Monthly) %>%
+  summarise(Number_of_written_loans = n()) %>%
+  ggplot(aes(Monthly, Number_of_written_loans)) +
+  geom_line(color = "blue") +
+  ylab("Number of loans") + geom_smooth(color = "red", method = "loess")
+
+
+volume2 <- lending_club %>%
+  mutate(Monthly = ceiling_date(issue_d, unit = "month")) %>%
+  group_by(Monthly) %>%
+  summarise(Volume = sum(funded_amnt) / 1000000) %>%
+  ggplot(aes(Monthly, Volume)) +
+  geom_line(color = "blue") +
+  ylab("Volume of loans ($mln)") + geom_smooth(color = "red", method = "loess")
+
+
+volume3 <- lending_club %>%
+  mutate(Monthly = ceiling_date(issue_d, unit = "month")) %>%
+  group_by(Monthly) %>%
+  summarise(Average = mean(funded_amnt)) %>%
+  ggplot(aes(Monthly, Average)) +
+  geom_line(color = "blue") +
+  ylab("Average loan size ($ per loan)") + geom_smooth(color = "red", method = "loess")
+
+grid.arrange(volume1, volume2, volume3, nrow = 1)
+```
+
+" _Like other peer-to-peer lenders including Prosper, Sofi and Khutzpa.com, LendingClub experienced increasing difficulty attracting investors during early 2016. This led the firm to increase the interest rate it charges borrowers on three occasions during the first months of the year. The increase in interest rates and concerns over the impact of the slowing United States economy caused a large drop in LendingClub's share price._"
+
+
+The number and volume of loans plotted have been aggregated by month. The growth is very smooth in the early years, and suddenly very volatile. As far as the first part of the dataset is concerned, a starting business could expect to be volatile and could witness a yearly cycle (expected from economic consumption figures) superimposed on the growth trend. This is not the case. 
+
+
+An interesting metric is that the average principal of loans has increased (see RHS Figure \@ref(fig:business-volume-per-month), on a sample of 100,000 loans). Partly, the increase in the early years could be interpreted success in improving marketing, distribution capabilities and confidence building. This metric plateau-ed in 2016 and decreased afterwards, but to a much lesser extent than the gross volume metrics. However, it is more volatile than the two previous metrics in the early years. 
+
+By the end of the dataset, those metrics have essentially recovered to their 2016 level.
+
+
+
+
+
+### Loan lifecyle and status
+
+In the dataset, less loans are still outstanding than matured or "_charged off_" (term that LC use to mean partially or fully written off, i.e. there are no possibilty for LC and/or the investors to receive further payments). The share of outstanding loans is:
+
+```{r share-of-live-portfolio}
+# Share of portfolio currently 'live'
+local({
+  n_current <- lending_club %>%
+    filter(!(
+      loan_status %in% c(
+        "Charged Off",
+        "Does not meet the credit policy. Status:Charged Off",
+        "Does not meet the credit policy. Status:Fully Paid",
+        "Fully Paid"
+      )
+    )) %>%
+    nrow()
+  
+  n_samples <- lending_club %>% nrow()
+  cat("Share of current loans = ",
+      round(100 * n_current / n_samples, 3),
+      "%")
+})
+```
+
+
+
+The dataset describes the life cycle of a loan. In the typical (ideal) case, we understand it to be:
+
+$$ 
+\text{Loan is approved}  \rightarrow  \text{Full amount funded by investors} \rightarrow \text{Loan marked as Current} \rightarrow \text{Fully Paid}
+$$
+
+In the worst case, it is:
+
+$$ 
+\text{Loan is approved}  \rightarrow  \text{Full amount funded by investors} \rightarrow \text{Loan marked as Current} \rightarrow 
+$$
+
+$$
+\rightarrow \text{Grace period (missed payments under 2 weeks)} \rightarrow \text{Late 15 to 31 days} \rightarrow
+$$
+
+$$
+\rightarrow  \text{Late 31 to 120 days} \rightarrow  \text{Default} \rightarrow  \text{Charged Off}
+$$
+
+Note that _Default_ precedes and is distinct from _Charged Off_ ^[See LendingClub FAQ at [](https://help.lendingclub.com/hc/en-us/articles/215488038) and help page [](https://help.lendingclub.com/hc/en-us/articles/216127897-What-happens-when-a-loan-is-charged-off-)]. A couple of things could happen to a loan in default: 
+
++ LC and the borrower restructure the loan with a new repayment schedule, where the borrower may repay a lesser amount over a longer period; or,
+
++ the claim could be sold to a debt recovery company that would buy the claim from LC/investors. This would be the final payment (if any) received by LC and the investors.
+
+The dataset also describes situations where a borrower negotiated a restructuring of the repayment schedule in case of unexpected hardship (e.g. disaster, sudden unemployment). 
+
+Note that this progression of distinguishing default (event in time) from actual financial loss mirrors what banks and rating agencies do. The former is called the _Probability of Default_ (PD), the latter _Loss Given Default_ (LGD). Ratings change over time (in a process resembling Markov Chains). LGD show some correlations with ratings. The dataset, although detailed, does not include the full life of each loan to conduct this sort of analysis (change of loan quality over time). This is an important reason why we decided to focus on the loan approval and expected return.
+
+> CHANGE: Debt-Settlement companies ^[https://help.lendingclub.com/hc/en-us/articles/115011819087-Debt-settlement-companies] that explains that debt settlement companies can step in, buy the debt and pay to LC.
+
+> CHANGE: What is the difference between a loan that is in “default” and a loan that has been “charged off”? ^[https://help.lendingclub.com/hc/en-us/articles/216127747]
+
+
+
+### Loan application
+
+Before a loan is approved, the borrower undergoes a review process that assess his/her capacity to repay. This includes:
+
++ employment situation and income, as well whether this income and possibly its source has been independently verified;
+
++ whether the application is made jointly (likely with a partner or a spouse, but there are no details);
+
++ housing situation (owner, owner with current mortgage, rental) and in which county he/she lives (that piece of information is partially anonymised by removing the last 2 digits of the borrower's zipcode);
+
++ the amount sought, its tenor and the purpose of the loan; and,
+
++ what seems to be previous credit history (number of previous deliquencies). The dataset is very confusing in that regard: it is clear that such information relates to before the loan is approved in the case of the joint applicant. In the case of the principal borrower however, the variable descriptions could be read as pre-approval information, or information gathered during the life of the loan. We have assumed that the information related to the principal borrower is also pre-approval. We also used _Sales Supplements_ from the LC website^[See https://www.lendingclub.com/legal/prospectus] that describe some of the information provided to investors. LendingClub also provides a summary description of its approval process in its regulatory filings with the Securities Exchange Commission [@LC201908S3]. 
+
+
+
+## Rates
+
+### IRR and required credit margins
+
+Figure \@ref(fig:credit-margin-over-time) shows the evolution of credit margins over time grouped by ratings. The plots are made with a random sample of 300,000 loans.
+
+```{r credit-margin-over-time,fig.cap="Credit margins per grade over time"}
+
+creditMargin36 <-
+  LoanMargin %>%
+  sample_n(300000) %>%
+  left_join(loans, term, by = "loanID") %>%
+  filter(is.numeric(creditMargin) & (term == 36)) %>%
+  ggplot(aes(issue_d, int_rate, col = grade)) +
+  geom_point(alpha = 0.25, size = 0.4) +
+  ggtitle("Credit margin per grade over time \n 3-year loans") +
+  xlab("Funding date") +
+  ylab("Interest rate")
+
+creditMargin60 <-
+  LoanMargin %>%
+  sample_n(300000) %>%
+  left_join(loans, term, by = "loanID") %>%
+  filter(is.numeric(creditMargin) & (term == 60)) %>%
+  ggplot(aes(issue_d, int_rate, col = grade)) +
+  geom_point(alpha = 0.25, size = 0.4) +
+  ggtitle("Credit margin per grade over time \n 5-year loans") +
+  xlab("Funding date") +
+  ylab("Interest rate")
+
+grid.arrange(creditMargin36, creditMargin60, nrow = 1)
+
+```
+
+We notice long periods where certain margins remain very stable which indicate that _both_ the initial pricing was constant _and_ that the proportion of default remains very low. 
+
+The graphs show considerations that are relevant to the modeling": 
+
++ The margins clearly change over time. Predictions will require to account for time [probably in a non-linear fashion].
+
++ For a given rating, it widens and narrows over time. The changes happen in multiples that depends on the ratings: 
+    
+    - For high quality / low margin loans: the changes are multiples of the margin, for example going from roughly 3% to 6/7%. 
+    
+    - Although the range of change is wide, those changes do not happen very often, especially in the later years.
+    
+    - By comparison, for low quality / high margin loans, the range of change is smaller, but more frequent and volatile. 
+    
++ In other words, the relation between loan quality (its rating) and its pricing (the credit margin) will significantly non-linear. 
+
+
+
+
+
+```{r IRR-over-time,fig.cap="Credit margins per grade over time"}
+
+IRR36 <-
+  LoansIRR %>%
+  sample_n(300000) %>%
+  left_join(loans, term, by = "loanID") %>%
+  filter(is.numeric(IRR) & (term == 36)) %>%
+  ggplot(aes(issue_d, IRR, col = grade)) +
+  geom_point(alpha = 0.25, size = 0.4) +
+  ggtitle("IRR per grade over time \n 3-year loans") +
+  xlab("Funding date") +
+  ylab("IRR")
+
+IRR60 <-
+  LoansIRR %>%
+  sample_n(300000) %>%
+  left_join(loans, term, by = "loanID") %>%
+  filter(is.numeric(IRR) & (term == 60)) %>%
+  ggplot(aes(issue_d, IRR, col = grade)) +
+  geom_point(alpha = 0.25, size = 0.4) +
+  ggtitle("IRR per grade over time \n 5-year loans") +
+  xlab("Funding date") +
+  ylab("IRR")
+
+grid.arrange(IRR36, IRR60, nrow = 1)
+
+```
+
+
+```{r CM-over-time,fig.cap="Credit margins per grade over time"}
+
+CM36 <-
+  LoanMargin %>%
+  sample_n(300000) %>%
+  left_join(loans, term, by = "loanID") %>%
+  filter(is.numeric(creditMargin) & (term == 36)) %>%
+  ggplot(aes(issue_d, creditMargin, col = grade)) +
+  geom_point(alpha = 0.25, size = 0.4) +
+  ggtitle("IRR per grade over time \n 3-year loans") +
+  xlab("Funding date") +
+  ylab("Credit Margin")
+
+CM60 <-
+  LoanMargin %>%
+  sample_n(300000) %>%
+  left_join(loans, term, by = "loanID") %>%
+  filter(is.numeric(creditMargin) & (term == 60)) %>%
+  ggplot(aes(issue_d, creditMargin, col = grade)) +
+  geom_point(alpha = 0.25, size = 0.4) +
+  ggtitle("IRR per grade over time \n 5-year loans") +
+  xlab("Funding date") +
+  ylab("Credit Margin")
+
+grid.arrange(CM36, CM60, nrow = 1)
+
+```
+
+### Dataset
+
+Because we are interested decisions made prior to invest, we will limit the predictors to be used to those that are realistically available prior to funding. We eliminated  
+
+
+
+
+### Interest rates
+
+Based on this information, the loan is approved or not. Approval includes the final amount (which could be lower than the amount requested), tenor (3 or 5 years) and a rating similar to those given to corporate borrowers. Unlike corporate borrowers however, the rating mechanically determines the rate of interest according to a grid known to the borrower in advance^[https://www.lendingclub.com/investing/investor-education/interest-rates-and-fees]. The rates have changed over time. Those changes where not as frequent as market conditions (e.g. changes in Federal Reserve Bank's rates)^[Corporate borrowers would negociate interest margins on a case-by-case basis despite similar risk profiles.]. 
+
+Figure \@ref(fig:interest-rate-table) ^[source: https://www.lendingclub.com/investing/investor-education/interest-rates-and-fees] shows the predetermined interest rate depending on the initial rating as of July 2019. 
+
+
+```{r interest-rate-table2,fig.cap="Interest rates given rating",out.width="70%",out.height="70%"}
+knitr::include_graphics("images/interest-rates-jul2019.png", auto_pdf = TRUE)
+```
+
+At the date of this report, the ratings range from `A` (the best) down to `D`, each split in 5 sub-ratings. However, LC previously also intermediated loans rated F or G (until 6 November 2017) and E (until 30 June 2019) ^[See https://www.lendingclub.com/info/demand-and-credit-profile.action]. This explains that such ratings are in the dataset. We will assume that the ratings in the dataset are the rating at the time of approval and that, even if loans are re-rated by LC, the dataset does not reflect it.
+
+Figures \@ref(fig:interest-over-time) shows the change in interest rate over time for different ratings and separated for each tenor. (Each figure is on a sample of 100,000 loans.) For each rating, we can see several parallel lines which correspond to the 5 sub-rating of each rating. We note that the range of interest rates has substantial widened over time. That is, the risk premium necessary to attract potential investors has had to substantially increase. In the most recent years, the highest rates exceed 30% which is higher than many credit cards.3-year loans are naturally considered safer (more A-rated, less G-rated). Identical ratings attract identical rates of interest.
+
+```{r interest-over-time,fig.cap="Interest rate per grade over time"}
+
+interest36 <- loans %>%
+  sample_n(100000) %>%
+  filter(term == 36) %>%
+  ggplot(aes(issue_d, int_rate, col = grade)) +
+  geom_point(alpha = 0.15) +
+  ggtitle("Interest rate per grade over time \n 3-year loans") +
+  xlab("Funding date") +
+  ylab("Interest rate")
+
+interest60 <- loans %>%
+  sample_n(100000) %>%
+  filter(term == 60) %>%
+  ggplot(aes(issue_d, int_rate, col = grade)) +
+  geom_point(alpha = 0.15) +
+  ggtitle("Interest rate per grade over time \n 5-year loans") +
+  xlab("Funding date") +
+  ylab("Interest rate")
+
+grid.arrange(interest36, interest60, nrow = 1)
+
+```
+
+By comparison, we plot the 3-year (in red) and 5-year (in blue) bank swap rates in Figure \@ref(fig:swap-rates). We see that the swap curve has flattened in recent times (3-year and 5-y rates are almost identical). We also can see that in broad terms the interest rates charged reflect those underlying swap rates. It is therefore most relevant to examine the credit margins added to the swap rates.
+
+
+```{r swap-rates,fig.cap="Historical Swap Rates"}
+RATES %>%
+  filter(DATE >= ymd("2008-01-01")) %>%
+  ggplot(aes(DATE, RATE3Y, RATE5Y)) +
+  geom_line(aes(DATE, RATE3Y), col = "red") +
+  geom_line(aes(DATE, RATE5Y), col = "blue")
+```
+
+
+Figures \@ref(fig:margin-over-time) shows the change in credit margin over time for different ratings and separated for each tenor. (Each figure is on a sample of 100,000 loans.) As above, for each rating, we can see several parallel lines which correspond to the 5 sub-rating of each rating. We note that the range of credit margins has widened over time but less than the interest rates. Identical ratings attract identical credit margins.
+
+```{r margin-over-time,fig.cap="Credit margins per grade over time"}
+margin36 <-
+  loans %>%
+  filter(term == 36) %>%
+  sample_n(100000) %>%
+  select(issue_d, int_rate, grade) %>%
+  rename(DATE = issue_d) %>%
+  left_join(RATES, by = "DATE", copy = TRUE) %>%
+  mutate(Margin = int_rate - RATE3Y) %>%
+  ggplot(aes(DATE, Margin, col = grade)) +
+  geom_point(alpha = 0.15) +
+  ggtitle("Credit margin per grade over time \n 3-year loans") +
+  xlab("Funding date") +
+  ylab("Credit margin")
+
+margin60 <-
+  loans %>%
+  filter(term == 60) %>%
+  sample_n(100000) %>%
+  select(issue_d, int_rate, grade) %>%
+  rename(DATE = issue_d) %>%
+  left_join(RATES, by = "DATE", copy = TRUE) %>%
+  mutate(Margin = int_rate - RATE5Y) %>%
+  ggplot(aes(DATE, Margin, col = grade)) +
+  geom_point(alpha = 0.15) +
+  ggtitle("Credit margin per grade over time \n 5-year loans") +
+  xlab("Funding date") +
+  ylab("Credit margin")
+
+grid.arrange(margin36, margin60, nrow = 1)
+```
+
+
+### Purpose
+
+When applying, a potential borrower must state the purpose of the loan. As shown in table \@ref(table:loans-per-purpose), the main purpose is the consolidation of existing debts.
+
+```{r loans-per-purpose}
+loans %>% 
+  group_by(purpose) %>% 
+  summarise(Number = n()) %>% 
+  arrange(desc(Number))
+
+
+```
+
+```{r}
+loans %>% 
+  left_join(LoanMargin, by = "loanID") %>% 
+  select(purpose, creditMargin) %>% 
+  sample_n(300000) %>% 
+  filter(!is.na(creditMargin)) %>%
+  ggplot(aes(creditMargin)) +
+  geom_histogram()
+```
+
+```{r}
+loans %>% 
+  left_join(LoanMargin, by = "loanID") %>% 
+  select(purpose, creditMargin) %>% 
+  filter(!is.na(creditMargin)) %>% 
+  ggplot(aes(purpose, creditMargin)) +
+  geom_boxplot(stat = "boxplot", notch = TRUE, outlier.alpha = 0.1) +
+  stat_summary(fun.y = mean, geom = "point", shape = 5, size = 4) +
+  coord_flip()
+```
+
+
+
+
+[TODO: DTI, amount... by grade]
+
+### Payments
+
+The loans are approved for only two tenors, 3 and 5 years, with monthly repayments. Installments are calculated easily with the standard formula:
+
+$$
+Installment = Principal \times rate \times \frac{1}{1 - \frac{1}{(1+rate)^N}}
+$$
+
+
+Where $Principal$ is the amount borrowed, $rate = \frac{\text{Quoted Interest Rate}}{12}$ is the monthly interest rate, and $N$ is the number of installments (36 or 60 monthly payments). The following piece of code shows that the average error between this formula and the dataset value is about 2 cents. We therefore precisely understand this variable.
+
+
+```{r installment-amount-error,echo=TRUE,eval=FALSE}
+local({
+  installmentError <- loans %>%
+    mutate(
+      PMT = round(funded_amnt * int_rate / 12 / (1 - 1 / (1 + int_rate / 12) ^
+                                                   term), 2),
+      PMT_delta = abs(installment - PMT)
+    ) %>%
+    select(PMT_delta)
+  
+  round(mean(100 * installmentError$PMT_delta), digits = 2)
+})
+```
+
+
+## Variables
+
+We here present the dataset in a bit more details The full list of variable is given in appendix (see Table \@ref(tab:variable-description)). This dataset will be reduced as we focused on our core question: _Are LC's loans priced appropriately?_.
+
+### General
+
+
+
+### Identification
+
+The dataset is anonymised (all identifying ID numbers are deleted) and we therefore removed those columns from the dataset. Since the identification `ID`s have been removed to anonymise the dataset, we cannot see if a borrower borrowed several times.
+
+
+
+## Loan decision 
+
+As indicated in the introduction, our focus is on loans that have gone through their entire life cycle to consider their respective pricing, risk and profitability. To that effect, we will remove all loans which are still current (either performing or not). From here on, everything will be based on this reduced dataset. 
+
+In this reduced dataset, we focus on loans that have matured or been terminated. It contains  `r nrow(loans)` samples. Most of the loans (ca.80%) have been repaid in full. See Table \@ref(tab:matured-loans).
+
+
+```{r matured-loans}
+# Share of portfolio currently 'live'
+loans %>%
+  group_by(loan_status) %>%
+  summarise(Number = n()) %>%
+  mutate(Share = round(100 * Number / n(), 3)) %>%
+  arrange(desc(Number)) %>%
+  kable(
+    "latex",
+    caption = "Matured loans per status",
+    booktabs = T,
+    # longtable = T,
+    col.names = c("Loan status", "Count", "Proportion (%)")
+  ) %>%
+  kable_styling(latex_options = c("repeat_header")) %>%
+  column_spec(1, width = "6cm") %>%
+  column_spec(2, width = "4cm") %>%
+  column_spec(2, width = "4cm")
+
+```
+
+
+When grouped by grade (Figure \@ref(fig:funded-by-subgrade)), we see a clear correlation between grade and default: the lower the grade the higher the portion defaults (all the way down to about 50%). In addition, most of the business is written in the B- or C-rating range.
+
+
+
+```{r funded-by-subgrade,fig.cap="Funding and Write-offs by Sub-grades"}
+loanSizeSummary <-
+  loans %>%
+  group_by(sub_grade) %>%
+  summarise(
+    Funded = sum(funded_amnt) / 1000000,
+    Repaid = sum(total_rec_prncp) / 1000000
+  ) %>%
+  mutate(Proportion = 100 * Repaid / Funded)
+
+loanBySubgrade1 <-
+  loanSizeSummary %>%
+  ggplot(aes(x = sub_grade, Funded)) +
+  geom_point(col = "blue") +
+  xlab("Sub grade") +
+  ylab("Funded amount ($mln)")
+
+loanBySubgrade2 <-
+  loanSizeSummary %>%
+  ggplot(aes(x = sub_grade, y = Proportion)) +
+  geom_point(col = "blue") +
+  xlab("Sub grade") +
+  ylab("Share repaid (%)")
+
+grid.arrange(loanBySubgrade1, loanBySubgrade2, ncol = 1)
+```
+
+ 
+
+## Payment-related information
+
+> As mentioned previously, the descriptions of the dataset variables is at times incomplete or confusing. For the purpose of determining the cash flow of each individual loans, we have attempted to reconstruct the variables.
+>
+> We have verfied that:
+>
+> + installments are calculated as per the formula shown above, rounded to the next cent.
+> 
+> + total_pymnt = total_rec_prncp + total_rec_int + total_rec_late_fee + recoveries
+

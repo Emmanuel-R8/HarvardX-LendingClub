@@ -1,12 +1,12 @@
 
 ```{r}
-#############################################################################################################
+###################################################################################################
 ##
 ## STARTUP CODE TO LOAD LIBRARIES AND DATA
 ## 
 ## NO TEXT
 ##
-###############################################################################################################
+###################################################################################################
 ```
 
 
@@ -27,8 +27,18 @@ if (!exists("lending_club")) lending_club <- readRDS("datasets/lending_club_refo
 if (!exists("loans")) loans <- readRDS("datasets/lending_club_reformatted_paid.rds")
 
 # Response variables
-if (!exists("LoansIRR")) LoansIRR <- read.csv("datasets/LoanIRR.csv") %>% as_tibble()
-if (!exists("LoanMargin")) LoanMargin <- read.csv("datasets/CreditMargins.csv") %>% as_tibble()
+if (!exists("LoansIRR")) {
+  LoansIRR <- read.csv("datasets/LoanIRR.csv") %>% 
+    as_tibble()
+}
+
+if (!exists("LoanMargin")) {
+  LoanMargin <- read.csv("datasets/CreditMargins.csv") %>% 
+    as_tibble() %>%
+    
+    # Remove monthDefault since already in IRR dataframe
+    select(-monthDefault)
+}
 
 # Interest rate swaps
 if (!exists("RATES")) RATES <- readRDS("datasets/rates.rds")
