@@ -17,11 +17,22 @@ At the outset, the dataset presents a number of challenges:
 
 ## Introduction
 
+### Split
+
 The dataset was randomly split into training and validation sets (80/20 ratio).
 
 We initiated the exploration of potential models with Principal Component Analysis, Linear Regression, Extreme Boosting and Random Forest. No model could be trained on the full set. We therefore came to limit the training set on a random sample of 0.1% (1 thousandth) of the initial full set.
 
 Any model will require training in batch (e.g. stochastic gradient descent) or online. Our untested intuition is that online methods are not adapted to an unbalanced dataset: the number of defaults/write-offs is fairly low for high quality ratings. However, the dataset is evidently a time series which points to online training. We will not explore that line of investigation, although exploring that tension would be an interesting subject.
+
+### The modeling task
+
+Two step process:
+- Given dataset (+/- rating?) find a score between -5 and +5
+- Given a score between -5 and +5 given the right parameters for the modes
+- Given a density curve extrapolate the required margin
+
+- Make money or not?
 
 
 

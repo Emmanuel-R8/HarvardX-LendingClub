@@ -35,8 +35,8 @@ if (!exists("LoansIRR")) {
     as_tibble()
 }
 
-if (!exists("LoanMargin")) {
-  LoanMargin <-
+if (!exists("LoansMargin")) {
+  LoansMargin <-
     read.csv(gzfile("datasets/LoansCreditMargin.csv.gz")) %>%
     as_tibble() %>%
 
@@ -47,12 +47,18 @@ if (!exists("LoanMargin")) {
 ###################################################################################################
 ##
 ## Interest rate swaps
-if (!exists("RATES"))
+if (!exists("RATES")) {
   RATES <- readRDS("datasets/rates.rds")
-if (!exists("RATES3Y"))
+}
+
+if (!exists("RATES3Y")) {
   RATES3Y <- readRDS("datasets/rates3Y.rds")
-if (!exists("RATES5Y"))
+}
+
+if (!exists("RATES5Y")) {
   RATES5Y <- readRDS("datasets/rates5Y.rds")
+}
+
 
 ###################################################################################################
 ##

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 1 Internal Rate of Return, Credit Margins and Net Present Values | LendingClub Loans Pricing</title>
+  <meta name="description" content="HarvardX - PH125.9x Data Science Capstone" />
+  <meta name="generator" content="bookdown 0.15 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 1 Internal Rate of Return, Credit Margins and Net Present Values | LendingClub Loans Pricing" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="HarvardX - PH125.9x Data Science Capstone" />
+  <meta name="github-repo" content="Emmanuel_R8/HarvardX-LendingClub" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 1 Internal Rate of Return, Credit Margins and Net Present Values | LendingClub Loans Pricing" />
+  
+  <meta name="twitter:description" content="HarvardX - PH125.9x Data Science Capstone" />
+  
+
+<meta name="author" content="Emmanuel Rialland - https://github.com/Emmanuel_R8" />
+
+
+<meta name="date" content="2019-11-13" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="introduction.html"/>
+<link rel="next" href="dataset.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+
+
+<style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  { background-color: #f8f8f8; }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ef2929; } /* Alert */
+code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #c4a000; } /* Attribute */
+code span.bn { color: #0000cf; } /* BaseN */
+code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4e9a06; } /* Char */
+code span.cn { color: #000000; } /* Constant */
+code span.co { color: #8f5902; font-style: italic; } /* Comment */
+code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+code span.dt { color: #204a87; } /* DataType */
+code span.dv { color: #0000cf; } /* DecVal */
+code span.er { color: #a40000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #0000cf; } /* Float */
+code span.fu { color: #000000; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+code span.ot { color: #8f5902; } /* Other */
+code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+code span.sc { color: #000000; } /* SpecialChar */
+code span.ss { color: #4e9a06; } /* SpecialString */
+code span.st { color: #4e9a06; } /* String */
+code span.va { color: #000000; } /* Variable */
+code span.vs { color: #4e9a06; } /* VerbatimString */
+code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./introduction.html" target="blank>LendingClub Loans Pricing</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="introduction.html"><a href="introduction.html"><i class="fa fa-check"></i>Introduction</a></li>
+<li class="chapter" data-level="1" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html"><i class="fa fa-check"></i><b>1</b> Internal Rate of Return, Credit Margins and Net Present Values</a><ul>
+<li class="chapter" data-level="1.1" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#important-warning"><i class="fa fa-check"></i><b>1.1</b> Important warning</a></li>
+<li class="chapter" data-level="1.2" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#background"><i class="fa fa-check"></i><b>1.2</b> Background</a></li>
+<li class="chapter" data-level="1.3" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#internal-rate-of-return"><i class="fa fa-check"></i><b>1.3</b> Internal Rate of Return</a></li>
+<li class="chapter" data-level="1.4" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#dataset-calculation"><i class="fa fa-check"></i><b>1.4</b> Dataset calculation</a><ul>
+<li class="chapter" data-level="1.4.1" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#irr"><i class="fa fa-check"></i><b>1.4.1</b> IRR</a></li>
+<li class="chapter" data-level="1.4.2" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#credit-margins"><i class="fa fa-check"></i><b>1.4.2</b> Credit Margins</a></li>
+<li class="chapter" data-level="1.4.3" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#npv"><i class="fa fa-check"></i><b>1.4.3</b> NPV</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="dataset.html"><a href="dataset.html"><i class="fa fa-check"></i><b>2</b> Dataset</a><ul>
+<li class="chapter" data-level="2.1" data-path="dataset.html"><a href="dataset.html#preamble"><i class="fa fa-check"></i><b>2.1</b> Preamble</a></li>
+<li class="chapter" data-level="2.2" data-path="dataset.html"><a href="dataset.html#general-presentation"><i class="fa fa-check"></i><b>2.2</b> General presentation</a><ul>
+<li class="chapter" data-level="2.2.1" data-path="dataset.html"><a href="dataset.html#business-volume"><i class="fa fa-check"></i><b>2.2.1</b> Business volume</a></li>
+<li class="chapter" data-level="2.2.2" data-path="dataset.html"><a href="dataset.html#loan-lifecyle-and-status"><i class="fa fa-check"></i><b>2.2.2</b> Loan lifecyle and status</a></li>
+<li class="chapter" data-level="2.2.3" data-path="dataset.html"><a href="dataset.html#loan-application"><i class="fa fa-check"></i><b>2.2.3</b> Loan application</a></li>
+</ul></li>
+<li class="chapter" data-level="2.3" data-path="dataset.html"><a href="dataset.html#rates"><i class="fa fa-check"></i><b>2.3</b> Rates</a><ul>
+<li class="chapter" data-level="2.3.1" data-path="dataset.html"><a href="dataset.html#irr-and-required-credit-margins"><i class="fa fa-check"></i><b>2.3.1</b> IRR and required credit margins</a></li>
+<li class="chapter" data-level="2.3.2" data-path="dataset.html"><a href="dataset.html#dataset-1"><i class="fa fa-check"></i><b>2.3.2</b> Dataset</a></li>
+<li class="chapter" data-level="2.3.3" data-path="dataset.html"><a href="dataset.html#interest-rates"><i class="fa fa-check"></i><b>2.3.3</b> Interest rates</a></li>
+<li class="chapter" data-level="2.3.4" data-path="dataset.html"><a href="dataset.html#purpose"><i class="fa fa-check"></i><b>2.3.4</b> Purpose</a></li>
+<li class="chapter" data-level="2.3.5" data-path="dataset.html"><a href="dataset.html#payments"><i class="fa fa-check"></i><b>2.3.5</b> Payments</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="dataset.html"><a href="dataset.html#net-present-value"><i class="fa fa-check"></i><b>2.4</b> Net present value</a></li>
+<li class="chapter" data-level="2.5" data-path="dataset.html"><a href="dataset.html#npv-grouped-by-sub-ratings"><i class="fa fa-check"></i><b>2.5</b> NPV grouped by sub-ratings</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="average-npv-and-credit-margin-by-subgrade.html"><a href="average-npv-and-credit-margin-by-subgrade.html"><i class="fa fa-check"></i><b>3</b> Average NPV and credit margin by subgrade</a><ul>
+<li class="chapter" data-level="3.0.1" data-path="average-npv-and-credit-margin-by-subgrade.html"><a href="average-npv-and-credit-margin-by-subgrade.html#npv-distribution-by-rating"><i class="fa fa-check"></i><b>3.0.1</b> NPV distribution by rating</a></li>
+<li class="chapter" data-level="3.1" data-path="average-npv-and-credit-margin-by-subgrade.html"><a href="average-npv-and-credit-margin-by-subgrade.html#variables"><i class="fa fa-check"></i><b>3.1</b> Variables</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="average-npv-and-credit-margin-by-subgrade.html"><a href="average-npv-and-credit-margin-by-subgrade.html#identification"><i class="fa fa-check"></i><b>3.1.1</b> Identification</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="average-npv-and-credit-margin-by-subgrade.html"><a href="average-npv-and-credit-margin-by-subgrade.html#loan-decision"><i class="fa fa-check"></i><b>3.2</b> Loan decision</a></li>
+<li class="chapter" data-level="3.3" data-path="average-npv-and-credit-margin-by-subgrade.html"><a href="average-npv-and-credit-margin-by-subgrade.html#payment-related-information"><i class="fa fa-check"></i><b>3.3</b> Payment-related information</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="modelling.html"><a href="modelling.html"><i class="fa fa-check"></i><b>4</b> Modelling</a><ul>
+<li class="chapter" data-level="4.1" data-path="modelling.html"><a href="modelling.html#introduction-1"><i class="fa fa-check"></i><b>4.1</b> Introduction</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="modelling.html"><a href="modelling.html#split"><i class="fa fa-check"></i><b>4.1.1</b> Split</a></li>
+<li class="chapter" data-level="4.1.2" data-path="modelling.html"><a href="modelling.html#the-modeling-task"><i class="fa fa-check"></i><b>4.1.2</b> The modeling task</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html"><i class="fa fa-check"></i><b>5</b> Stochastic Gradient Descent</a><ul>
+<li class="chapter" data-level="5.1" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#gradient-descent"><i class="fa fa-check"></i><b>5.1</b> Gradient descent</a></li>
+<li class="chapter" data-level="5.2" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#stochastic-gradient-descent-1"><i class="fa fa-check"></i><b>5.2</b> Stochastic Gradient Descent</a><ul>
+<li class="chapter" data-level="5.2.1" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#stochastic-gradient-descent-sgd"><i class="fa fa-check"></i><b>5.2.1</b> Stochastic Gradient Descent (SGD)</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="conclusion.html"><a href="conclusion.html"><i class="fa fa-check"></i><b>6</b> Conclusion</a></li>
+<li class="chapter" data-level="" data-path="appendix.html"><a href="appendix.html"><i class="fa fa-check"></i>Appendix</a><ul>
+<li class="chapter" data-level="6.1" data-path="appendix.html"><a href="appendix.html#list-assumptions"><i class="fa fa-check"></i><b>6.1</b> List of assumptions / limitations regarding the dataset</a></li>
+<li class="chapter" data-level="6.2" data-path="appendix.html"><a href="appendix.html#data-preparation-and-formatting"><i class="fa fa-check"></i><b>6.2</b> Data preparation and formatting</a><ul>
+<li class="chapter" data-level="6.2.1" data-path="appendix.html"><a href="appendix.html#lendinclub-dataset"><i class="fa fa-check"></i><b>6.2.1</b> LendinClub dataset</a></li>
+<li class="chapter" data-level="6.2.2" data-path="appendix.html"><a href="appendix.html#zip-codes-and-fips-codes"><i class="fa fa-check"></i><b>6.2.2</b> Zip codes and FIPS codes</a></li>
+<li class="chapter" data-level="6.2.3" data-path="appendix.html"><a href="appendix.html#market-interest-rates"><i class="fa fa-check"></i><b>6.2.3</b> Market interest rates</a></li>
+<li class="chapter" data-level="6.2.4" data-path="appendix.html"><a href="appendix.html#macro-economical-data"><i class="fa fa-check"></i><b>6.2.4</b> Macro-economical data</a></li>
+</ul></li>
+<li class="chapter" data-level="6.3" data-path="appendix.html"><a href="appendix.html#list-of-variables"><i class="fa fa-check"></i><b>6.3</b> List of variables</a></li>
+<li class="chapter" data-level="6.4" data-path="appendix.html"><a href="appendix.html#calculations-of-the-internal-rate-of-returns-and-month-to-default"><i class="fa fa-check"></i><b>6.4</b> Calculations of the internal rate of returns and month-to-default</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="appendix.html"><a href="appendix.html#r-code"><i class="fa fa-check"></i><b>6.4.1</b> R code</a></li>
+<li class="chapter" data-level="6.4.2" data-path="appendix.html"><a href="appendix.html#julia-code"><i class="fa fa-check"></i><b>6.4.2</b> Julia code</a></li>
+</ul></li>
+<li class="chapter" data-level="6.5" data-path="appendix.html"><a href="appendix.html#system-version"><i class="fa fa-check"></i><b>6.5</b> System version</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://bookdown.org/" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">LendingClub Loans Pricing</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="internal-rate-of-return-credit-margins-and-net-present-values" class="section level1">
+<h1><span class="header-section-number">Chapter 1</span> Internal Rate of Return, Credit Margins and Net Present Values</h1>
+<p>In this section, we describe the response variables that we will generate for each loan and that will be used in the rest of this report.</p>
+<p>As indicated in the introduction, our purpose is to test a model that predicts the financial risk of a loan.</p>
+<div id="important-warning" class="section level2">
+<h2><span class="header-section-number">1.1</span> Important warning</h2>
+<p>The calculations presented here are simplistic, although they bear some resemblance to what financial institutions (<em>FIs</em>) do. The literature on credit assessment and pricing is very rich and very complex. Finding the optimal capital allocation to particular risks while at the same time satisfying internal risk policies and regulatory requirements is a problem that financial institutions have yet to solve in full. Investing in a loan is not only a matter of assessing the risk of a particular borrower, but also assessing systemic risks (which exist across all borrowers), risks associated with funding the loan (interest, currency and liquidity markets), each requiring a risk assessment and pricing.</p>
+<p>In other words, nobody would, let alone should, make any investment decision based on the calculations below.</p>
+</div>
+<div id="background" class="section level2">
+<h2><span class="header-section-number">1.2</span> Background</h2>
+<p>This subsection can be skipped by anybody with basic financial knowledge.</p>
+<p>A bird in hand or two in the bush; a penny today or a pound tomorrow. What is the price of delaying obtaining and owning something? This is what pricing a loan is about. A lender could keep his/her cash in hand, or lend it and have it in hand later. He/she would accept this in exchange for receiving a bit more: this is the rate of interest. A lender wants to be compensated for delaying the possibility of using the cash, but also for taking the risk of not receiving it, partially or in full, when repayment is due.</p>
+<p>There are borrowers that one can see as (almost) completely safe or risk-free such as central banks or governments of strong economies. A lender always has the possibility to lend to them instead of more risky borrowers. Therefore, a lender would require a higher interest rate than risk-free. The additional interest that a lender requires is commensurate with the risk of the borrower not repaying (called <em>credit worthiness</em>) and is called the <em>credit margin</em>.</p>
+<p>For each individual borrower, an FI would assess information provided by the borrower and massive amounts of historical data to answer the question: considering historical borrowers with a profile similar to the applicant’s, what is the probability of not getting principal and interest back (<em>Probability of Default</em> or <em>PD</em>)? And, in case the borrower stops paying and using additional courses of action (such as seizing and selling assets), what is the total loss that could be expected on average (<em>Loss given Default</em> or <em>LGD</em>)?</p>
+<p>Making that assessment, the FI would require an interest rate which would roughly be the sum of:</p>
+<ul>
+<li><p>the risk-free rate;</p></li>
+<li><p>a margin to cover the average loss of similar individual borrowers<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>;</p></li>
+<li><p>a margin to cover all the operational costs of running their operations; and,</p></li>
+<li><p>a margin to remunerate the capital allocated by the FI (banking regulations require all banks to allocate an amount of capital against any risk taken; those are stipulated in a number of complex rules).</p></li>
+</ul>
+<p>Said crudely, this total is the amount for the FI to get out of bed and look at a loan. Although this sounds like an exact science (for some definition of the word), it is not. At the end of the day, the FI will also have to contend with the competition from other FIs or non banking lenders, market liquidity (if there is a lot of money available to be lent, it brings prices down) and, critically, whether the borrower would at all be interested in accepting that cost.</p>
+<p>Note that the dataset is distorted by this additional survival effect: the application information of many loans does not appear merely because the rate of interest was considered too high (this is not dissimilar to <em>survival effects</em> where some data did not survive through the history of a dataset<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>).</p>
+</div>
+<div id="internal-rate-of-return" class="section level2">
+<h2><span class="header-section-number">1.3</span> Internal Rate of Return</h2>
+<p>For the purpose of this report, we will simplify things enormously: we will only consider the first two components of the interest rate. The risk-free rate and the credit margin that would cover the cost of default/losses of individual borrowers.</p>
+<p>The modeling exercise will focus on trying to approximate <em>on average</em> the credit margin given the information provided by the borrower.</p>
+<p>With respect to a given loan and its cash flow, two calculations are important here: the Net Present Value (<em>NPV</em>) and the Internal Rate of Return (<em>IRR</em>). If we remember that an FI is indifferent to holding a principal <span class="math inline">\(P\)</span> today or receiving it with an annual interest a year later (i.e. <span class="math inline">\(P \times (1 + r)\)</span> where <span class="math inline">\(r\)</span> is the annual rate of interest), we can say that any amount <span class="math inline">\(CF_1\)</span> received in a year is equivalent to <span class="math inline">\(CF_0 = \frac{CF_1}{1 + r}\)</span> today. More generally, a steam of future cash receipts is worth:</p>
+<p><span class="math display">\[NPV(r) = \sum_{Year \space i = 1}^{Year = n}\frac{CF_i}{(1 + r)^i}\]</span></p>
+<p>The amount <span class="math inline">\(NPV(r)\)</span> is called the <em>Net Present Value</em> of the cash flow discounted at the rate <span class="math inline">\(r\)</span>. Given that the LendingClub repayments are monthly, the formula becomes:</p>
+<p><span class="math display">\[NPV(r) = \sum_{Month \space i = 1}^{Month = 12 \times n}\frac{CF_i}{(1 + \frac{r}{12})^i}\]</span></p>
+<p>If we now have a day 1 cash flow <span class="math inline">\(CF_0\)</span>, we can calculate:</p>
+<p><span class="math display">\[CF_0 - \sum_{Year \space i = 1}^{Year = n}\frac{CF_i}{(1 + r)^i}\]</span></p>
+<p>However, for any given <span class="math inline">\(CF_0\)</span>, there is no reason that it would equal the NPV of the future cash flow (i.e no reason why the difference would be equal to zero). But this is an equation depending on <span class="math inline">\(r\)</span>. If we can find a value of <span class="math inline">\(r\)</span> that zeroes this formula, it is called the internal rate of return of the cash flow:</p>
+<p><span class="math display">\[CF_0 - \sum_{Year \space i = 1}^{Year = n}\frac{CF_i}{(1 + IRR(CF))^i} = 0\]</span></p>
+<p>or for monthly cash flow:</p>
+<p><span class="math display">\[CF_0 - \sum_{Month \space i = 1}^{Month = 12 \times n}\frac{CF_i}{(1 + \frac{IRR(r)}{12})^i}  = 0\]</span></p>
+</div>
+<div id="dataset-calculation" class="section level2">
+<h2><span class="header-section-number">1.4</span> Dataset calculation</h2>
+<p>For each loan. we calculated the IRR, credit margin and NPV. The calculations were performed in Julia due to R’s slow performance on such a large dataset. For this reason, the resulting datasets are available on the GitHub repository as gzipped CSV files.</p>
+<div id="irr" class="section level3">
+<h3><span class="header-section-number">1.4.1</span> IRR</h3>
+<p>We used the dataset to calculate the IRR of each loan. We used the following information for the dataset: <code>funded_amnt</code>(loan amount funded), <code>int_rate</code> (all-in interest rate), <code>term</code> (tenor of the loan in months), <code>total_pymnt</code> (total cumulative amount received from the borrower), <code>total_rec_prncp</code> (amount repaid allocated to principal repayment), <code>total_rec_int</code> (amount repaid allocated to interest payment), <code>recoveries</code> (any amount recovered later from the borrower) and <code>total_rec_late_fee</code> (any late payments fees paid by the borrower).</p>
+<p>From that information, we recreated a cash flow for each loan. The R code is presented in appendix. Unfortunately, this code takes close to a full day to run on the entire dataset of completed loans (i.e. excluding all ongoing loans). This is just impractical for anybody to run to check this report and the resulting IRR results dataset is included in the Github repository. To make things practical, the dataset was actually created using code in Julia<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>. It is a direct translation of the R code, with a similar syntax (therefore very easy to follow). The Julia code runs about 500 times quicker (this is not a typo), or about 3 minutes. We appreciate that this is the departure from the assignment description.</p>
+<p>Similarly, we calculate the credit margin required by each loan noting that:</p>
+<p><span class="math display">\[ \text{Risk-free} + \text{Credit Margin} = IRR(loan)\]</span></p>
+</div>
+<div id="credit-margins" class="section level3">
+<h3><span class="header-section-number">1.4.2</span> Credit Margins</h3>
+<p>As noted in the previous section, risk-free rates change over time. When solving for the credit margin, we use the relevant risk-free rate.</p>
+<p>Again, this was coded in Julia. The Julia code here takes about 1h20min to run. On the assumptions that the equivalent R code would take therefore almost 30 days to run through the full dataset, we did not write any R code for this calculation. The code is in appendix, and we believe easy to follow.</p>
+</div>
+<div id="npv" class="section level3">
+<h3><span class="header-section-number">1.4.3</span> NPV</h3>
+<p>We also calculated the NPV of each loan. Again, this was coded in Julia. The code is in appendix.</p>
+<p>We calculate both the NPV as an absolute dollar amount and as a portion of the original</p>
+
+</div>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol start="2">
+<li id="fn2"><p>It is important to realise that the average margin only brings the borrower back to having earned the risk-free rate average: the additional income from the credit margin will be spent to cover average losses. In addition, we present the credit margin as income against borrower-specific losses. It does not address a lot of other risks such as correlation risks: a borrower might default because the economy as a whole gets worse, in which case many borrowers will default. This is a cyclical <em>systemic</em> risk similar to the 2007 US real estate crisis.<a href="internal-rate-of-return-credit-margins-and-net-present-values.html#fnref2" class="footnote-back">↩</a></p></li>
+<li id="fn3"><p>A well-known example is historical stock prices which disappear when companies are de-listed or go bankrupt.<a href="internal-rate-of-return-credit-margins-and-net-present-values.html#fnref3" class="footnote-back">↩</a></p></li>
+<li id="fn4"><p><a href="https://julialang.org/" class="uri">https://julialang.org/</a><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#fnref4" class="footnote-back">↩</a></p></li>
+</ol>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="introduction.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="dataset.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/Emmanuel-R8/HarvardX-LendingClub/edit/master/03-responses.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"download": ["HarvardX-LendingClub.pdf", "HarvardX-LendingClub.epub"],
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

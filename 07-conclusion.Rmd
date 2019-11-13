@@ -3,3 +3,5 @@
 > Is the interest rate proposed by LC high enough?
 
 > We use the entire dataset to estimate the impact of time  as a polynomial curve. To assess future loans, this would not be acceptable. Only an online algorithm should be used. For example ARMA/ARIMA, Kalman filtering of the time-trend trajectory. 
+
+> This report was one of those "it-builds-character" endeavour. Facing such a large dataset, it took a very long time before settling to address a particular question. Exploring the data lead to many blind alleys with little interest.

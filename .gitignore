@@ -21,7 +21,7 @@ old
 
 scratchpad.*
 
-build/
+./build
 
 datasets/simplemaps_uszips_basicv1.6
 datasets/lending_club.csv
