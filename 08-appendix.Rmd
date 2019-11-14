@@ -1308,6 +1308,45 @@ CSV.write("datasets/CreditMargins.csv", creditMargin_Result)
 ```
 
 
+### Maxima derivation of the cost function
+
+```
+PDF1(x, Q) := alpha1( Q) * sqrt( 1 / ( 2 * pi)) * 
+              exp( - 1 / 2*(( log( -( x - m1( Q)) / m1( Q)) + sigma1( Q) ^ 2) / sigma1( Q)) ^ 2) / 
+              ( -( x - m1(Q)) * sigma1( Q)) ;
+
+PDF2(x, Q) := alpha2( Q) * sqrt( 1 / ( 2 * pi)) * 
+              exp( - 1 / 2*(( log( -( x - m2( Q)) / m2( Q)) + sigma2( Q) ^ 2) / sigma2( Q)) ^ 2) / 
+              ( -( x - m2( Q)) * sigma2( Q)) ;
+
+PDF3(x, Q) := alpha3( Q) * sqrt( 1 / ( 2 (* pi)) * 
+              exp( - 1 / 2*(( log( -( x - m3( Q)) / m3( Q)) + sigma3( Q) ^ 2) / sigma3( Q)) ^ 2) / 
+              ( -( x - m3( Q)) * sigma3( Q)) ;
+
+PDF4(x, Q) := alpha4( Q) * sqrt( 1 / ( 2 * pi)) * 
+              exp( - 1 / 2*(( log( ( x - m4( Q)) / m4( Q)) + sigma4( Q) ^ 2) / sigma4( Q)) ^ 2) / ( 
+              ( x - m4( Q)) * sigma4( Q)) ;
+
+
+alpha1(Q) := am1* Q + an1 ;
+alpha2(Q) := am2* Q + an2 ;
+alpha3(Q) := am3* Q + an3 ;
+alpha4(Q) := am4* Q + an4 ;
+
+m1(Q) := mm1* Q + mn1 ;
+m2(Q) := mm2* Q + mn2 ;
+m3(Q) := mm3* Q + mn3 ;
+m4(Q) := mm4* Q + mn4 ;
+
+sigma1(Q) := sm1* Q + sn1 ;
+sigma2(Q) := sm2* Q + sn2 ;
+sigma3(Q) := sm3* Q + sn3 ;
+sigma4(Q) := sm4* Q + sn4 ;
+
+J(x, Q): = -( x - ( PDF1( x, Q) + PDF2( x, Q) + PDF3( x, Q) + PDF4( x, Q))) ^ 2 ; 
+
+diff( PDF1(x, Q), Q) ; 
+```
 
 
 ## System version

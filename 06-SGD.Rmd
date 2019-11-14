@@ -10,8 +10,15 @@ knitr::include_graphics("images/scikit-learn-mlmap.png", auto_pdf = TRUE)
 
 Following the disappointing results of the previous section, we will explore a simpler model, but iteratively trained on a wider set of random samples.
 
+## Description of the model
+
+Input - Layer - Single Q - Distribution
+
+
 
 ## Gradient descent
+
+### Generalities
 
 Gradient descent is a generic numerical optimisation algorithm to iteratively converge towards a (sometimes local) minumum of a given function. It is extensively used in statistical learning to minimise error functions.  
 
@@ -41,6 +48,56 @@ The gradient decent algorithm finds parameters in the following manner iterating
 While $|| \alpha \nabla J_{(\theta)} || > \eta$, $\theta :=  \theta - \alpha \nabla J_{(\theta)}$
 
 In practice, the cost function will add a penalty term to regularise the model parameters (see below).
+
+
+### Cost function as a function of the $Q$ parameter
+
+Looking back at the distribution of the NPV between the -1 and about 1.5, it is multimodal and looks like the sum of 4 log-normal distributions with modes centered on about  
+
+
+$$
+PDF(x) = \frac{1}{x \sigma \sqrt{2 \pi}} e^{-\frac{1}2 \left( \frac{ \log(x) - \mu }{\sigma} \right)^2 }
+$$
+
+$$
+\text{mode} = m = e^{\mu - \sigma^2} \text{, therefore: } \mu = log(\text{mode}) + \sigma^2
+$$
+
+$$
+PDF(x) = \sqrt{\frac{e}{2 \pi}} \frac{1}{x \sigma}  e^{-\frac{1}2 \left( \frac{\log(\frac{x}{m}) - \sigma^2}  {\sigma} \right)^2 }
+$$
+
+We will center the distribution on the mode, therefore:
+
+$$
+PDF(x) = \sqrt{\frac{e}{2 \pi}} \frac{1}{\left( x - m \right) \sigma}  e^{-\frac{1}2 \left( \frac{\log(\frac{x - m}{m}) - \sigma^2}  {\sigma} \right)^2 }
+$$
+
+The distribution's tail is towards positive infinity. For the symmetric result, we would replace $\left( x - m \right)$ by $-\left( x - m \right)$.
+
+
+If we use 4 log-normal distributions, the cost function is:
+
+$$
+\operatorname{J}\left( x,Q\right) =-{{\left[ x-\left( \alpha_1 \operatorname{PDF_1}\left( x,Q\right) + \alpha_2 \operatorname{PDF_2}\left( x,Q\right) + \alpha_2 \operatorname{PDF_3}\left( x,Q\right) + \alpha_4 \operatorname{PDF_4}\left( x,Q\right) \right) \right] }^2}
+$$
+
+To optimise the shape of the total multi-modal distribution, we will assume that each $\alpha$, $m$ and $\sigma$ is a linear function of $Q$. The derivative $\frac{\partial{\operatorname{J}}}{\partial{Q}}$ is^[This was actually generated using Maxima (code in appendix) which allows for quicker iterations.]:
+
+$$
+\begin{align*}
+\frac{\partial{\operatorname{J}}}{\partial{Q}} \left(x, Q \right) = - \sqrt{\frac{2}{\pi}} \left(
+x
+- \frac{\alpha_1}{\sigma_1 \left(-x+m_1 \right)} {e^{-\frac{1}{2} \left( \frac{ \log{\left( \frac{-x+m_1}{ m_1} \right)} + \sigma_1^2}{\sigma_1} \right) ^2}} -\\
+- \frac{\alpha_2}{\sigma_2 \left(-x+m_2 \right)} {e^{-\frac{1}{2} \left( \frac{ \log{\left( \frac{-x+m_2}{ m_2} \right)} + \sigma_2^2}{\sigma_2} \right) ^2}} -\\
+- \frac{\alpha_3}{\sigma_3 \left(-x+m_3 \right)} {e^{-\frac{1}{2} \left( \frac{ \log{\left( \frac{-x+m_3}{ m_3} \right)} + \sigma_3^2}{\sigma_3} \right) ^2}} -\\
+- \frac{\alpha_4}{\sigma_4 \left( x-m_4 \right)} {e^{-\frac{1}{2} \left( \frac{ \log{\left( \frac{ x-m_4}{ m_4} \right)} + \sigma_4^2}{\sigma_4} \right) ^2}}
+\right)
+\end{align*}
+$$
+
+
+
 
 
 ## Stochastic Gradient Descent
