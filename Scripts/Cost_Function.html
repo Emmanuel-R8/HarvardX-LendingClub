@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <title>Cost_Function</title>
+    <meta name="generator" content="wxMaxima"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script type="text/x-mathjax-config">  MathJax.Hub.Config({
+    displayAlign: "left",
+    context: "MathJax",
+    TeX: {TagSide: "left"}
+  })
+</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS_HTML" async="async">  // A comment that hinders wxWidgets from optimizing this tag too much.
+</script>
+    <link rel="stylesheet" type="text/css" href="Cost_Function_htmlimg/Cost_Function.css"/>
+  </head>
+  <body>
+    <!-- ****************************************************** -->
+    <!-- *        Created with wxMaxima version 19.07.0       * -->
+    <!-- ****************************************************** -->
+    <noscript>
+      <div class="error message">
+        <p>Please enable JavaScript in order to get a 2d display of the equations embedded in this web page.</p>
+      </div>
+    </noscript>
+    <p hidden="hidden">\(      \DeclareMathOperator{\abs}{abs}
+      \newcommand{\ensuremath}[1]{\mbox{$#1$}}
+\)</p>
+    <!-- Code cell -->
+    <table>
+      <tr>
+        <td>
+          <span class="prompt">(%i17)	
+  </span>
+        </td>
+        <td>
+          <span class="input">
+            <span class="code_function">PDF1</span>(
+            <span class="code_variable">x</span>, 
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_function">alpha1</span>(
+            <span class="code_variable">Q</span>)·
+            <span class="code_function">sqrt</span>(
+            <span class="code_number">1</span>
+            <span class="code_operator">/</span> (
+            <span class="code_number">2</span>·
+            <span class="code_variable">%pi</span>)) · 
+            <span class="code_function">exp</span>(
+            <span class="code_number">−</span>
+            <span class="code_number">1</span>
+            <span class="code_operator">/</span>
+            <span class="code_number">2</span>·((
+            <span class="code_function">log</span>(
+            <span class="code_operator">−</span>(
+            <span class="code_variable">x</span>
+            <span class="code_operator">−</span>
+            <span class="code_function">m1</span>(
+            <span class="code_variable">Q</span>)) 
+            <span class="code_operator">/</span>
+            <span class="code_function">m1</span>(
+            <span class="code_variable">Q</span>))
+            <span class="code_operator">+</span>
+            <span class="code_function">sigma1</span>(
+            <span class="code_variable">Q</span>)
+            <span class="code_operator">^</span>
+            <span class="code_number">2</span>) 
+            <span class="code_operator">/</span>
+            <span class="code_function">sigma1</span>(
+            <span class="code_variable">Q</span>))
+            <span class="code_operator">^</span>
+            <span class="code_number">2</span>) 
+            <span class="code_operator">/</span> (
+            <span class="code_operator">−</span>(
+            <span class="code_variable">x</span>
+            <span class="code_operator">−</span>
+            <span class="code_function">m1</span>(
+            <span class="code_variable">Q</span>)) · 
+            <span class="code_function">sigma1</span>(
+            <span class="code_variable">Q</span>))
+            <span class="code_endofline">;</span>
+            <br/>
+            <span class="code_function">PDF3</span>(
+            <span class="code_variable">x</span>, 
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_function">alpha3</span>(
+            <span class="code_variable">Q</span>)·
+            <span class="code_function">sqrt</span>(
+            <span class="code_number">1</span>
+            <span class="code_operator">/</span> (
+            <span class="code_number">2</span>·
+            <span class="code_variable">%pi</span>)) · 
+            <span class="code_function">exp</span>(
+            <span class="code_number">−</span>
+            <span class="code_number">1</span>
+            <span class="code_operator">/</span>
+            <span class="code_number">2</span>·((
+            <span class="code_function">log</span>(
+            <span class="code_operator">−</span>(
+            <span class="code_variable">x</span>
+            <span class="code_operator">−</span>
+            <span class="code_function">m3</span>(
+            <span class="code_variable">Q</span>)) 
+            <span class="code_operator">/</span>
+            <span class="code_function">m3</span>(
+            <span class="code_variable">Q</span>))
+            <span class="code_operator">+</span>
+            <span class="code_function">sigma3</span>(
+            <span class="code_variable">Q</span>)
+            <span class="code_operator">^</span>
+            <span class="code_number">2</span>) 
+            <span class="code_operator">/</span>
+            <span class="code_function">sigma3</span>(
+            <span class="code_variable">Q</span>))
+            <span class="code_operator">^</span>
+            <span class="code_number">2</span>) 
+            <span class="code_operator">/</span> (
+            <span class="code_operator">−</span>(
+            <span class="code_variable">x</span>
+            <span class="code_operator">−</span>
+            <span class="code_function">m3</span>(
+            <span class="code_variable">Q</span>)) · 
+            <span class="code_function">sigma3</span>(
+            <span class="code_variable">Q</span>))
+            <span class="code_endofline">;</span>
+            <br/>
+            <span class="code_function">PDF4</span>(
+            <span class="code_variable">x</span>, 
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_function">alpha4</span>(
+            <span class="code_variable">Q</span>)·
+            <span class="code_function">sqrt</span>(
+            <span class="code_number">1</span>
+            <span class="code_operator">/</span> (
+            <span class="code_number">2</span>·
+            <span class="code_variable">%pi</span>)) · 
+            <span class="code_function">exp</span>(
+            <span class="code_number">−</span>
+            <span class="code_number">1</span>
+            <span class="code_operator">/</span>
+            <span class="code_number">2</span>·((
+            <span class="code_function">log</span>( (
+            <span class="code_variable">x</span>
+            <span class="code_operator">−</span>
+            <span class="code_function">m4</span>(
+            <span class="code_variable">Q</span>)) 
+            <span class="code_operator">/</span>
+            <span class="code_function">m4</span>(
+            <span class="code_variable">Q</span>))
+            <span class="code_operator">+</span>
+            <span class="code_function">sigma4</span>(
+            <span class="code_variable">Q</span>)
+            <span class="code_operator">^</span>
+            <span class="code_number">2</span>) 
+            <span class="code_operator">/</span>
+            <span class="code_function">sigma4</span>(
+            <span class="code_variable">Q</span>))
+            <span class="code_operator">^</span>
+            <span class="code_number">2</span>) 
+            <span class="code_operator">/</span> ( (
+            <span class="code_variable">x</span>
+            <span class="code_operator">−</span>
+            <span class="code_function">m4</span>(
+            <span class="code_variable">Q</span>)) · 
+            <span class="code_function">sigma4</span>(
+            <span class="code_variable">Q</span>))
+            <span class="code_endofline">;</span>
+            <br/>
+            <br/>
+            <span class="code_function">PDF2</span>(
+            <span class="code_variable">x</span>, 
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_function">alpha2</span>(
+            <span class="code_variable">Q</span>)·
+            <span class="code_function">sqrt</span>(
+            <span class="code_number">1</span>
+            <span class="code_operator">/</span> (
+            <span class="code_number">2</span>·
+            <span class="code_variable">%pi</span>)) · 
+            <span class="code_function">exp</span>(
+            <span class="code_number">−</span>
+            <span class="code_number">1</span>
+            <span class="code_operator">/</span>
+            <span class="code_number">2</span>·((
+            <span class="code_variable">x</span>
+            <span class="code_operator">−</span>
+            <span class="code_function">m2</span>(
+            <span class="code_variable">Q</span>))
+            <span class="code_operator">/</span>
+            <span class="code_function">sigma2</span>(
+            <span class="code_variable">Q</span>))
+            <span class="code_operator">^</span>
+            <span class="code_number">2</span>) 
+            <span class="code_operator">/</span>
+            <span class="code_function">sigma2</span>(
+            <span class="code_variable">Q</span>)
+            <span class="code_endofline">;</span>
+            <br/>
+            <br/>
+            <span class="code_function">alpha1</span>(
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_variable">am1</span>·
+            <span class="code_variable">Q</span>
+            <span class="code_operator">+</span>
+            <span class="code_variable">an1</span>
+            <span class="code_endofline">;</span>
+            <br/>
+            <span class="code_function">alpha2</span>(
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_variable">am2</span>·
+            <span class="code_variable">Q</span>
+            <span class="code_operator">+</span>
+            <span class="code_variable">an2</span>
+            <span class="code_endofline">;</span>
+            <br/>
+            <span class="code_function">alpha3</span>(
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_variable">am3</span>·
+            <span class="code_variable">Q</span>
+            <span class="code_operator">+</span>
+            <span class="code_variable">an3</span>
+            <span class="code_endofline">;</span>
+            <br/>
+            <span class="code_function">alpha4</span>(
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_variable">am4</span>·
+            <span class="code_variable">Q</span>
+            <span class="code_operator">+</span>
+            <span class="code_variable">an4</span>
+            <span class="code_endofline">;</span>
+            <br/>
+            <br/>
+            <span class="code_function">m1</span>(
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_variable">mm1</span>·
+            <span class="code_variable">Q</span>
+            <span class="code_operator">+</span>
+            <span class="code_variable">mn1</span>
+            <span class="code_endofline">;</span>
+            <br/>
+            <span class="code_function">m2</span>(
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_variable">mm2</span>·
+            <span class="code_variable">Q</span>
+            <span class="code_operator">+</span>
+            <span class="code_variable">mn2</span>
+            <span class="code_endofline">;</span>
+            <br/>
+            <span class="code_function">m3</span>(
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_variable">mm3</span>·
+            <span class="code_variable">Q</span>
+            <span class="code_operator">+</span>
+            <span class="code_variable">mn3</span>
+            <span class="code_endofline">;</span>
+            <br/>
+            <span class="code_function">m4</span>(
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_variable">mm4</span>·
+            <span class="code_variable">Q</span>
+            <span class="code_operator">+</span>
+            <span class="code_variable">mn4</span>
+            <span class="code_endofline">;</span>
+            <br/>
+            <br/>
+            <span class="code_function">sigma1</span>(
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_variable">sm1</span>·
+            <span class="code_variable">Q</span>
+            <span class="code_operator">+</span>
+            <span class="code_variable">sn1</span>
+            <span class="code_endofline">;</span>
+            <br/>
+            <span class="code_function">sigma2</span>(
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_variable">sm2</span>·
+            <span class="code_variable">Q</span>
+            <span class="code_operator">+</span>
+            <span class="code_variable">sn2</span>
+            <span class="code_endofline">;</span>
+            <br/>
+            <span class="code_function">sigma3</span>(
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_variable">sm3</span>·
+            <span class="code_variable">Q</span>
+            <span class="code_operator">+</span>
+            <span class="code_variable">sn3</span>
+            <span class="code_endofline">;</span>
+            <br/>
+            <span class="code_function">sigma4</span>(
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_variable">sm4</span>·
+            <span class="code_variable">Q</span>
+            <span class="code_operator">+</span>
+            <span class="code_variable">sn4</span>
+            <span class="code_endofline">;</span>
+            <br/>
+            <br/>
+            <span class="code_function">J</span>(
+            <span class="code_variable">x</span>, 
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">:</span>
+            <span class="code_operator">=</span>
+            <span class="code_operator">−</span>(
+            <span class="code_variable">x</span>
+            <span class="code_operator">−</span> (
+            <span class="code_function">PDF1</span>(
+            <span class="code_variable">x</span>, 
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">+</span>
+            <span class="code_function">PDF2</span>(
+            <span class="code_variable">x</span>, 
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">+</span>
+            <span class="code_function">PDF3</span>(
+            <span class="code_variable">x</span>, 
+            <span class="code_variable">Q</span>) 
+            <span class="code_operator">+</span>
+            <span class="code_function">PDF4</span>(
+            <span class="code_variable">x</span>, 
+            <span class="code_variable">Q</span>)))
+            <span class="code_operator">^</span>
+            <span class="code_number">2</span>
+            <span class="code_endofline">;</span>
+          </span>
+        </td>
+      </tr>
+    </table>
+    <p>\[\tag{%o1} \operatorname{PDF1}\left( x,Q\right) :=\frac{\operatorname{alpha1}(Q) \sqrt{\frac{1}{2 \ensuremath{\pi} }} \operatorname{exp}\left( \frac{-1}{2}\, {{\left( \frac{\log{\left( \frac{-\left( x-\operatorname{m1}(Q)\right) }{\operatorname{m1}(Q)}\right) }+{{\operatorname{sigma1}(Q)}^{2}}}{\operatorname{sigma1}(Q)}\right) }^{2}}\right) }{\left( -\left( x-\operatorname{m1}(Q)\right) \right)  \operatorname{sigma1}(Q)}\]
+</p>
+    <p>\[\tag{%o2} \operatorname{PDF3}\left( x,Q\right) :=\frac{\operatorname{alpha3}(Q) \sqrt{\frac{1}{2 \ensuremath{\pi} }} \operatorname{exp}\left( \frac{-1}{2}\, {{\left( \frac{\log{\left( \frac{-\left( x-\operatorname{m3}(Q)\right) }{\operatorname{m3}(Q)}\right) }+{{\operatorname{sigma3}(Q)}^{2}}}{\operatorname{sigma3}(Q)}\right) }^{2}}\right) }{\left( -\left( x-\operatorname{m3}(Q)\right) \right)  \operatorname{sigma3}(Q)}\]
+</p>
+    <p>\[\tag{%o3} \operatorname{PDF4}\left( x,Q\right) :=\frac{\operatorname{alpha4}(Q) \sqrt{\frac{1}{2 \ensuremath{\pi} }} \operatorname{exp}\left( \frac{-1}{2}\, {{\left( \frac{\log{\left( \frac{x-\operatorname{m4}(Q)}{\operatorname{m4}(Q)}\right) }+{{\operatorname{sigma4}(Q)}^{2}}}{\operatorname{sigma4}(Q)}\right) }^{2}}\right) }{\left( x-\operatorname{m4}(Q)\right)  \operatorname{sigma4}(Q)}\]
+</p>
+    <p>\[\tag{%o4} \operatorname{PDF2}\left( x,Q\right) :=\frac{\operatorname{alpha2}(Q) \sqrt{\frac{1}{2 \ensuremath{\pi} }} \operatorname{exp}\left( \frac{-1}{2}\, {{\left( \frac{x-\operatorname{m2}(Q)}{\operatorname{sigma2}(Q)}\right) }^{2}}\right) }{\operatorname{sigma2}(Q)}\]
+</p>
+    <p>\[\tag{%o5} \operatorname{alpha1}(Q):=\mathit{am1} Q+\mathit{an1}\]
+</p>
+    <p>\[\tag{%o6} \operatorname{alpha2}(Q):=\mathit{am2} Q+\mathit{an2}\]
+</p>
+    <p>\[\tag{%o7} \operatorname{alpha3}(Q):=\mathit{am3} Q+\mathit{an3}\]
+</p>
+    <p>\[\tag{%o8} \operatorname{alpha4}(Q):=\mathit{am4} Q+\mathit{an4}\]
+</p>
+    <p>\[\tag{%o9} \operatorname{m1}(Q):=\mathit{mm1} Q+\mathit{mn1}\]
+</p>
+    <p>\[\tag{%o10} \operatorname{m2}(Q):=\mathit{mm2} Q+\mathit{mn2}\]
+</p>
+    <p>\[\tag{%o11} \operatorname{m3}(Q):=\mathit{mm3} Q+\mathit{mn3}\]
+</p>
+    <p>\[\tag{%o12} \operatorname{m4}(Q):=\mathit{mm4} Q+\mathit{mn4}\]
+</p>
+    <p>\[\tag{%o13} \operatorname{sigma1}(Q):=\mathit{sm1} Q+\mathit{sn1}\]
+</p>
+    <p>\[\tag{%o14} \operatorname{sigma2}(Q):=\mathit{sm2} Q+\mathit{sn2}\]
+</p>
+    <p>\[\tag{%o15} \operatorname{sigma3}(Q):=\mathit{sm3} Q+\mathit{sn3}\]
+</p>
+    <p>\[\tag{%o16} \operatorname{sigma4}(Q):=\mathit{sm4} Q+\mathit{sn4}\]
+</p>
+    <p>\[\tag{%o17} \operatorname{J}\left( x,Q\right) :=-{{\left( x-\left( \operatorname{PDF1}\left( x,Q\right) +\operatorname{PDF2}\left( x,Q\right) +\operatorname{PDF3}\left( x,Q\right) +\operatorname{PDF4}\left( x,Q\right) \right) \right) }^{2}}\]
+</p>
+    <!-- Code cell -->
+    <table>
+      <tr>
+        <td>
+          <span class="prompt"> --&gt;	
+  </span>
+        </td>
+        <td>
+          <span class="input">
+            <span class="code_function">diff</span>(
+            <span class="code_function">PDF1</span>(
+            <span class="code_variable">x</span>, 
+            <span class="code_variable">Q</span>), 
+            <span class="code_variable">Q</span>)
+            <span class="code_endofline">;</span>
+          </span>
+        </td>
+      </tr>
+    </table>
+    <p>\[\tag{%o77} \frac{\left( \mathit{an1}+Q\, \mathit{am1}\right) \, \left( \frac{\mathit{sm1}\, {{\left( \log{\left( \frac{-x+\mathit{mn1}+Q\, \mathit{mm1}}{\mathit{mn1}+Q\, \mathit{mm1}}\right) }+{{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}\right) }^{2}}}{{{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{3}}}-\frac{\left( \log{\left( \frac{-x+\mathit{mn1}+Q\, \mathit{mm1}}{\mathit{mn1}+Q\, \mathit{mm1}}\right) }+{{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}\right) \, \left( \frac{\left( \mathit{mn1}+Q\, \mathit{mm1}\right) \, \left( \frac{\mathit{mm1}}{\mathit{mn1}+Q\, \mathit{mm1}}-\frac{\mathit{mm1}\, \left( -x+\mathit{mn1}+Q\, \mathit{mm1}\right) }{{{\left( \mathit{mn1}+Q\, \mathit{mm1}\right) }^{2}}}\right) }{-x+\mathit{mn1}+Q\, \mathit{mm1}}+2 \mathit{sm1}\, \left( \mathit{sn1}+Q\, \mathit{sm1}\right) \right) }{{{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}}\right) \, {{\% e}^{-\frac{{{\left( \log{\left( \frac{-x+\mathit{mn1}+Q\, \mathit{mm1}}{\mathit{mn1}+Q\, \mathit{mm1}}\right) }+{{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}\right) }^{2}}}{2 {{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}}}}}{\sqrt{2}\, \sqrt{\ensuremath{\pi} }\, \left( \mathit{sn1}+Q\, \mathit{sm1}\right) \, \left( -x+\mathit{mn1}+Q\, \mathit{mm1}\right) }+\frac{\mathit{am1}\, {{\% e}^{-\frac{{{\left( \log{\left( \frac{-x+\mathit{mn1}+Q\, \mathit{mm1}}{\mathit{mn1}+Q\, \mathit{mm1}}\right) }+{{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}\right) }^{2}}}{2 {{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}}}}}{\sqrt{2}\, \sqrt{\ensuremath{\pi} }\, \left( \mathit{sn1}+Q\, \mathit{sm1}\right) \, \left( -x+\mathit{mn1}+Q\, \mathit{mm1}\right) }-\frac{\left( \mathit{an1}+Q\, \mathit{am1}\right) \, \mathit{sm1}\, {{\% e}^{-\frac{{{\left( \log{\left( \frac{-x+\mathit{mn1}+Q\, \mathit{mm1}}{\mathit{mn1}+Q\, \mathit{mm1}}\right) }+{{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}\right) }^{2}}}{2 {{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}}}}}{\sqrt{2}\, \sqrt{\ensuremath{\pi} }\, {{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}\, \left( -x+\mathit{mn1}+Q\, \mathit{mm1}\right) }-\frac{\left( \mathit{an1}+Q\, \mathit{am1}\right) \, \mathit{mm1}\, {{\% e}^{-\frac{{{\left( \log{\left( \frac{-x+\mathit{mn1}+Q\, \mathit{mm1}}{\mathit{mn1}+Q\, \mathit{mm1}}\right) }+{{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}\right) }^{2}}}{2 {{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}}}}}{\sqrt{2}\, \sqrt{\ensuremath{\pi} }\, \left( \mathit{sn1}+Q\, \mathit{sm1}\right) \, {{\left( -x+\mathit{mn1}+Q\, \mathit{mm1}\right) }^{2}}}\]
+</p>
+    <!-- Code cell -->
+    <table>
+      <tr>
+        <td>
+          <span class="prompt"> --&gt;	
+  </span>
+        </td>
+        <td>
+          <span class="input">
+            <span class="code_function">diff</span>(
+            <span class="code_function">J</span>(
+            <span class="code_variable">x</span>,
+            <span class="code_variable">Q</span>), 
+            <span class="code_variable">Q</span>)
+            <span class="code_endofline">;</span>
+          </span>
+        </td>
+      </tr>
+    </table>
+    <p>\[\tag{%o76} -2 (-\frac{\left( \mathit{an4}+Q\, \mathit{am4}\right) \, {{\% e}^{-\frac{{{\left( \log{\left( \frac{x-\mathit{mn4}-Q\, \mathit{mm4}}{\mathit{mn4}+Q\, \mathit{mm4}}\right) }+{{\left( \mathit{sn4}+Q\, \mathit{sm4}\right) }^{2}}\right) }^{2}}}{2 {{\left( \mathit{sn4}+Q\, \mathit{sm4}\right) }^{2}}}}}}{\sqrt{2}\, \sqrt{\ensuremath{\pi} }\, \left( \mathit{sn4}+Q\, \mathit{sm4}\right) \, \left( x-\mathit{mn4}-Q\, \mathit{mm4}\right) }-\frac{\left( \mathit{an3}+Q\, \mathit{am3}\right) \, {{\% e}^{-\frac{{{\left( \log{\left( \frac{-x+\mathit{mn3}+Q\, \mathit{mm3}}{\mathit{mn3}+Q\, \mathit{mm3}}\right) }+{{\left( \mathit{sn3}+Q\, \mathit{sm3}\right) }^{2}}\right) }^{2}}}{2 {{\left( \mathit{sn3}+Q\, \mathit{sm3}\right) }^{2}}}}}}{\sqrt{2}\, \sqrt{\ensuremath{\pi} }\, \left( \mathit{sn3}+Q\, \mathit{sm3}\right) \, \left( -x+\mathit{mn3}+Q\, \mathit{mm3}\right) }-\frac{\left( \mathit{an2}+Q\, \mathit{am2}\right) \, {{\% e}^{-\frac{{{\left( \log{\left( \frac{-x+\mathit{mn2}+Q\, \mathit{mm2}}{\mathit{mn2}+Q\, \mathit{mm2}}\right) }+{{\left( \mathit{sn2}+Q\, \mathit{sm2}\right) }^{2}}\right) }^{2}}}{2 {{\left( \mathit{sn2}+Q\, \mathit{sm2}\right) }^{2}}}}}}{\sqrt{2}\, \sqrt{\ensuremath{\pi} }\, \left( \mathit{sn2}+Q\, \mathit{sm2}\right) \, \left( -x+\mathit{mn2}+Q\, \mathit{mm2}\right) }-\frac{\left( \mathit{an1}+Q\, \mathit{am1}\right) \, {{\% e}^{-\frac{{{\left( \log{\left( \frac{-x+\mathit{mn1}+Q\, \mathit{mm1}}{\mathit{mn1}+Q\, \mathit{mm1}}\right) }+{{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}\right) }^{2}}}{2 {{\left( \mathit{sn1}+Q\, \mathit{sm1}\right) }^{2}}}}}}{\sqrt{2}\, \sqrt{\ensuremath{\pi} }\, \left( \mathit{sn1}+Q\, \mathit{sm1}\right) \, \left( -x+\mathit{mn1}+Q\, \mathit{mm1}\right) }+x) \]
+</p>
+    <!-- Code cell -->
+    <table>
+      <tr>
+        <td>
+          <span class="prompt"> --&gt;	
+  </span>
+        </td>
+        <td>
+          <span class="input"/>
+        </td>
+      </tr>
+    </table>
+    <hr/>
+    <p>
+      <small> Created with 
+        <a href="https://wxMaxima-developers.github.io/wxmaxima/">wxMaxima</a>.</small>
+    </p>
+  </body>
+</html>

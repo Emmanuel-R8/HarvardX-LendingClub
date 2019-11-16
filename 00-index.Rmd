@@ -84,6 +84,8 @@ knitr::opts_chunk$set(
   # Graphics
   out.width = "70%",
   fig.align = "center",
+  dev = "png",
+  dpi = 300, 
   # fig.height = 3,
 
   # Text size
@@ -91,11 +93,11 @@ knitr::opts_chunk$set(
 )
 
 
-if (knitr::is_html_output()) {
-  knitr::opts_chunk$set(dev = "png")
-} else {
-  knitr::opts_chunk$set(dev = "pdf")
-}
+#if (knitr::is_html_output()) {
+#  knitr::opts_chunk$set(dev = "png")
+#} else {
+#  knitr::opts_chunk$set(dev = "pdf")
+#}
 
 
 # Modify the size of the code chunks

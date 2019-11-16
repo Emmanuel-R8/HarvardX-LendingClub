@@ -56,7 +56,7 @@ Looking back at the distribution of the NPV between the -1 and about 1.5, it is 
 
 
 $$
-PDF(x) = \frac{1}{x \sigma \sqrt{2 \pi}} e^{-\frac{1}2 \left( \frac{ \log(x) - \mu }{\sigma} \right)^2 }
+PDF(x) = \frac{1}{x \sigma \sqrt{2 \pi}} exp{\left( -\frac{1}2 \left( \frac{ \log(x) - \mu }{\sigma} \right)^2 \right)}
 $$
 
 $$
@@ -64,13 +64,13 @@ $$
 $$
 
 $$
-PDF(x) = \sqrt{\frac{e}{2 \pi}} \frac{1}{x \sigma}  e^{-\frac{1}2 \left( \frac{\log(\frac{x}{m}) - \sigma^2}  {\sigma} \right)^2 }
+PDF(x) = \sqrt{\frac{e}{2 \pi}} \frac{1}{x \sigma}  exp{\left( -\frac{1}2 \left( \frac{\log(\frac{x}{m}) - \sigma^2}  {\sigma} \right)^2 \right)}
 $$
 
 We will center the distribution on the mode, therefore:
 
 $$
-PDF(x) = \sqrt{\frac{e}{2 \pi}} \frac{1}{\left( x - m \right) \sigma}  e^{-\frac{1}2 \left( \frac{\log(\frac{x - m}{m}) - \sigma^2}  {\sigma} \right)^2 }
+PDF(x) = \sqrt{\frac{e}{2 \pi}} \frac{1}{\left( x - m \right) \sigma}  exp{ \left( -\frac{1}2 \left( \frac{\log(\frac{x - m}{m}) - \sigma^2}  {\sigma} \right)^2 \right) }
 $$
 
 The distribution's tail is towards positive infinity. For the symmetric result, we would replace $\left( x - m \right)$ by $-\left( x - m \right)$.
@@ -84,17 +84,18 @@ $$
 
 To optimise the shape of the total multi-modal distribution, we will assume that each $\alpha$, $m$ and $\sigma$ is a linear function of $Q$. The derivative $\frac{\partial{\operatorname{J}}}{\partial{Q}}$ is^[This was actually generated using Maxima (code in appendix) which allows for quicker iterations.]:
 
+
 $$
-\begin{align*}
-\frac{\partial{\operatorname{J}}}{\partial{Q}} \left(x, Q \right) = - \sqrt{\frac{2}{\pi}} \left(
-x
-- \frac{\alpha_1}{\sigma_1 \left(-x+m_1 \right)} {e^{-\frac{1}{2} \left( \frac{ \log{\left( \frac{-x+m_1}{ m_1} \right)} + \sigma_1^2}{\sigma_1} \right) ^2}} -\\
-- \frac{\alpha_2}{\sigma_2 \left(-x+m_2 \right)} {e^{-\frac{1}{2} \left( \frac{ \log{\left( \frac{-x+m_2}{ m_2} \right)} + \sigma_2^2}{\sigma_2} \right) ^2}} -\\
-- \frac{\alpha_3}{\sigma_3 \left(-x+m_3 \right)} {e^{-\frac{1}{2} \left( \frac{ \log{\left( \frac{-x+m_3}{ m_3} \right)} + \sigma_3^2}{\sigma_3} \right) ^2}} -\\
-- \frac{\alpha_4}{\sigma_4 \left( x-m_4 \right)} {e^{-\frac{1}{2} \left( \frac{ \log{\left( \frac{ x-m_4}{ m_4} \right)} + \sigma_4^2}{\sigma_4} \right) ^2}}
-\right)
-\end{align*}
+\begin{array}{ccc}
+\frac{\partial{\operatorname{J}}}{\partial{Q}} \left(x, Q \right) = - \sqrt{\frac{2}{\pi}} x
+& - & \sqrt{\frac{2}{\pi}} \frac{\alpha_1}{\sigma_1 \left(-x+m_1 \right)} {e^{-\frac{1}{2} \left( \frac{ \log{\left( \frac{-x+m_1}{ m_1} \right)} + \sigma_1^2}{\sigma_1} \right) ^2}} \\
+& - & \frac{1}{\sqrt{2 \pi}} \frac{\alpha_2}{\sigma_2 \left(-x+m_2 \right)} {e^{-\frac{1}{2} \left( \frac{ \log{\left( \frac{-x+m_2}{ m_2} \right)} + \sigma_2^2}{\sigma_2} \right) ^2}} \\
+& - & \sqrt{\frac{2}{\pi}} \frac{\alpha_3}{\sigma_3 \left(-x+m_3 \right)} {e^{-\frac{1}{2} \left( \frac{ \log{\left( \frac{-x+m_3}{ m_3} \right)} + \sigma_3^2}{\sigma_3} \right) ^2}} \\
+& - & \sqrt{\frac{2}{\pi}} \frac{\alpha_4}{\sigma_4 \left( x-m_4 \right)} {e^{-\frac{1}{2} \left( \frac{ \log{\left( \frac{ x-m_4}{ m_4} \right)} + \sigma_4^2}{\sigma_4} \right) ^2}}
+\end{array}
 $$
+
+
 
 
 

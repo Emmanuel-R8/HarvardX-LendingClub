@@ -792,6 +792,9 @@ local({
 
 #### Internal Rate of Return
 
+```{julia julia-IRR,eval=FALSE,echo=TRUE,child="Scripts/JuliaIRR.jl"}
+```
+
 
 ```{julia julia-IRR,eval=FALSE,echo=TRUE}
 ####################################################################################################

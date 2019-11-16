@@ -3,35 +3,11 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-```{r}
-# Libraries
-library(tidyverse)
-library(lubridate)
-
-# Load data
-if (!exists("loans")) loans <- readRDS("datasets/lending_club_reformatted_paid.rds")
-if (!exists("loansIRR"))
-  loansIRR <- read.csv("datasets/LoanIRR.csv") %>% as_tibble()
-
-if (!exists("loansCreditMargin"))
-  loansCreditMargin <- read.csv("datasets/CreditMargins.csv") %>% as_tibble() %>%
-    # Remove monthDefault since already in IRR dataframe
-    select(-monthDefault)
+```{r child="CleanLoad.Rmd"}
 ```
 
 
 ```{r}
-nSamples <- nrow(loans)
-
-loansWorkingSet <- loans %>%
-  # add IRR and credit margins calculations
-  left_join(loansIRR, by = "loanID") %>%
-  left_join(loansCreditMargin, by = "loanID") %>%
-
-  # add a % principal loss variable
-  mutate(principal_loss_pct = (funded_amnt - total_rec_prncp) / funded_amnt)
-
-
 # Select the variables checked in 01-startup.Rmd
 varList <- c(LC_variable[LC_variable$inModel == TRUE, "variable_name"])$variable_name
 varList <- c(varList, "grade_num", "sub_grade_num", "principal_loss_pct", "creditMargin", "monthDefault")
@@ -448,4 +424,17 @@ tmp01 <-
 
 
 ```
+
+
+```{r}
+
+
+
+```
+
+
+
+
+
+
 

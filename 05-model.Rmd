@@ -1,4 +1,4 @@
-# Modelling
+# Modeling
 
 At the outset, the dataset presents a number of challenges:
 

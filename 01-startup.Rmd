@@ -10,10 +10,9 @@
 ```
 
 
-```{r}
-# Clean load 
-source(file = "clean-load.R")
+```{r child="CleanLoad.Rmd"}
 ```
+
 
 
 ```{r needed-functions}

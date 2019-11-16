@@ -1,9 +1,7 @@
 # Dataset
 
 
-```{r}
-# Clean load 
-source(file = "clean-load.R")
+```{r child="CleanLoad.Rmd",eval=FALSE}
 ```
 
 
@@ -467,7 +465,7 @@ loansBySubGrade <-
 p1 <- loansBySubGrade %>% 
   ggplot(aes(sub_grade, AverageNPV)) +
   geom_point(col = "blue")
-            
+
 p2 <- loansBySubGrade %>% 
   ggplot(aes(sub_grade, AverageCreditMargin)) +
   geom_point(col = "blue")
@@ -475,29 +473,52 @@ p2 <- loansBySubGrade %>%
 gridExtra::grid.arrange(p1, p2, ncol = 1)
 ```
 
+### Principal losses
+
+### Distribution of principal losses by rating
+
+Figure \@ref(fig:loss-distribution-subrating) shows that for a given grade, the losses are very widely spread. The loans are group by ratings and loans that have been fully repaid are removed.
+
+Setting aside the loans rated "A" or "B", the distributions seem log-normal. Unsurprisingly, the worse the rating the larger the principal loss.
+
+```{r loss-distribution-subrating,fig.cap="Distribution of NPV (\\%) depending on rating \n(y-axis square-root scaling)"}
+
+Set <- loansWorkingSet %>% 
+  select(grade, funded_amnt, total_rec_prncp) %>%
+  filter(total_rec_prncp < funded_amnt - 1) %>% 
+  mutate(PrincipalLoss = (funded_amnt - total_rec_prncp)/funded_amnt)
+
+setGood <-  Set %>%
+  filter(grade %in% c("A", "B")) 
+
+setMid <-  Set %>%
+  filter(grade %in% c("C", "D")) %>% 
+  sample_n(100000)  
+
+setLow <-  Set %>%
+  filter(grade %in% c("E", "F", "G")) 
+
+adjustSpread <- 0.6
+rangeMin <- 0.0
+rangeMax <- 1.0
+
+Set %>% ggplot(aes(PrincipalLoss, col = grade)) +
+  geom_density(adjust = adjustSpread) +
+  scale_x_continuous(limits = c(rangeMin, rangeMax)) +
+  #scale_y_sqrt() + 
+  xlab("")
+
+```
+
+
 
 ### NPV distribution by rating
 
+Principal loss does not reflect the timing of that loss: a loss now is worse than a loss later. This subsection looks at the NPVs of actual loan cashflow (principal and interest) discounted the risk-free rate.
+
 Figure \@ref(fig:NPV-distribution-subrating) shows that for a given grade, the NPVs are very widely spread. From top to bottom, loans are group by ratings: from quality ratings of `A` and `B`, average ratings of `C` and `D`, to poor ratings of `E` and below. From left to right, we focus on different parts of how NPVs are distributed. Note that each graph is based on a random sample of 100,000 loans (about 1/12th of the original set) and therefore the NPV densities are comparable from graph to graph. 
 
-
-At the outset, column by column (where NPVs are on the same scale), the NPV distribution show several modes on the same location: 
-
-+ a mode with a maximum around 1.25 / 1.5 being loans seemingly repaid in full (the mode is above 100% given the repayment of principal _and_ interest);
-
-+ a second and third mode around 42% and -1%;
-
-+ one last very diffuse mode around -100%.
-
-The modes are made more apparent by zooming on where the modes are present: the leftmost column basically shows the entire range of the NPVs (as portion of the loan). The middle graph zooms on the -20% / 50% range. The rightmost column zooms on the -100% / -25% section.
-
-Looking at the left hand scale, we can see that the lower NPVs overall gain in importance as the loan rating worsen. 
-
-The overall trend is what we should expect. What is very surprising is the existence of (1) very clearly defined modes which (2) are common to all types of borrowers. 
-
-
-
-```{r NPV-distribution-subrating,fig.cap="Distribution of NPV (\\%) depending on rating",fig.width="15cm"}
+```{r NPV-distribution-subrating,fig.cap="Distribution of NPV (\\%) depending on rating \n(y-axis square-root scaling)"}
 
 setGood <-  loansWorkingSet %>%
   filter(grade %in% c("A", "B")) %>% 
@@ -602,46 +623,58 @@ gridExtra::grid.arrange(ratingGood, rating2Good, rating3Good,
 
 ```
 
-```{r NPV-top,fig.cap="NPV \\% over 120\\% \n(no y-axis scaling"}
-loansWorkingSet %>%
-  filter(!is.na(NPVLossPCT))  %>% 
+
+At the outset, column by column (where NPVs are on the same scale), the NPV distribution show several modes on the same location. The modes are made more apparent by zooming on where the modes are present: the leftmost column basically shows the entire range of the NPVs (as portion of the loan). The middle graph zooms on the -20% / 50% range. The rightmost column zooms on the -100% / -25% section. Looking at the left hand scale, we can see that the lower NPVs overall gain in importance as the loan rating worsen. 
+
+Zooming without scaling the y-axis and grouping all the ratings available for investment on a single plot gives more details.
+
++ Figure \@ref(fig:NPV-top) shows a mode with a maximum around 1.25 / 1.5 being loans seemingly repaid in full (the mode is above 100% given the repayment of principal _and_ interest);
+
+
+```{r NPV-top,fig.cap="NPV \\% over 120\\% \n(no y-axis scaling)"}
+NPVset <- 
+  loansWorkingSet %>%
+  filter(grade %in% c("A", "B", "C", "D")) %>% 
+  select(grade, NPVLossPCT) %>% 
+  filter(!is.na(NPVLossPCT)) 
+
+NPVset %>%
   filter(NPVLossPCT >= 1.2) %>% 
   #sample_n(100000) %>% 
   ggplot(aes(NPVLossPCT, col = grade)) +
   geom_density(adjust = 3) 
 ```
 
-```{r NPV-mid-high,fig.cap="NPV \\% around 41\\% \n(no y-axis scaling"}
-loansWorkingSet %>%
-  filter(!is.na(NPVLossPCT))  %>% 
++ Figure \@ref(fig:NPV-mid-high) and figure \@ref(fig:NPV-zero) show a second and third mode around 41% and -1%;
+
+```{r NPV-mid-high,fig.cap="NPV \\% around 41\\% \n(no y-axis scaling)"}
+NPVset %>%
   filter(between(NPVLossPCT, 0.35, 0.50)) %>% 
   #sample_n(100000) %>% 
   ggplot(aes(NPVLossPCT, col = grade)) +
   geom_density(adjust = 3) 
 ```
 
-
-
-```{r NPV-zero,fig.cap="NPV \\% around -1\\% \n(no y-axis scaling"}
-loansWorkingSet %>%
-  filter(!is.na(NPVLossPCT))  %>% 
+```{r NPV-zero,fig.cap="NPV \\% around -1\\% \n(no y-axis scaling)"}
+NPVset %>%
   filter(between(NPVLossPCT, -0.10, 0.01)) %>% 
   #sample_n(100000) %>% 
   ggplot(aes(NPVLossPCT, col = grade)) +
   geom_density() 
 ```
 
++ Finally, figure \@ref(fig:NPV-total-loss) one last very diffuse mode around -100%.
 
-
-```{r NPV-total-loss,fig.cap="NPV \\% for close to total loss \\% \n(no y-axis scaling"}
-loansWorkingSet %>%
-  filter(!is.na(NPVLossPCT))  %>% 
+```{r NPV-total-loss,fig.cap="NPV \\% for close to total loss \\% \n(no y-axis scaling)"}
+NPVset %>%
   filter(between(NPVLossPCT, -1.00, -0.60)) %>% 
   #sample_n(100000) %>% 
   ggplot(aes(NPVLossPCT, col = grade)) +
   geom_density() 
 ```
 
+
+The overall trend is what we should expect. What is surprising is the existence of (1) very clearly defined modes which (2) are common to all types of borrowers. They roughly look log-normal, apart from the mode around 41% which look Gaussian.
 
 
 ## Variables
