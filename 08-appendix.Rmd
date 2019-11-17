@@ -614,6 +614,10 @@ The following shows two versions of the same code. The R version is provided bec
 
 ### R code
 
+```{r child="Scripts/RNPV.R",eval=FALSE,echo=TRUE}
+```
+
+
 ```{r R-IRR,eval=FALSE,echo=TRUE}
 ###################################################################################################
 #
@@ -634,10 +638,10 @@ The following shows two versions of the same code. The R version is provided bec
 # WARNING: THIS IS NOT OPTIMISED. RUNNING THIS FOR ALL LOANS (1.3 MLN OF THEM) TAKES CA.20 HOURS !!!!
 #
 calculateIRR <- function(loanNumber = 1,
-                         loan,
-                         intRate,
+                         loan = 1000,
+                         intRate = 0.02,
                          term = 36,
-                         totalPaid,
+                         totalPaid = 1000,
                          totalPrincipalPaid,
                          totalInterestPaid,
                          recoveries = 0,
@@ -689,7 +693,7 @@ calculateIRR <- function(loanNumber = 1,
       schedule[i, "monthlyPayment"] <-
         schedule[i, "monthlyPayment"] + totalPrincipalPaid - previousTotalP
       
-      # Then 3-month after the last payment date, recoveries and and later fees are paid
+      # Then 3-month after the last payment date, recoveries and and late fees are paid
       schedule[i + 3, "monthlyPayment"] <-
         schedule[i + 3, "monthlyPayment"] + recoveries + lateFees
       

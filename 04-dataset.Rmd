@@ -453,7 +453,7 @@ Figure \@ref(NPV-subrating) shows that as ratings worsen, the average NPV^[The a
 
 If loans were adequately priced, the excess returns (thanks to higher interest) should on average offset credit losses, that is an NPV average should be at least 100%. This seems to be the case down to ratings of about `D4`. Further down, credit losses become too frequent and/or too substantial to be covered on average. We posit that this justified rejecting loans applications rated `E1` and below.
 
-```{r NPV-subrating,fig.cap="Average NPV (\\%) depending on sub-rating"}
+```{r NPV-subrating,fig.cap="Average NPV et credit margin (\\%) depending on sub-rating"}
 loansBySubGrade <- 
   loansWorkingSet %>% 
   filter(!is.na(creditMargin)) %>% 

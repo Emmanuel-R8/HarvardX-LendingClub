@@ -1,5 +1,5 @@
 
-```{r echo=FALSE,message=FALSE}
+```{r cl-load-data,echo=FALSE,message=FALSE}
 # Load libraries
 library(tidyverse)
 library(lubridate)
@@ -21,8 +21,10 @@ if (!exists("lending_club")) {
 if (!exists("loans")) {
   loans <- readRDS("datasets/lending_club_reformatted_paid.rds")
 }
+```
 
 
+```{r cl-load-calculations,echo=FALSE,message=FALSE}
 ###################################################################################################
 ##
 ## Response variables
@@ -40,11 +42,14 @@ if (!exists("LoansMargin")) {
   LoansMargin <-
     read.csv(gzfile("datasets/LoansCreditMargin.csv.gz")) %>%
     as_tibble() %>%
-
+    
     # Remove monthDefault since already in IRR dataframe
     select(-monthDefault)
 }
+```
 
+
+```{r cl-load-rates,echo=FALSE,message=FALSE}
 ###################################################################################################
 ##
 ## Interest rate swaps
@@ -59,8 +64,10 @@ if (!exists("RATES3Y")) {
 if (!exists("RATES5Y")) {
   RATES5Y <- readRDS("datasets/rates5Y.rds")
 }
+```
 
 
+```{r cl-load-geography,echo=FALSE,message=FALSE}
 ###################################################################################################
 ##
 ## ZIP/FIPS code data
@@ -78,8 +85,10 @@ if (!exists("personalIncome"))
   personalIncome <- readRDS("datasets/personalincome.rds")
 if (!exists("unemploymentRate"))
   unemploymentRate <- readRDS("datasets/unemployment.rds")
+```
 
 
+```{r echo=FALSE,message=FALSE}
 nSamples <- nrow(loans)
 
 loansWorkingSet <- loans %>%
@@ -92,8 +101,10 @@ loansWorkingSet <- loans %>%
   mutate(principal_loss_pct = (funded_amnt - total_rec_prncp) / funded_amnt)
 
 nSamples <- nrow(loans)
+```
 
 
+```{r echo=FALSE,message=FALSE}
 ###################################################################################################
 ##
 ## Mostly generated from a LibreOffice spreadsheet for convenience purposes, then reformatted

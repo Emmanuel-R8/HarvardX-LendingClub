@@ -204,15 +204,15 @@ library(tidyverse)
 # (RMSE), for which we define a few helper functions (the global variables are defined
 # later):
 rmse_training <- function() {
-  prediction_Z <- rowSums(LF_Model$P[tri_train$userN, ] *
-                            LF_Model$Q[tri_train$movieN, ])
+  prediction_Z <- rowSums(LF_Model$P[tri_train$userN,] *
+                            LF_Model$Q[tri_train$movieN,])
   prediction <- prediction_Z * r_sd + r_m
   sqrt(sum((tri_train$rating - prediction) ^ 2 / nSamples))
 }
 
 rmse_validation <- function() {
-  prediction_Z <- rowSums(LF_Model$P[tri_test$userN, ] *
-                            LF_Model$Q[tri_test$movieN, ])
+  prediction_Z <- rowSums(LF_Model$P[tri_test$userN,] *
+                            LF_Model$Q[tri_test$movieN,])
   prediction <- prediction_Z * r_sd + r_m
   sqrt(sum((tri_test$rating - prediction) ^ 2) / nTest)
 }
@@ -253,13 +253,13 @@ stochastic_grad_descent <- function(model,
   for (i in 1:times) {
     # Extract a sample of size `batch_size` from the training set.
     spl <- sample(1:nSamples, size = batch_size, replace = FALSE)
-    spl_training_values <- tri_train[spl, ]
+    spl_training_values <- tri_train[spl,]
     
     
     # Take a subset of `P` and `Q` matching the users and
     # movies in the training sample.
-    spl_P <- model$P[spl_training_values$userN, ]
-    spl_Q <- model$Q[spl_training_values$movieN, ]
+    spl_P <- model$P[spl_training_values$userN,]
+    spl_Q <- model$Q[spl_training_values$movieN,]
     
     # rowSums returns the cross-product for a given user and movie.
     # err is the term inside brackets in the partial derivatives
@@ -270,15 +270,15 @@ stochastic_grad_descent <- function(model,
     delta_P <- -err * spl_Q + lambda * spl_P
     delta_Q <- -err * spl_P + lambda * spl_Q
     
-    model$P[spl_training_values$userN, ]  <- spl_P - alpha * delta_P
-    model$Q[spl_training_values$movieN, ] <- spl_Q - alpha * delta_Q
+    model$P[spl_training_values$userN,]  <- spl_P - alpha * delta_P
+    model$Q[spl_training_values$movieN,] <- spl_Q - alpha * delta_Q
     
   }
   
   # RMSE against the training set
   error <- sqrt(sum((
-    tri_train$rating_z - rowSums(model$P[tri_train$userN, ] *
-                                   model$Q[tri_train$movieN, ])
+    tri_train$rating_z - rowSums(model$P[tri_train$userN,] *
+                                   model$Q[tri_train$movieN,])
   ) ^ 2)
   / nSamples)
   

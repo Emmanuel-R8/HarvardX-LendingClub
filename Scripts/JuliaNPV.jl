@@ -54,12 +54,106 @@ function CreateCreditFoncier(;n = 36, riskFree = 0.0)
   schedule[1, :principal] = -1
   for m in 2:(n+1)
     # interest component
-    interest = riskFree * sum(schedule[1:(m-1), :principal])
-    schedule[m, :principalPayment] = instalment + interest
+    interest = -riskFree * sum(schedule[1:(m-1), :principal])
+    schedule[m, :principal] = instalment - interest
   end
 
   return(schedule)
 end
+
+
+# Solve for the credit margin
+function loanSchedule(; loanNumber = 1, loan = 1000.0, intRate = 0.05, term = 36,
+  totalPaid = 1000.0, totalPrincipalPaid = 700.0, totalInterestPaid = 50.0,
+  recoveries = 0.0, lateFees = 0.0,
+  riskFree = 0.01,
+  showSchedule = false)
+
+  # Months after which a loan defaults (normal tenor if no default or early prepayment)
+  monthDefault = term
+
+  # Monthly instlment
+  instalment = ceil(loan * intRate/12 / (1 - 1 / (1 + intRate/12) ^ term), digits = 2)
+
+  # Create a blank schedule
+  schedule = DataFrame(month = 0:nMonths, monthlyPayment = 0.0,
+                       principalPayment = 0.0,
+                       totalPandI = 0.0, totalI = 0.0, totalP = 0.0)
+
+  for i in 2:(nMonths + 1)
+    # Get situation at the end of previous month
+    previousTotalPandI = schedule[i - 1, :totalPandI]
+    previousTotalP     = schedule[i - 1, :totalP]
+    previousTotalI     = schedule[i - 1, :totalI]
+
+    # This is the beginning of a new month. First and foremost, the borrower is expected to pay the
+    # accrued interest on amount of principal outstanding.
+    # The instalment is expected to cover that amount of interest and the rest goes to
+    # reducing the principal due outstanding.
+    accruedInterest = ceil((loan - previousTotalP) * intRate/12; digits = 2)
+    decreasePrincipal = instalment - accruedInterest
+
+    # If that amount takes the schedule above the total amount of interest shown in the data set,
+    # we should stop the schedule at this point
+    # This is a shortcut since we could have a payment higher than the interest due, but not enough
+    # to cover the expected principal repayment. However, it works well in practice.
+    if previousTotalI + accruedInterest > totalInterestPaid
+
+      # We stop the normal schedule at this date.
+      # Interest is paid (although less than scheduled)
+      schedule[i, :monthlyPayment] = totalInterestPaid - previousTotalI
+
+      # Whatever principal is left as per the dataset
+      decreasePrincipal = totalPrincipalPaid - previousTotalP
+      schedule[i, :monthlyPayment] += decreasePrincipal
+
+      # Then 3-month after the last payment date, recoveries and and later fees are paid
+      schedule[i + 3, :monthlyPayment] += recoveries + lateFees
+
+      # Not really useful, but for completeness
+      schedule[i, :totalPandI] = totalPaid
+      schedule[i, :totalI]     = totalInterestPaid
+      schedule[i, :totalP]     = totalPrincipalPaid
+
+      # If total principal paid is less than borrower, then it is a default, and the monthDefault
+      # is adjusted.
+      if (totalPrincipalPaid < loan)
+        monthDefault = i
+      end
+
+      # No more payments to add to the schedule
+      break
+
+    else
+      # Deal with normal schedule
+      schedule[i, :monthlyPayment]   = instalment
+      schedule[i, :principalPayment] = decreasePrincipal
+      schedule[i, :totalPandI]       = schedule[i-1, :totalPandI] + instalment
+      schedule[i, :totalI]           = schedule[i-1, :totalI]     + accruedInterest
+      schedule[i, :totalP]           = schedule[i-1, :totalP]     + decreasePrincipal
+    end
+  end
+
+  # At this point schedule[, :monthlyPayment] contains the schedule of all payments, but needs to
+  # include the initial loan.
+  schedule[1, :monthlyPayment] = -loan
+  schedule[1, :principalPayment] = -loan
+
+  if (showSchedule)
+    println("Payments")
+    println(schedule)
+  end
+  # Rescale to 1,000
+
+  schedule[!, :monthlyPayment]   = schedule[:, :monthlyPayment] ./ loan .* 1000
+  schedule[!, :principalPayment] = schedule[:, :principalPayment] ./ loan .* 1000
+  schedule[!, :totalPandI]       = schedule[:, :totalPandI] ./ loan .* 1000
+  schedule[!, :totalI]           = schedule[:, :totalI] ./ loan .* 1000
+  schedule[!, :totalP]           = schedule[:, :totalP] ./ loan .* 1000
+
+  return(schedule)
+end
+
 
 
 # Solve for the credit margin
@@ -158,7 +252,6 @@ function NPV(; loanNumber = 1, loan = 1000.0, intRate = 0.05, term = 36,
   return((
     loanID = loanNumber,
     NPV =  sum(cashFlow ./ (1 + riskFree/12) .^ (0:nMonths))
-    NPVPrincipal =
   ))
 end
 
@@ -181,6 +274,11 @@ NPV(loanNumber = 1734666, loan = 35000, intRate = 0.0797, term = 36,
              totalPaid = 1057.04, totalPrincipalPaid = 863.83, totalInterestPaid = 193.72,
              recoveries = 0, lateFees = 0,
              riskFree = 0.02, showSchedule = true)
+
+loanSchedule(loanNumber = 1, loan = 5600, intRate = 0.1299, term = 36,
+    totalPaid = 6791.72, totalPrincipalPaid = 5600, totalInterestPaid = 1191.72,
+    recoveries = 0, lateFees = 0,
+    riskFree = 0.02, showSchedule = false)
 
 
 
