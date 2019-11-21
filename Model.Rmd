@@ -31,7 +31,7 @@ loansPredictors <-
   select(-one_of(varRemove)) %>%
 
   # [TODO] FOR THE MOMENT UNTIL MACRODATA IS FIXED
-  select(-one_of("addr_state")) %>%
+  #select(-one_of("addr_state")) %>%
 
   ##
   ## Dates to numeric, in 'decimal' years since 2000
@@ -111,6 +111,10 @@ set.seed(42)
 sampleTraining  <- sample(1:nSamples, floor(nSamples * proportionTraining), replace = FALSE)
 loansTraining <- loansPredictors %>% slice( sampleTraining)
 loansTest <-     loansPredictors %>% slice(-sampleTraining)
+```
+
+
+```{r}
 modelTraining <- modelX %>% slice( sampleTraining)
 modelTest <-     modelX %>% slice(-sampleTraining)
 ```
@@ -332,7 +336,367 @@ profvis({
 ```
 
 
+#  NPV by purpose
 
+```{r loss-distribution-purpose,fig.cap="Distribution of NPV (\\%) depending on rating \n(y-axis square-root scaling)"}
+
+Set <- loansWorkingSet %>% 
+  select(purpose, funded_amnt, total_rec_prncp) %>%
+  filter(total_rec_prncp < funded_amnt - 1) %>% 
+  mutate(PrincipalLoss = (funded_amnt - total_rec_prncp)/funded_amnt)
+
+adjustSpread <- 1
+rangeMin <- 0.0
+rangeMax <- 1.5
+
+Set %>% ggplot(aes(PrincipalLoss, col = purpose)) +
+  geom_density(adjust = adjustSpread) +
+  scale_x_continuous(limits = c(rangeMin, rangeMax)) +
+  #scale_y_sqrt() + 
+  xlab("")
+
+```
+
+#  NPV by state
+
+```{r loss-distribution-state,fig.cap="Distribution of NPV (\\%) depending on rating \n(y-axis square-root scaling)"}
+
+Set <- loansWorkingSet %>% 
+  select(addr_state, funded_amnt, total_rec_prncp) %>%
+  filter(total_rec_prncp < funded_amnt - 1) %>% 
+  mutate(PrincipalLoss = (funded_amnt - total_rec_prncp)/funded_amnt)
+
+adjustSpread <- 1
+rangeMin <- 0.0
+rangeMax <- 1.5
+
+Set %>% ggplot(aes(PrincipalLoss, col = addr_state)) +
+  geom_density(adjust = adjustSpread) +
+  scale_x_continuous(limits = c(rangeMin, rangeMax)) +
+  #scale_y_sqrt() + 
+  xlab("")
+
+```
+
+#  NPV by employment length
+
+```{r loss-distribution-emp,fig.cap="Distribution of NPV (\\%) depending on rating \n(y-axis square-root scaling)"}
+
+Set <- loansWorkingSet %>% 
+  select(emp_length, funded_amnt, total_rec_prncp) %>%
+  mutate(emp_length = as.factor(ifelse(is.na(emp_length), 0, emp_length))) %>% 
+  filter(total_rec_prncp < funded_amnt - 1) %>% 
+  mutate(PrincipalLoss = (funded_amnt - total_rec_prncp)/funded_amnt)
+
+adjustSpread <- 1
+rangeMin <- 0.0
+rangeMax <- 1.5
+
+Set %>% ggplot(aes(PrincipalLoss, col = emp_length)) +
+  geom_density(adjust = adjustSpread) +
+  scale_x_continuous(limits = c(rangeMin, rangeMax)) +
+  #scale_y_sqrt() + 
+  xlab("")
+
+```
+
+#  NPV by home ownership
+
+```{r loss-distribution-home,fig.cap="Distribution of NPV (\\%) depending on rating \n(y-axis square-root scaling)"}
+
+Set <- loansWorkingSet %>% 
+  select(home_ownership, funded_amnt, total_rec_prncp) %>%
+  filter(total_rec_prncp < funded_amnt - 1) %>% 
+  mutate(PrincipalLoss = (funded_amnt - total_rec_prncp)/funded_amnt)
+
+adjustSpread <- 1
+rangeMin <- 0.0
+rangeMax <- 1.5
+
+Set %>% ggplot(aes(PrincipalLoss, col = home_ownership)) +
+  geom_density(adjust = adjustSpread) +
+  scale_x_continuous(limits = c(rangeMin, rangeMax)) +
+  #scale_y_sqrt() + 
+  xlab("")
+
+
+```
+
+# Information value (no package)
+
+```{r}
+Set <- loansWorkingSet %>%
+  mutate(goodLoan = (abs(funded_amnt - total_rec_prncp) < 1), 
+         badLoan  = !goodLoan)
+
+nGood = Set %>% filter(goodLoan == TRUE) %>% nrow()
+nBad  = Set %>% filter(badLoan  == TRUE) %>% nrow()
+```
+
+## Home ownership
+
+```{r}
+CountGB <- Set %>% 
+  mutate(goodLoan = as.factor(goodLoan)) %>% 
+  group_by(home_ownership, goodLoan) %>% 
+  mutate(totalByDefault = n()) %>% 
+  ungroup() %>% 
+  
+  mutate(gg = if_else(goodLoan == "TRUE",  totalByDefault / nGood, 0), 
+         bb = if_else(goodLoan == "FALSE", totalByDefault / nBad , 0)) %>% 
+  
+  group_by(home_ownership) %>% 
+  summarise(gg = max(gg), 
+            bb = max(bb)) %>% 
+  mutate(IV = (gg - bb) * log(gg / bb)) 
+
+sum(CountGB$IV)
+```
+
+
+## State
+
+```{r}
+CountGB <- Set %>% 
+  mutate(goodLoan = as.factor(goodLoan)) %>% 
+  group_by(addr_state, goodLoan) %>% 
+  mutate(totalByDefault = n()) %>% 
+  ungroup() %>% 
+  
+  mutate(gg = if_else(goodLoan == "TRUE",  totalByDefault / nGood, 0), 
+         bb = if_else(goodLoan == "FALSE", totalByDefault / nBad , 0)) %>% 
+  
+  group_by(addr_state) %>% 
+  summarise(gg = max(gg), 
+            bb = max(bb)) %>% 
+  mutate(IV = (gg - bb) * log(gg / bb)) 
+
+sum(CountGB$IV)
+```
+
+
+## Verification status
+
+```{r}
+CountGB <- Set %>% 
+  mutate(goodLoan = as.factor(goodLoan)) %>% 
+  group_by(verification_status, goodLoan) %>% 
+  mutate(totalByDefault = n()) %>% 
+  ungroup() %>% 
+  
+  mutate(gg = if_else(goodLoan == "TRUE",  totalByDefault / nGood, 0), 
+         bb = if_else(goodLoan == "FALSE", totalByDefault / nBad , 0)) %>% 
+  
+  group_by(verification_status) %>% 
+  summarise(gg = max(gg), 
+            bb = max(bb)) %>% 
+  mutate(IV = (gg - bb) * log(gg / bb)) 
+
+sum(CountGB$IV)
+```
+
+## Application type
+
+```{r}
+CountGB <- Set %>% 
+  mutate(goodLoan = as.factor(goodLoan)) %>% 
+  group_by(application_type, goodLoan) %>% 
+  mutate(totalByDefault = n()) %>% 
+  ungroup() %>% 
+  
+  mutate(gg = if_else(goodLoan == "TRUE",  totalByDefault / nGood, 0), 
+         bb = if_else(goodLoan == "FALSE", totalByDefault / nBad , 0)) %>% 
+  
+  group_by(application_type) %>% 
+  summarise(gg = max(gg), 
+            bb = max(bb)) %>% 
+  mutate(IV = (gg - bb) * log(gg / bb)) 
+
+sum(CountGB$IV)
+```
+
+## Grade
+
+```{r}
+CountGB <- Set %>% 
+  mutate(goodLoan = as.factor(goodLoan)) %>% 
+  group_by(grade, goodLoan) %>% 
+  mutate(totalByDefault = n()) %>% 
+  ungroup() %>% 
+  
+  mutate(gg = if_else(goodLoan == "TRUE",  totalByDefault / nGood, 0), 
+         bb = if_else(goodLoan == "FALSE", totalByDefault / nBad , 0)) %>% 
+  
+  group_by(grade) %>% 
+  summarise(gg = max(gg), 
+            bb = max(bb)) %>% 
+  mutate(IV = (gg - bb) * log(gg / bb)) 
+
+sum(CountGB$IV)
+```
+
+## Sub-grade
+
+```{r}
+CountGB <- Set %>% 
+  mutate(goodLoan = as.factor(goodLoan)) %>% 
+  group_by(sub_grade, goodLoan) %>% 
+  mutate(totalByDefault = n()) %>% 
+  ungroup() %>% 
+  
+  mutate(gg = if_else(goodLoan == "TRUE",  totalByDefault / nGood, 0), 
+         bb = if_else(goodLoan == "FALSE", totalByDefault / nBad , 0)) %>% 
+  
+  group_by(sub_grade) %>% 
+  summarise(gg = max(gg), 
+            bb = max(bb)) %>% 
+  mutate(IV = (gg - bb) * log(gg / bb)) 
+
+sum(CountGB$IV)
+```
+
+## Debt to income
+
+```{r}
+CountGB <- Set %>% 
+  mutate(goodLoan = as.factor(goodLoan)) %>% 
+  filter(!is.na(dti)) %>% 
+  mutate(dti = as_factor(dti)) %>% 
+  group_by(dti, goodLoan) %>% 
+  mutate(totalByDefault = n()) %>% 
+  ungroup() %>% 
+  
+  mutate(gg = if_else(goodLoan == "TRUE",  totalByDefault / nGood, 0), 
+         bb = if_else(goodLoan == "FALSE", totalByDefault / nBad , 0)) %>% 
+  
+  group_by(dti) %>% 
+  summarise(gg = max(gg), 
+            bb = max(bb)) %>% 
+  mutate(IV = (gg - bb) * log(gg / bb)) %>% 
+  filter(is.finite(IV))
+
+sum(CountGB$IV)
+
+```
+
+
+
+## Loop through all variables
+
+```{r}
+loansBinning <- loansWorkingSet %>%
+  mutate(home_ownership = as_factor(home_ownership)) %>%
+  mutate(
+    emp_length = as_factor(emp_length),
+    goodLoan = (abs(funded_amnt - total_rec_prncp) < 1),
+    badLoan  = !goodLoan
+  ) %>%
+  as.data.frame()
+
+nGood = loansBinning %>% filter(goodLoan == TRUE) %>% nrow()
+nBad  = loansBinning %>% filter(badLoan  == TRUE) %>% nrow()
+
+
+listIV <- tibble(field = names(loansBinning), IV = -1.0)
+
+for (n in listIV$field) {
+  cat("Variable: ", n)
+  
+  if (n == "isDefault") {
+    cat("\n")
+  } else {
+    if (is.factor(loansBinning[, n])) {
+      cat(" is a factor, ")
+      
+      v <- as.character(n)
+      
+      CountGB <- loansBinning %>%
+        select(goodLoan, badLoan, !!v) %>%
+        filter(!is.na(!!v)) %>%
+        group_by(!!sym(v), goodLoan) %>%
+        mutate(totalByDefault = n()) %>%
+        ungroup() %>%
+        
+        mutate(
+          gg = if_else(goodLoan == "TRUE",  totalByDefault / nGood, 0),
+          bb = if_else(goodLoan == "FALSE", totalByDefault / nBad , 0)
+        ) %>%
+        
+        group_by(!!sym(v)) %>%
+        summarise(gg = max(gg),
+                  bb = max(bb)) %>%
+        mutate(IV = (gg - bb) * log(gg / bb)) %>%
+        filter(is.finite(IV))
+      
+      
+      
+      resultHome <- sum(CountGB$IV)
+      
+      
+      tryCatch({
+        cat("     IV = ", resultHome)
+        listIV[which(listIV[, "field"] == n)  , "IV"] <- resultHome
+      },
+      error = function(e) {
+        return(NA)
+      })
+    }
+    
+    cat("\n")
+  }
+}
+
+```
+
+
+
+# NPV distributions
+
+##  NPV by verification status
+
+```{r loss-distribution-verification,fig.cap="Distribution of NPV (\\%) depending on rating \n(y-axis square-root scaling)"}
+
+Set <- loansWorkingSet %>% 
+  select(verification_status, funded_amnt, total_rec_prncp) %>%
+  filter(total_rec_prncp < funded_amnt - 1) %>% 
+  mutate(PrincipalLoss = (funded_amnt - total_rec_prncp)/funded_amnt)
+
+adjustSpread <- 1
+rangeMin <- 0.0
+rangeMax <- 1.5
+
+Set %>% ggplot(aes(PrincipalLoss, col = verification_status)) +
+  geom_density(adjust = adjustSpread) +
+  scale_x_continuous(limits = c(rangeMin, rangeMax)) +
+  #scale_y_sqrt() + 
+  xlab("")
+
+```
+
+
+##  NPV by application type
+
+```{r loss-distribution-joint,fig.cap="Distribution of NPV (\\%) depending on rating \n(y-axis square-root scaling)"}
+
+Set <- loansWorkingSet %>% 
+  select(application_type, funded_amnt, total_rec_prncp) %>%
+  filter(total_rec_prncp < funded_amnt - 1) %>% 
+  mutate(PrincipalLoss = (funded_amnt - total_rec_prncp)/funded_amnt)
+
+adjustSpread <- 1
+rangeMin <- 0.0
+rangeMax <- 1.5
+
+Set %>% ggplot(aes(PrincipalLoss, col = application_type)) +
+  geom_density(adjust = adjustSpread) +
+  scale_x_continuous(limits = c(rangeMin, rangeMax)) +
+  #scale_y_sqrt() + 
+  xlab("")
+
+```
+
+
+# K-Means
 
 ```{r eval=FALSE}
 library(cluster)
@@ -614,15 +978,411 @@ tmp01 <-
 ```
 
 
+# Optimised binning for Information Value
+
+## Data preparation
+
+```{r child="CleanLoad.Rmd"}
+```
+
+```{r}
+rm(lending_club)
+```
+
+
+```{r}
+# Select the variables checked in 01-startup.Rmd
+varList <- c(LC_variable[LC_variable$inModel == TRUE, "variable_name"])$variable_name
+varList <- c(varList, "grade_num", "sub_grade_num", "principal_loss_pct", "creditMargin", "monthDefault")
+
+# Make sure that some variables are NOT in included in the training set
+varRemove <- c("")
+```
+
+
+```{r}
+#################################################################################################
+##
+## Prepare a dataset with ONLY the predictors NOT removing NA's
+##
+loansPredictors <-
+  loansWorkingSet %>%
+
+  # Keep the chosen predictors
+  # Use one_of() to avoid errors if column does not exist
+  select(one_of(varList)) %>%
+  select(-one_of(varRemove)) %>%
+
+  # [TODO] FOR THE MOMENT UNTIL MACRODATA IS FIXED
+  # select(-one_of("addr_state")) %>%
+
+  ##
+  ## Dates to numeric, in 'decimal' years since 2000
+  ##
+  mutate_at(c("issue_d", "earliest_cr_line"), function(d) {
+    return(year(d) - 2000 + (month(d) - 1) / 12)
+  }) %>%
+
+  ## Add polynomials of the dates to model the time-trend shape
+  mutate(issue_d2 = issue_d ^ 2,
+         issue_d3 = issue_d ^ 3,
+         earliest_cr_line2 = earliest_cr_line ^ 2,
+         earliest_cr_line3 = earliest_cr_line ^ 3) %>% 
+  
+  ## Create default flag as int as required by `smbinning`
+  mutate(isDefault = if_else(principal_loss_pct >= 0.001, 1, 0))
+
+
+#################################################################################################
+##
+## Create training / test sets 80%/20%
+##
+proportionTraining <- 0.8
+set.seed(42)
+sampleTraining  <- sample(1:nSamples, floor(nSamples * proportionTraining), replace = FALSE)
+loansTraining <- loansPredictors %>% slice( sampleTraining)
+loansTest <-     loansPredictors %>% slice(-sampleTraining)
+
+# Subsets of the training set
+set.seed(42)
+nSamplesTraining <- nrow(loansTraining)
+sample005 <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.005), replace = FALSE)
+sample01  <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.01),  replace = FALSE)
+sample05  <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.05),  replace = FALSE)
+sample10  <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.10),  replace = FALSE)
+sample20  <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.20),  replace = FALSE)
+
+loans005 <- loansTraining %>% slice(sample005)
+loans01  <- loansTraining %>% slice(sample01)
+loans05  <- loansTraining %>% slice(sample05)
+loans10  <- loansTraining %>% slice(sample10)
+loans20  <- loansTraining %>% slice(sample20)
+
+loss005 <- loansTraining %>% select(principal_loss_pct) %>% slice(sample005)
+loss01  <- loansTraining %>% select(principal_loss_pct) %>% slice(sample01)
+loss05  <- loansTraining %>% select(principal_loss_pct) %>% slice(sample05)
+loss10  <- loansTraining %>% select(principal_loss_pct) %>% slice(sample10)
+loss20  <- loansTraining %>% select(principal_loss_pct) %>% slice(sample20)
+
+```
+
+## Binning
+
+```{r}
+detach("package:scorer", unload = TRUE, force = TRUE)
+devtools::install_local("~/Development/R/DVPT-PACKAGES/Score_modeling_binning/scorer", force = TRUE, quiet = TRUE)
+#devtools::install_github("Emmanuel-R8/SMBinning")
+library(scorer)
+```
+
+```{r}
+loansBinning <- loans10 %>% 
+  mutate(home_ownership = as_factor(home_ownership),
+         emp_length = as_factor(emp_length), 
+         isDefaultBool = (isDefault == 1)) 
+
+```
+
+### dti
+
+```{r}
+resultHome <- binTableContinuous(
+  df = loansBinning, 
+  x = "dti",
+  y = "isDefault",
+  p = 0.05)
+
+resultHome$table
+resultHome$IV
+
+```
+
+### Home ownership
+
+```{r}
+resultHome <- binTableCategorical(
+  df = loansBinning, 
+  x = "home_ownership", 
+  y = "isDefaultBool", 
+  maxCategories = 20)
+
+resultHome
+resultHome$IV
+
+```
+
+### Verification Status
+
+```{r}
+resultVerif <- binTableCategorical(
+  df = loansBinning, 
+  x = "verification_status", 
+  y = "isDefaultBool", 
+  maxCategories = 20)
+
+resultVerif
+resultVerif$IV
+
+```
+
+
+
+### Purpose
+
+```{r}
+resultHome <- binTableCategorical(
+  df = loansBinning, 
+  x = "purpose", 
+  y = "isDefaultBool", 
+  maxCategories = 20)
+
+resultHome
+resultHome$IV
+
+```
+
+
+### Sub grade
+
+```{r}
+resultSubgrade <- binTableCategorical(
+  df = loansBinning, 
+  x = "sub_grade", 
+  y = "isDefaultBool", 
+  maxCategories = 50)
+
+resultSubgrade
+resultSubgrade$IV
+
+```
+
+
+
+### Employment years
+
+```{r}
+resultEmp <- binTableCategorical(
+  df = loansBinning, 
+  x = "emp_length", 
+  y = "isDefaultBool", 
+  maxCategories = 20)
+
+resultEmp
+resultEmp$IV
+
+```
+
+
+
+### Bank card utilisation
+
+```{r}
+resultBC <- binTableContinuous(
+  df = loansBinning, 
+  x = "bc_util", 
+  y = "isDefault", 
+  p = 0.05)
+
+resultBC
+resultBC$IV
+
+```
+
+
+
+### State
+
+```{r}
+resultState <- binTableCategorical(
+  df = loansBinning, 
+  x = "addr_state", 
+  y = "isDefaultBool", 
+  maxCategories = 100)
+
+resultState
+resultState$IV
+
+```
+
+
+### Annual income
+
+```{r}
+which(names(loansBinning) == "annual_inc_joint")
+
+resultInc <- binTableContinuous(
+  df = loansBinning, 
+  x = "annual_inc_joint", 
+  y = "isDefault", 
+  p = 0.05)
+
+resultHome
+resultHome$iv
+
+```
+
+### Loan amount
+
+```{r}
+resultAmnt <- binTableContinuous(
+  df = loansBinning, 
+  x = "loan_amnt", 
+  y = "isDefault", 
+  p = 0.05)
+
+resultAmnt$IV
+
+```
+
+### Credit Margin
+
+```{r}
+resultCM <- binTableContinuous(
+  df = loansBinning, 
+  x = "creditMargin", 
+  y = "isDefault", 
+  p = 0.05)
+
+resultCM$IV
+resultCM
+```
+
+
+## Loop through all variables
+
+```{r}
+detach("package:scorer", unload = TRUE, force = TRUE)
+devtools::install_local("~/Development/R/DVPT-PACKAGES/Score_modeling_binning/scorer", force = TRUE, quiet = TRUE)
+#devtools::install_github("Emmanuel-R8/SMBinning")
+library(scorer)
+```
+
+
 ```{r}
 
+loansBinning <- loans20 %>%
+  mutate(home_ownership = as_factor(home_ownership),
+         emp_length = as_factor(emp_length),
+         grade = as_factor(grade), 
+         isDefaultBool = (isDefault == 1)) 
 
+
+listIV <- tibble(field = names(loansBinning), IV = -1.0)
+listBins <- list()
+
+for (n in listIV$field) {
+  cat("Field: ", n)
+  
+  if (n %in% c("isDefault", "isDefaultBool")) {
+    cat("\n")
+  } else {
+    if (class(loansBinning[[1, n]]) == "factor") {
+      cat(" is a factor, ")
+      result <- binTableCategorical(df = loansBinning,
+        x = n,
+        y = "isDefaultBool",
+        maxCategories = 100
+      )
+    } else {
+      cat(" is numeric, ")
+      result <- binTableContinuous(df = loansBinning,
+                              x = n,
+                              y = "isDefault",
+                              p = 0.05)
+    }
+    
+    tryCatch({
+      cat("     IV = ", result$IV)
+      listIV[which(listIV[,"field"] == n)  , "IV"] <- result$IV
+      listBins <- c(listBins, list(result))
+    }, 
+    error = function(e) {
+      return(NA)
+  } )
+    
+    cat("\n")
+  }
+}
+
+
+```
+
+```{r}
+#saveRDS(listIV, "datasets/listIV005.rds")
+#saveRDS(listBins, "datasets/listBins005.rds")
+#saveRDS(listIV, "datasets/listIV020.rds")
+```
+
+
+Ignore the variables that would not be available before the credit scoring is complete.
+
+```{r}
+bestBins <- listIV %>% 
+  filter(!(field %in% c("loanID", "term", "int_rate", "creditMargin", "loan_status", 
+                        "grade", "sub_grade", "grade_num", "sub_grade_num", 
+                        "emp_length", "home_ownership", "monthDefault"))) %>% 
+  filter(IV >= 0.02) %>% 
+  arrange(desc(IV))
+
+
+bestBins
+```
+
+
+
+
+
+## Model training
+
+```{r}
+detach("package:smbinning", unload = TRUE, force = TRUE)
+#devtools::install_github("Emmanuel-R8/SMBinning")
+devtools::install_local(path = "~/Development/R/DVPT-PACKAGES/Score_modeling_binning/smbinning", force = TRUE)
+library(smbinning)
+
+loansBinning <- loans005 %>%
+  sample_n(250) %>% 
+  mutate(home_ownership = as_factor(home_ownership)) %>% 
+  select(-loanID) %>% 
+  as.data.frame()
+
+smbinning.logitrank(df = loansBinning,
+                    y = "isDefault",  
+                    chr = as_vector(bestBins[,1]))
 
 ```
 
 
 
 
+
+```{r}
+## https://blog.revolutionanalytics.com/2015/03/r-package-smbinning-optimal-binning-for-scoring-modeling.html
+data("smbsimdf1")
+resultSmbinning <- smbinning(smbsimdf1, y = "fgood", x = "tob", p = 0.05)
+
+resultSmbinning$ivtable
+
+```
+```{r}
+# Relevant plots (2x2 Page)
+par(mfrow = c(2, 2))
+
+boxplot(
+  smbsimdf1$tob ~ smbsimdf1$fgood,
+  horizontal = T,
+  frame = F,
+  col = "lightgray",
+  main = "Distribution"
+)
+
+mtext("Time on Books (Months)", 3)
+
+smbinning.plot(resultSmbinning, option = "dist", sub = "Time on Books (Months)")
+smbinning.plot(resultSmbinning, option = "badrate", sub = "Time on Books (Months)")
+smbinning.plot(resultSmbinning, option = "WoE", sub = "Time on Books (Months)")
+
+```
 
 
 

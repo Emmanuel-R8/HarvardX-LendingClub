@@ -11,13 +11,22 @@ library(lubridate)
 library(dslabs)
 ds_theme_set()
 
+```
+
+
+```{r cl-load-lending-club,echo=FALSE,message=FALSE}
 ###################################################################################################
 ##
 ## LendingClub data
-if (!exists("lending_club")) {
-  lending_club <- readRDS("datasets/lending_club_reformatted.rds")
-}
+## This file is only used to create the working datasets
+## 
+#if (!exists("lending_club")) {
+#  lending_club <- readRDS("datasets/lending_club_reformatted.rds")
+#}
+```
 
+
+```{r cl-load-reformatted-paid,echo=FALSE,message=FALSE}
 if (!exists("loans")) {
   loans <- readRDS("datasets/lending_club_reformatted_paid.rds")
 }
@@ -88,7 +97,7 @@ if (!exists("unemploymentRate"))
 ```
 
 
-```{r echo=FALSE,message=FALSE}
+```{r create-working-set,echo=FALSE,message=FALSE}
 nSamples <- nrow(loans)
 
 loansWorkingSet <- loans %>%
@@ -104,7 +113,7 @@ nSamples <- nrow(loans)
 ```
 
 
-```{r echo=FALSE,message=FALSE}
+```{r create-list-variables,echo=FALSE,message=FALSE}
 ###################################################################################################
 ##
 ## Mostly generated from a LibreOffice spreadsheet for convenience purposes, then reformatted
@@ -163,14 +172,14 @@ LC_variable <-
   add_row(
     variable_name = 'grade' ,
     description = 'LC assigned loan grade',
-    inModel = FALSE,
+    inModel = TRUE,
     inPrediction = FALSE,
     inPricing = FALSE
   ) %>%
   add_row(
     variable_name = 'sub_grade' ,
     description = 'LC assigned loan subgrade',
-    inModel = FALSE,
+    inModel = TRUE,
     inPrediction = TRUE,
     inPricing = FALSE
   ) %>%
@@ -275,7 +284,7 @@ LC_variable <-
   add_row(
     variable_name = 'dti' ,
     description = 'A ratio calculated using the borrower s total monthly debt payments on the total debt obligations, excluding mortgage and the requested LC loan, divided by the borrower s self-reported monthly income. NOT USED AS A VARIABLE. ONLY USE JOINT DTI.',
-    inModel = FALSE,
+    inModel = TRUE,
     inPrediction = FALSE,
     inPricing = FALSE
   ) %>%

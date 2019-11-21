@@ -332,7 +332,7 @@ local({
     )
   
   saveRDS(past_loans, "datasets/lending_club_reformatted_paid.rds")
-})```
+})
 
 ```
 
@@ -589,7 +589,7 @@ This table presents the list of variables provided in the original dataset. The 
 
 ```{r variable-description,cache=TRUE}
 LC_variable %>%
-  select(variable_name, description) %>% 
+  select(variable_name, description) %>%
   
   # Format the table.
   kable(
@@ -781,15 +781,23 @@ local({
   loansIRR <-
     loans %>%
     rowwise() %>%
-    do(calculateIRR(loanNumber = .$loanID,
-                    loan = .$funded_amnt, intRate = .$int_rate, term = .$term,
-                    totalPaid = .$total_pymnt, totalPrincipalPaid = .$total_rec_prncp,
-                    totalInterestPaid = .$total_rec_int,
-                    recoveries = .$recoveries, lateFees = .$total_rec_late_fee))
-
+    do(
+      calculateIRR(
+        loanNumber = .$loanID,
+        loan = .$funded_amnt,
+        intRate = .$int_rate,
+        term = .$term,
+        totalPaid = .$total_pymnt,
+        totalPrincipalPaid = .$total_rec_prncp,
+        totalInterestPaid = .$total_rec_int,
+        recoveries = .$recoveries,
+        lateFees = .$total_rec_late_fee
+      )
+    )
+  
   saveRDS(loansIRR, "datasets/lending_club_IRRs.rds")
   
-  })
+})
 ```
 
 ### Julia code
