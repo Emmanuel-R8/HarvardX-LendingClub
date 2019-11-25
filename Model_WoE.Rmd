@@ -1,0 +1,439 @@
+----
+title: "R Notebook"
+output: html_notebook
+----
+
+```{r child="CleanLoad.Rmd"}
+```
+
+
+# Optimised binning for Information Value
+
+## Data preparation
+
+
+```{r}
+# Select the variables checked in 01-startup.Rmd
+varList <- c(LC_variable[LC_variable$inModel == TRUE, "variable_name"])$variable_name
+varList <- c(varList, "grade_num", "sub_grade_num", "principal_loss_pct", "creditMargin", "monthDefault")
+
+# Make sure that some variables are NOT in included in the training set
+varRemove <- c("")
+```
+
+
+```{r}
+#################################################################################################
+##
+## Prepare a dataset with ONLY the predictors NOT removing NA's
+##
+loansPredictors <-
+  loansWorkingSet %>%
+
+  # Keep the chosen predictors
+  # Use one_of() to avoid errors if column does not exist
+  select(one_of(varList)) %>%
+  select(-one_of(varRemove)) %>%
+
+  # [TODO] FOR THE MOMENT UNTIL MACRODATA IS FIXED
+  # select(-one_of("addr_state")) %>%
+
+  ##
+  ## Dates to numeric, in 'decimal' years since 2000
+  ##
+  mutate_at(c("issue_d", "earliest_cr_line"), function(d) {
+    return(year(d) - 2000 + (month(d) - 1) / 12)
+  }) %>%
+
+  ## Add polynomials of the dates to model the time-trend shape
+  mutate(issue_d2 = issue_d ^ 2,
+         issue_d3 = issue_d ^ 3,
+         earliest_cr_line2 = earliest_cr_line ^ 2,
+         earliest_cr_line3 = earliest_cr_line ^ 3) %>%
+
+  ## Create default flag as int as required by `smbinning`
+  mutate(isDefault = if_else(principal_loss_pct >= 0.001, 1, 0))
+
+
+#################################################################################################
+##
+## Create training / test sets 80%/20%
+##
+proportionTraining <- 0.8
+set.seed(42)
+sampleTraining  <- sample(1:nSamples, floor(nSamples * proportionTraining), replace = FALSE)
+loansTraining <- loansPredictors %>% slice( sampleTraining)
+loansTest <-     loansPredictors %>% slice(-sampleTraining)
+
+# Subsets of the training set
+set.seed(42)
+nSamplesTraining <- nrow(loansTraining)
+sample005 <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.005), replace = FALSE)
+sample01  <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.01),  replace = FALSE)
+sample05  <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.05),  replace = FALSE)
+sample10  <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.10),  replace = FALSE)
+sample20  <- sample(1:nSamplesTraining,  floor(nSamplesTraining * 0.20),  replace = FALSE)
+
+loans005 <- loansTraining %>% slice(sample005)
+loans01  <- loansTraining %>% slice(sample01)
+loans05  <- loansTraining %>% slice(sample05)
+loans10  <- loansTraining %>% slice(sample10)
+loans20  <- loansTraining %>% slice(sample20)
+
+loss005 <- loansTraining %>% select(principal_loss_pct) %>% slice(sample005)
+loss01  <- loansTraining %>% select(principal_loss_pct) %>% slice(sample01)
+loss05  <- loansTraining %>% select(principal_loss_pct) %>% slice(sample05)
+loss10  <- loansTraining %>% select(principal_loss_pct) %>% slice(sample10)
+loss20  <- loansTraining %>% select(principal_loss_pct) %>% slice(sample20)
+
+```
+
+## Binning
+
+```{r}
+detach("package:smbinning", unload = TRUE, force = TRUE)
+devtools::install_github("Emmanuel-R8/SMBinning")
+library(smbinning)
+```
+
+```{r}
+loansBinning <- loans005 %>%
+  mutate(home_ownership = as_factor(home_ownership)) %>%
+  mutate(emp_length = as_factor(emp_length)) %>%
+  as.data.frame()
+```
+
+### Verification Status
+
+```{r}
+resultVerif <- smbinning.factor(
+  df = loansBinning,
+  x = "verification_status",
+  y = "isDefault",
+  maxcat = 20)
+
+resultVerif
+resultVerif$iv
+```
+
+### Home ownership
+
+```{r}
+resultHome <- smbinning.factor(
+  df = loansBinning,
+  x = "home_ownership",
+  y = "isDefault",
+  maxcat = 20)
+
+resultHome
+resultHome$iv
+```
+
+### Purpose
+
+```{r}
+resultHome <- smbinning.factor(
+  df = loansBinning,
+  x = "purpose",
+  y = "isDefault",
+  maxcat = 20)
+
+resultHome
+resultHome$iv
+
+```
+
+
+### Sub grade
+
+```{r}
+resultHome <- smbinning.factor(
+  df = loansBinning,
+  x = "sub_grade",
+  y = "isDefault",
+  maxcat = 50)
+
+resultHome
+resultHome$iv
+
+```
+
+
+
+### Employment years
+
+```{r}
+resultHome <- smbinning.factor(
+  df = loansBinning,
+  x = "emp_length",
+  y = "isDefault",
+  maxcat = 20)
+
+resultHome
+resultHome$iv
+
+```
+
+
+### dti
+
+```{r}
+resultHome <- smbinning(
+  df = loansBinning,
+  x = "dti",
+  y = "isDefault",
+  p = 0.05)
+
+resultHome
+resultHome$iv
+
+```
+
+
+### Bank card utilisation
+
+```{r}
+resultHome <- smbinning(
+  df = loansBinning,
+  x = "bc_util",
+  y = "isDefault",
+  p = 0.05)
+
+resultHome
+resultHome$iv
+
+```
+
+
+
+### State
+
+```{r}
+resultState <- smbinning.factor(
+  df = loansBinning,
+  x = "addr_state",
+  y = "isDefault",
+  maxcat = 100)
+
+resultState
+resultState$iv
+
+```
+
+
+### Annual income
+
+```{r}
+which(names(loansBinning) == "annual_inc_joint")
+
+resultHome <- smbinning(
+  df = loansBinning,
+  x = "annual_inc_joint",
+  y = "isDefault",
+  p = 0.05)
+
+resultHome
+resultHome$iv
+
+```
+
+### Loan amount
+
+```{r}
+resultHome <- smbinning(
+  df = loansBinning,
+  x = "loan_amnt",
+  y = "isDefault",
+  p = 0.05)
+
+resultHome
+
+```
+
+### Credit Margin
+
+```{r}
+resultHome <- smbinning(
+  df = loansBinning,
+  x = "creditMargin",
+  y = "isDefault",
+  p = 0.05)
+
+resultHome
+
+```
+
+
+
+### Check
+
+```{r}
+devtools::install_local(path = "~/Development/R/smbinning", force = TRUE)
+
+resultDTI <- smbinning(
+  df = loansBinning,
+  x = "dti",
+  y = "isDefault",
+  p = 0.05)
+
+resultDTI$iv
+resultDTI
+
+resultAnnual <- smbinning(
+  df = loansBinning,
+  x = "annual_inc_joint",
+  y = "isDefault",
+  p = 0.05)
+
+resultAnnual
+resultAnnual$iv
+
+resultEmp <- smbinning.factor(
+  df = loansBinning,
+  x = "emp_length",
+  y = "isDefault",
+  maxcat = 20)
+
+resultEmp
+resultEmp$iv
+
+resultHome <- smbinning.factor(
+  df = loansBinning,
+  x = "home_ownership",
+  y = "isDefault",
+  maxcat = 20)
+
+resultHome
+resultHome$iv
+
+```
+
+
+
+## Loop through all variables
+
+```{r}
+
+loansBinning <- loans005 %>%
+  mutate(home_ownership = as_factor(home_ownership)) %>%
+  mutate(emp_length = as_factor(emp_length)) %>%
+  as.data.frame()
+
+listIV <- tibble(field = names(loansBinning), IV = -1.0)
+listBins <- list()
+
+for (n in listIV$field) {
+  cat("Field: ", n)
+
+  if (n == "isDefault") {
+    cat("\n")
+  } else {
+    if (is.factor(loansBinning[, n])) {
+      cat(" is a factor, ")
+      resultHome <- smbinning.factor(df = loansBinning,
+                                     x = n,
+                                     y = "isDefault",
+                                     maxcat = 100
+      )
+    } else {
+      cat(" is numeric, ")
+      resultHome <- smbinning(df = loansBinning,
+                              x = n,
+                              y = "isDefault",
+                              p = 0.05)
+    }
+
+    tryCatch({
+      cat("     IV = ", resultHome$iv)
+      listIV[which(listIV[,"field"] == n)  , "IV"] <- resultHome$iv
+      listBins <- c(listBins, list(resultHome))
+    },
+    error = function(e) {
+      return(NA)
+    } )
+
+    cat("\n")
+  }
+}
+
+
+```
+
+```{r}
+#saveRDS(listIV, "datasets/listIV005.rds")
+#saveRDS(listBins, "datasets/listBins005.rds")
+#saveRDS(listIV, "datasets/listIV020.rds")
+```
+
+
+Ignore the variables that would not be available before the credit scoring is complete.
+
+```{r}
+bestBins <- listIV %>%
+  filter(!(field %in% c("loanID", "term", "int_rate", "creditMargin", "loan_status",
+                        "grade", "sub_grade", "grade_num", "sub_grade_num",
+                        "emp_length", "home_ownership", "monthDefault"))) %>%
+  filter(IV >= 0.02) %>%
+  arrange(desc(IV))
+
+
+bestBins
+```
+
+
+
+
+
+## Model training
+
+```{r}
+detach("package:smbinning", unload = TRUE, force = TRUE)
+devtools::install_github("Emmanuel-R8/SMBinning")
+library(smbinning)
+
+loansBinning <- loans005 %>%
+  sample_n(250) %>%
+  mutate(home_ownership = as_factor(home_ownership)) %>%
+  select(-loanID) %>%
+  as.data.frame()
+
+smbinning.logitrank(df = loansBinning,
+                    y = "isDefault",
+                    chr = as_vector(bestBins[,1]))
+
+```
+
+
+
+
+
+```{r}
+## https://blog.revolutionanalytics.com/2015/03/r-package-smbinning-optimal-binning-for-scoring-modeling.html
+data("smbsimdf1")
+resultSmbinning <- smbinning(smbsimdf1, y = "fgood", x = "tob", p = 0.05)
+
+resultSmbinning$ivtable
+
+```
+```{r}
+# Relevant plots (2x2 Page)
+par(mfrow = c(2, 2))
+
+boxplot(
+  smbsimdf1$tob ~ smbsimdf1$fgood,
+  horizontal = T,
+  frame = F,
+  col = "lightgray",
+  main = "Distribution"
+)
+
+mtext("Time on Books (Months)", 3)
+
+smbinning.plot(resultSmbinning, option = "dist", sub = "Time on Books (Months)")
+smbinning.plot(resultSmbinning, option = "badrate", sub = "Time on Books (Months)")
+smbinning.plot(resultSmbinning, option = "WoE", sub = "Time on Books (Months)")
+
+```
+
+
+

@@ -1,0 +1,672 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Weight of evidence binning
+
+## Data preparation
+
+```{r child="CleanLoad.Rmd"}
+```
+
+```{r}
+rm(loans)
+```
+
+
+```{r}
+# dplyr::select the variables checked in 01-startup.Rmd
+varList <- c(LC_variable[LC_variable$inModel == TRUE, "variable_name"])$variable_name
+varList <- c(varList, "grade_num", "sub_grade_num", "principal_loss_pct", "creditMargin", "monthDefault")
+
+# Make sure that some variables are NOT in included in the final training set
+varRemove <- c("grade_num", "sub_grade_num", "principal_loss_pct", "creditMargin", "monthDefault")
+```
+
+
+```{r}
+#################################################################################################
+##
+## Prepare a dataset with ONLY the predictors NOT removing NA's
+##
+loansPredictors <-
+  loansWorkingSet %>%
+
+  # Keep the chosen predictors
+  # Use tidyselect::one_of() to avoid errors if column does not exist
+  dplyr::select(tidyselect::one_of(varList)) %>%
+
+  ##
+  ## Dates to numeric, in 'decimal' years since 2000
+  ##
+  dplyr::mutate_at(c("issue_d", "earliest_cr_line"), function(d) {
+    return(year(d) - 2000 + (month(d) - 1) / 12)
+  }) %>%
+
+  ## Add polynomials of the dates to model the time-trend shape
+  dplyr::mutate(
+    issue_d2 = issue_d^2,
+    issue_d3 = issue_d^3,
+    earliest_cr_line2 = earliest_cr_line^2,
+    earliest_cr_line3 = earliest_cr_line^3
+  ) %>%
+
+  ## Create a logical flag TRUE for non-defaulted (good) loans
+  dplyr::mutate(isGoodLoan = (principal_loss_pct < 0.001)) %>%
+
+  dplyr::select(-tidyselect::one_of(varRemove))
+
+
+
+#################################################################################################
+##
+## Create training / test sets 80%/20%
+##
+proportionTraining <- 0.8
+set.seed(42)
+sampleTraining <- sample(1:nSamples, floor(nSamples * proportionTraining), replace = FALSE)
+loansTraining <- loansPredictors %>% dplyr::slice(sampleTraining)
+loansTest <- loansPredictors %>% dplyr::slice(-sampleTraining)
+
+# Subsets of the training set
+set.seed(42)
+nSamplesTraining <- nrow(loansTraining)
+#sample005 <- sample(1:nSamplesTraining, floor(nSamplesTraining * 0.005), replace = FALSE)
+#sample01 <- sample(1:nSamplesTraining, floor(nSamplesTraining * 0.01), replace = FALSE)
+#sample05 <- sample(1:nSamplesTraining, floor(nSamplesTraining * 0.05), replace = FALSE)
+#sample10 <- sample(1:nSamplesTraining, floor(nSamplesTraining * 0.10), replace = FALSE)
+sample20 <- sample(1:nSamplesTraining, floor(nSamplesTraining * 0.20), replace = FALSE)
+
+#loans005 <- loansTraining %>% dplyr::slice(sample005)
+#loans01 <- loansTraining %>% dplyr::slice(sample01)
+#loans05 <- loansTraining %>% dplyr::slice(sample05)
+#loans10 <- loansTraining %>% dplyr::slice(sample10)
+loans20 <- loansTraining %>% dplyr::slice(sample20)
+
+#loss005 <- loansTraining %>% dplyr::slice(sample005)
+#loss01 <- loansTraining %>% dplyr::slice(sample01)
+#loss05 <- loansTraining %>% dplyr::slice(sample05)
+#loss10 <- loansTraining %>% dplyr::slice(sample10)
+#loss20 <- loansTraining %>% dplyr::slice(sample20)
+```
+
+## Binning
+
+```{r}
+detach("package:binner", unload = TRUE, force = TRUE)
+devtools::install_local("~/Development/R/DVPT-PACKAGES/Score_modeling_binning/binner", force = TRUE, quiet = TRUE)
+# devtools::install_github("Emmanuel-R8/SMBinning")
+library(binner)
+```
+
+```{r}
+loansBinning <- loans20 %>%
+  dplyr::mutate(
+    home_ownership = as_factor(home_ownership),
+    emp_length = as_factor(emp_length)
+  )
+```
+
+### dti
+
+```{r}
+resultHome <- WoETableContinuous(
+  df = loansBinning,
+  x = "dti",
+  y = "isGoodLoan",
+  p = 0.05
+)
+
+resultHome$table
+resultHome$IV
+```
+
+### Home ownership
+
+```{r}
+resultHome <- WoETable(
+  df = loansBinning,
+  x = "home_ownership",
+  y = "isGoodLoan",
+  maxCategories = 20
+)
+
+resultHome
+resultHome$IV
+```
+
+### Verification Status
+
+```{r}
+resultVerif <- WoETable(
+  df = loansBinning,
+  x = "verification_status",
+  y = "isGoodLoan",
+  maxCategories = 20
+)
+
+resultVerif
+resultVerif$IV
+```
+
+
+
+### Purpose
+
+```{r}
+resultHome <- WoETable(
+  df = loansBinning,
+  x = "purpose",
+  y = "isGoodLoan",
+  maxCategories = 20
+)
+
+resultHome
+resultHome$IV
+```
+
+
+### Sub grade
+
+```{r}
+resultSubgrade <- WoETable(
+  df = loansBinning,
+  x = "sub_grade",
+  y = "isGoodLoan",
+  maxCategories = 50
+)
+
+resultSubgrade
+resultSubgrade$IV
+```
+
+
+
+### Employment years
+
+```{r}
+resultEmp <- WoETable(
+  df = loansBinning,
+  x = "emp_length",
+  y = "isGoodLoan",
+  maxCategories = 20
+)
+
+resultEmp
+resultEmp$IV
+```
+
+
+
+### Bank card utilisation
+
+```{r}
+resultBC <- WoETable(
+  df = loansBinning,
+  x = "bc_util",
+  y = "isGoodLoan",
+  p = 0.05
+)
+
+resultBC
+resultBC$IV
+```
+
+### State
+
+```{r}
+resultState <- WoETable(
+  df = loansBinning,
+  x = "addr_state",
+  y = "isGoodLoan",
+  maxCategories = 100
+)
+
+resultState
+resultState$IV
+```
+
+
+### Annual income
+
+```{r}
+which(names(loansBinning) == "annual_inc_joint")
+
+resultInc <- WoETable(
+  df = loansBinning,
+  x = "annual_inc_joint",
+  y = "isGoodLoan",
+  p = 0.05
+)
+
+resultHome
+resultHome$iv
+```
+
+### Loan amount
+
+```{r}
+resultAmnt <- WoETable(
+  df = loansBinning,
+  x = "loan_amnt",
+  y = "isGoodLoan",
+  p = 0.05
+)
+
+resultAmnt$IV
+```
+
+
+## Loop through all variables
+
+```{r}
+detach("package:binner", unload = TRUE, force = TRUE)
+devtools::install_local("~/Development/R/DVPT-PACKAGES/Score_modeling_binning/binner", force = TRUE, quiet = TRUE)
+# devtools::install_github("Emmanuel-R8/SMBinning")
+library(binner)
+```
+
+
+```{r}
+
+loansBinning <- loansTraining %>%
+  dplyr::mutate(
+    home_ownership = as_factor(home_ownership),
+    emp_length = as_factor(emp_length),
+    grade = as_factor(grade)
+  )
+
+
+
+listIV <- dplyr::tibble(variable = names(loansBinning), IV = -1.0)
+listBins <-
+  dplyr::tibble(
+    variable = "",
+    type = "",
+    IV = 0.0,
+    WoE = list(),
+    .rows = 0
+  )
+
+for (n in listIV$variable) {
+  cat("Variable: ", n)
+
+  # We don't test the response with itself
+  if (n %in% c("isGoodLoan")) {
+    cat("\n")
+
+  } else {
+    if (class(loansBinning[[1, n]]) == "factor") {
+      cat(" is a factor, ")
+      result <- WoETableCategorical(
+        df = loansBinning,
+        x = n,
+        y = "isGoodLoan",
+        maxCategories = 100)
+
+    } else {
+      cat(" is numeric, ")
+      result <- WoETableContinuous(df = loansBinning,
+                                   x = n,
+                                   y = "isGoodLoan",
+                                   p = 0.05)
+    }
+
+    tryCatch({
+      if (is.na(result)) {
+        cat("Variable skipped.\n")
+        dplyr::add_row(
+          listBins,
+          variable = n,
+          type = NA,
+          IV = NA
+        )
+      } else {
+        cat("     IV : ", result$IV, "\n")
+
+        listBins <- listBins %>%
+          dplyr::add_row(
+            variable = n,
+            type = result$type,
+            IV = result$IV,
+            WoE = list(result$table)
+          )
+      }
+    },
+    finally = {})
+  }
+}
+
+
+```
+
+```{r}
+# saveRDS(listIV, "datasets/listIV005.rds")
+# saveRDS(listBins, "datasets/listBins005.rds")
+
+# saveRDS(listIV, "datasets/listIV20.rds")
+# saveRDS(listBins, "datasets/listBins20.rds")
+
+# saveRDS(listIV, "datasets/listIV100.rds")
+# saveRDS(listBins, "datasets/listBins100.rds")
+```
+
+## dplyr::select relevant variables
+
+Ignore the variables that would not be available before the credit scoring is complete.
+
+```{r}
+bestBins <- listBins %>%
+  filter(IV >= 0.015) %>%
+  arrange(desc(IV)) %>%
+  filter(!(variable %in% c(
+    "loanID", "term", "int_rate", "creditMargin", "loan_status",
+    "grade", "sub_grade", "grade_num", "sub_grade_num",
+    "emp_length", "home_ownership", "monthDefault",
+    "principal_loss_pct", "creditMargin", "monthDefault",
+    "isGoodLoan")))
+
+
+bestBins
+
+# saveRDS(list(data = loansBinning, bins = bestBins), "datasets/bestBins20.rds")
+# saveRDS(list(data = loansBinning, bins = bestBins), "datasets/bestBins100.rds")
+
+```
+
+## Create data table in binary form
+
+For each variable, create new variables for each bin in the WoE table of that variable.
+
+```{r}
+# Variable will contain all the categories for all the variables.
+allCategories <- loansBinning[,"loanID"]
+
+for (index in 1:length(bestBins$variable)) {
+
+  binned <- categoriseFromWoE(df = loansBinning,
+                              varName =  bestBins$variable[index],
+                              woeTable = bestBins$WoE[[index]])
+
+  allCategories <- cbind(allCategories, binned)
+}
+
+
+# saveRDS(allCategories, "datasets/allCategories20.rds")
+# saveRDS(allCategories, "datasets/allCategories100.rds")
+```
+
+## SpeedGLM
+
+```{r}
+library(caret)
+library(speedglm)
+```
+
+### First training on variables selected by their Information Value
+
+```{r}
+loanSample <- allCategories[, 2:length(names(allCategories))] %>%
+  cbind(loansBinning$isGoodLoan) %>%
+  dplyr::rename(isGoodLoan = "loansBinning$isGoodLoan") %>%
+  dplyr::mutate(isGoodLoan = if_else(isGoodLoan, 1, 0)) %>%
+  as.data.frame()
+ncol(loanSample)
+
+# Remove any categories uniformaly constant (only 0)
+# This is important when working on an extract of the dataset for variables that are seldom used (e.g. customers from particular states)
+loanSample <- loanSample[, colSums(loanSample) != 0]
+ncol(loanSample)
+
+{
+  startTime <- proc.time()
+  trainSGLM <- speedglm(isGoodLoan ~ ., data = loanSample, family = binomial(), intercept = TRUE)
+  cat(proc.time() - startTime)
+}
+
+
+#saveRDS(trainSGLM, "datasets/modelSGLM100.rds")
+```
+
+
+```{r}
+summary(trainSGLM)
+
+# List of model variables
+modelNames <- attr(trainSGLM$coefficients, "names") %>%
+  dplyr::as_tibble() %>%
+  dplyr::rename(modelName = "value")
+
+
+# List of variables with a significance value higher than 2
+listVars <- summary(trainSGLM)$coefficients %>%
+  dplyr::as_tibble() %>%
+  cbind(modelNames) %>%
+  dplyr::rename(zValue = "z value") %>%
+  dplyr::filter(!is.na(zValue) & abs(zValue) >= 2)
+
+# Save space
+rm(loanSample)
+```
+
+### Retraining with only retained variables
+
+```{r}
+selectedCategories <- str_remove_all(listVars[, "modelName"], "\`")
+
+loanSample <- allCategories[, 2:length(names(allCategories))] %>%
+  dplyr::select(tidyselect::one_of(selectedCategories)) %>%
+  cbind(loansBinning$isGoodLoan) %>%
+  dplyr::rename(isGoodLoan = "loansBinning$isGoodLoan") %>%
+  dplyr::mutate(isGoodLoan = if_else(isGoodLoan, 1, 0)) %>%
+  as.data.frame()
+
+ncol(loanSample)
+
+# Remove any categories uniformaly constant (only 0)
+loanSample <- loanSample[, colSums(loanSample) != 0]
+ncol(loanSample)
+
+{
+  startTime <- proc.time()
+  retrainSGLM <- speedglm(isGoodLoan ~ ., data = loanSample, family = binomial(), intercept = TRUE)
+  cat(proc.time() - startTime)
+}
+
+
+#saveRDS(trainSGLM, "datasets/modelSGLM100.rds")
+
+summary(retrainSGLM)
+
+# List of model variables
+retrainmodelNames <- attr(retrainSGLM$coefficients, "names") %>%
+  dplyr::as_tibble() %>%
+  dplyr::rename(modelName = "value")
+
+
+# Score card formula: score = coefficient x Factor + Offset
+#
+# Factor: P points <=> T times more likely than not to defaults
+# Factor= P / log(T)
+#
+# Offset is cosmetic to only have positive value (no negative scores)
+
+ScoreFactor <- 100 / log(5)
+ScoreOffset <- - floor(min(ScoreFactor * retrainlistVars$Estimate) / 10) * 10
+
+
+
+# List of variables with a significance value higher than 2
+retrainlistVars <- summary(retrainSGLM)$coefficients %>%
+  dplyr::as_tibble() %>%
+  cbind(retrainmodelNames) %>%
+  dplyr::rename(zValue = "z value") %>%
+  dplyr::mutate(scoreCard = round(ScoreFactor * Estimate + ScoreOffset)) %>%
+
+  # Remove the intercept row
+  dplyr::filter(modelName != "(Intercept)")
+
+```
+
+# Loan Scoring
+
+Scoring the loans is a simple matrix multiplication $\text{Loan matrix} \times \text{Scorecard weights}$
+
+  ## Training set
+
+  ```{r}
+# Convert the training samples to a matrix
+
+loanMatrix <- loanSample %>%
+  dplyr::select(-isGoodLoan) %>%
+  as.matrix()
+
+scorecardVector <- retrainlistVars$scoreCard %>%
+  as.matrix()
+
+sampleScores <- loanMatrix %*% scorecardVector
+```
+
+
+## Test set
+
+```{r}
+# Prepare the full test set
+predictionCategories <- loansTest[,"loanID"]
+
+for (index in 1:length(bestBins$variable)) {
+
+  binned <- categoriseFromWoE(df = loansTest,
+                              varName =  bestBins$variable[index],
+                              woeTable = bestBins$WoE[[index]])
+
+  predictionCategories <- cbind(predictionCategories, binned)
+}
+
+# Retain only the relevant scorecard categories
+predictionCategories <- predictionCategories[, 2:length(names(predictionCategories))] %>%
+  dplyr::select(tidyselect::one_of(selectedCategories)) %>%
+  cbind(loansTest$isGoodLoan) %>%
+  dplyr::rename(isGoodLoan = "loansTest$isGoodLoan") %>%
+  dplyr::mutate(isGoodLoan = if_else(isGoodLoan, 1, 0)) %>%
+  as.data.frame()
+
+ncol(predictionCategories)
+
+
+# Convert the training samples to a matrix
+
+predictionMatrix <- predictionCategories %>%
+  dplyr::select(-isGoodLoan) %>%
+  as.matrix()
+
+predictionScores <- predictionMatrix %*% scorecardVector
+```
+
+
+## Scoring performance
+
+```{r}
+
+loansTraining %>%
+  dplyr::select(sub_grade) %>%
+  cbind(sampleScores %>% as_tibble()) %>%
+  dplyr::rename(Score = V1) %>%
+  group_by(sub_grade) %>%
+  summarise(Mean = mean(Score))
+
+
+
+dplyr::sample_n(50000) %>%
+  ggplot(aes(sub_grade, Score)) +
+  geom_point()
+
+```
+
+
+
+
+
+
+
+
+# Model training
+
+```{r}
+detach("package:smbinning", unload = TRUE, force = TRUE)
+# devtools::install_github("Emmanuel-R8/SMBinning")
+devtools::install_local(path = "~/Development/R/DVPT-PACKAGES/Score_modeling_binning/smbinning", force = TRUE)
+library(smbinning)
+
+loansBinning <- loans005 %>%
+  dplyr::sample_n(250) %>%
+  dplyr::mutate(home_ownership = as_factor(home_ownership)) %>%
+  dplyr::select(-loanID) %>%
+  as.data.frame()
+
+smbinning.logitrank(
+  df = loansBinning,
+  y = "isGoodLoan",
+  chr = as_vector(bestBins[, 1])
+)
+```
+
+
+
+
+
+```{r}
+## https://blog.revolutionanalytics.com/2015/03/r-package-smbinning-optimal-binning-for-scoring-modeling.html
+data("smbsimdf1")
+resultSmbinning <- smbinning(smbsimdf1, y = "fgood", x = "tob", p = 0.05)
+
+resultSmbinning$ivtable
+```
+```{r}
+# Relevant plots (2x2 Page)
+par(mfrow = c(2, 2))
+
+boxplot(
+  smbsimdf1$tob ~ smbsimdf1$fgood,
+  horizontal = T,
+  frame = F,
+  col = "lightgray",
+  main = "Distribution"
+)
+
+mtext("Time on Books (Months)", 3)
+
+smbinning.plot(resultSmbinning, option = "dist", sub = "Time on Books (Months)")
+smbinning.plot(resultSmbinning, option = "badrate", sub = "Time on Books (Months)")
+smbinning.plot(resultSmbinning, option = "WoE", sub = "Time on Books (Months)")
+```
+
+## Create bins
+
+```{r}
+
+```
+
+
+
+
+
+# Logistic regression
+
+```{r}
+library(caret)
+
+# Load the best variables and their `bins`
+varBins <- readRDS("datasets/listBins20.rds")
+bestVars <- readRDS("datasets/bestBins20.rds")
+```
+
+
+
+
+
+
+
+
+
