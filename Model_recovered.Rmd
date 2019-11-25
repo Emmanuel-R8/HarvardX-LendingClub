@@ -520,7 +520,7 @@ Scoring the loans is a simple matrix multiplication $\text{Loan matrix} \times \
 
 ## Training set
 
-  ```{r}
+```{r}
 
 # Convert the training samples to a matrix
 # After removing any column whose name does not appear in the scorecards weights
@@ -661,6 +661,9 @@ smbinning.plot(resultSmbinning, option = "WoE", sub = "Time on Books (Months)")
 ## Try all variables
 
 ```{r}
+listIV <- readRDS("datasets/listIV100.rds")
+listBins <- readRDS("datasets/listBins100.rds")
+
 allBins <- listBins %>%
   arrange(desc(IV)) %>%
   filter(!(variable %in% c(
@@ -704,12 +707,21 @@ ncol(allCategories)
 
 
 summary(trainSGLMmax)
+# saveRDS(trainSGLMmax, "datasets/trainSGLMmax.rds")
+
 
 # List of model variables
-modelNames <- attr(trainSGLM$coefficients, "names") %>%
+modelNames <- attr(trainSGLMmax$coefficients, "names") %>%
   tibble::enframe() %>%
   dplyr::rename(modelName = "value")
 
+# Create scorecard weight
+listVarsMax <- summary(trainSGLMmax)$coefficients %>%
+  dplyr::as_tibble() %>%
+  cbind(modelNames) %>%
+  dplyr::filter(!is.na(Estimate)) %>% 
+  dplyr::rename(zValue = "z value") %>% 
+  dplyr::filter(abs(zValue) >= 1.6)
 
 # Score card formula: score = coefficient x Factor + Offset
 #
@@ -719,20 +731,42 @@ modelNames <- attr(trainSGLM$coefficients, "names") %>%
 # Offset is cosmetic to only have positive value (no negative scores)
 
 ScoreFactor <- 100 / log(5)
-ScoreOffset <- -floor(min(ScoreFactor * retrainlistVars$Estimate) / 10) * 10
+ScoreOffset <- -floor(min(ScoreFactor * listVarsMax$Estimate) / 10) * 10
 
-
-# Create scorecard weight
-listVars <- summary(trainSGLM)$coefficients %>%
-  dplyr::as_tibble() %>%
-  cbind(modelNames) %>%
-  dplyr::rename(zValue = "z value") %>% 
+listVarsMax <- listVarsMax %>% 
   dplyr::mutate(scoreCard = round(ScoreFactor * Estimate + ScoreOffset)) %>% 
 
   # Remove the intercept row
   dplyr::filter(modelName != "(Intercept)")
 
 
+allMatrix <- allCategories[, !is.na(match(names(allCategories), str_remove_all(listVarsMax$modelName, "\`")))] %>% as.matrix()
+dim(allMatrix)
+rm(allCategories)
+
+scorecardVector <- listVarsMax$scoreCard %>%
+  as.matrix()
+dim(scorecardVector)
+
+allScores <- allMatrix %*% scorecardVector
+
+
+
+loansTraining %>%
+  dplyr::select(sub_grade) %>%
+  cbind(allScores %>% as_tibble()) %>%
+  dplyr::rename(Score = V1) %>%
+  group_by(sub_grade) %>%
+  summarise(Mean = mean(Score))
+
+
+loansTraining %>%
+  dplyr::select(sub_grade) %>%
+  cbind(allScores %>% as_tibble()) %>%
+  dplyr::rename(Score = V1) %>%
+  dplyr::sample_n(50000) %>%
+  ggplot(aes(sub_grade, Score)) +
+  geom_point(alpha = 0.1, col = "blue")
 
 
 
