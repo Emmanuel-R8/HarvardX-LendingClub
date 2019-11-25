@@ -2,6 +2,8 @@
 
 This is the final report of for the HarvardX Data Science Professional Certificate. It is based on the LendingClub dataset.
 
+WARNING: The repo is large. If you are only interested in the current status, clone with `git clone --depth=1 https://github.com/Emmanuel-R8/HarvardX-LendingClub.git` , or laternatively download as a zip file [](https://github.com/Emmanuel-R8/HarvardX-LendingClub/archive/master.zip).
+
 Pratical notes:
 
 - It is formatted as a bookdown document instead of simple R markdown. This was the easiest way found to get cross-references working. Apart from that, syntax is identical.

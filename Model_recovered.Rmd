@@ -261,14 +261,6 @@ resultAmnt$IV
 ## Loop through all variables
 
 ```{r}
-detach("package:binner", unload = TRUE, force = TRUE)
-devtools::install_local("~/Development/R/DVPT-PACKAGES/Score_modeling_binning/binner", force = TRUE, quiet = TRUE)
-# devtools::install_github("Emmanuel-R8/SMBinning")
-library(binner)
-```
-
-
-```{r}
 
 loansBinning <- loansTraining %>%
   dplyr::mutate(
@@ -289,6 +281,7 @@ listBins <-
     .rows = 0
   )
 
+startTime <- proc.time()
 for (n in listIV$variable) {
   cat("Variable: ", n)
 
@@ -337,22 +330,14 @@ for (n in listIV$variable) {
     finally = {})
   }
 }
-
-
-```
-
-```{r}
-# saveRDS(listIV, "datasets/listIV005.rds")
-# saveRDS(listBins, "datasets/listBins005.rds")
-
-# saveRDS(listIV, "datasets/listIV20.rds")
-# saveRDS(listBins, "datasets/listBins20.rds")
+proc.time() - startTime
 
 # saveRDS(listIV, "datasets/listIV100.rds")
 # saveRDS(listBins, "datasets/listBins100.rds")
+
 ```
 
-## dplyr::select relevant variables
+## Select relevant variables
 
 Ignore the variables that would not be available before the credit scoring is complete.
 
@@ -370,7 +355,6 @@ bestBins <- listBins %>%
 
 bestBins
 
-# saveRDS(list(data = loansBinning, bins = bestBins), "datasets/bestBins20.rds")
 # saveRDS(list(data = loansBinning, bins = bestBins), "datasets/bestBins100.rds")
 
 ```
@@ -381,6 +365,7 @@ For each variable, create new variables for each bin in the WoE table of that va
 
 ```{r}
 # Variable will contain all the categories for all the variables.
+# WARNING: 2.3 GB dataframe
 allCategories <- loansBinning[,"loanID"]
 
 for (index in 1:length(bestBins$variable)) {
@@ -393,20 +378,20 @@ for (index in 1:length(bestBins$variable)) {
 }
 
 
-# saveRDS(allCategories, "datasets/allCategories20.rds")
 # saveRDS(allCategories, "datasets/allCategories100.rds")
+
 ```
 
 ## SpeedGLM
 
-```{r}
-library(caret)
-library(speedglm)
-```
+Warning: `speedglm` has a `select()` function which shadows `dplyr::select()`. 
+
 
 ### First training on variables selected by their Information Value
 
 ```{r}
+
+# WARNING: 2.4 GB dataframe
 loanSample <- allCategories[, 2:length(names(allCategories))] %>%
   cbind(loansBinning$isGoodLoan) %>%
   dplyr::rename(isGoodLoan = "loansBinning$isGoodLoan") %>%
@@ -419,14 +404,15 @@ ncol(loanSample)
 loanSample <- loanSample[, colSums(loanSample) != 0]
 ncol(loanSample)
 
+# About 8min. to complete training dataset
 {
   startTime <- proc.time()
-  trainSGLM <- speedglm(isGoodLoan ~ ., data = loanSample, family = binomial(), intercept = TRUE)
+  trainSGLM <- speedglm::speedglm(isGoodLoan ~ ., data = loanSample, family = binomial(), intercept = TRUE)
   cat(proc.time() - startTime)
 }
 
 
-#saveRDS(trainSGLM, "datasets/modelSGLM100.rds")
+# saveRDS(trainSGLM, "datasets/modelSGLM100.rds")
 ```
 
 
@@ -435,16 +421,31 @@ summary(trainSGLM)
 
 # List of model variables
 modelNames <- attr(trainSGLM$coefficients, "names") %>%
-  dplyr::as_tibble() %>%
+  tibble::enframe() %>%
   dplyr::rename(modelName = "value")
 
 
-# List of variables with a significance value higher than 2
+# Score card formula: score = coefficient x Factor + Offset
+#
+# Factor: P points <=> T times more likely than not to defaults
+# Factor= P / log(T)
+#
+# Offset is cosmetic to only have positive value (no negative scores)
+
+ScoreFactor <- 100 / log(5)
+ScoreOffset <- -floor(min(ScoreFactor * retrainlistVars$Estimate) / 10) * 10
+
+
+# Create scorecard weight
 listVars <- summary(trainSGLM)$coefficients %>%
   dplyr::as_tibble() %>%
   cbind(modelNames) %>%
-  dplyr::rename(zValue = "z value") %>%
-  dplyr::filter(!is.na(zValue) & abs(zValue) >= 2)
+  dplyr::rename(zValue = "z value") %>% 
+  dplyr::mutate(scoreCard = round(ScoreFactor * Estimate + ScoreOffset)) %>% 
+
+  # Remove the intercept row
+  dplyr::filter(modelName != "(Intercept)")
+
 
 # Save space
 rm(loanSample)
@@ -455,6 +456,7 @@ rm(loanSample)
 ```{r}
 selectedCategories <- str_remove_all(listVars[, "modelName"], "\`")
 
+# WARNING 925 MB
 loanSample <- allCategories[, 2:length(names(allCategories))] %>%
   dplyr::select(tidyselect::one_of(selectedCategories)) %>%
   cbind(loansBinning$isGoodLoan) %>%
@@ -468,14 +470,15 @@ ncol(loanSample)
 loanSample <- loanSample[, colSums(loanSample) != 0]
 ncol(loanSample)
 
+# About 1min.
 {
   startTime <- proc.time()
-  retrainSGLM <- speedglm(isGoodLoan ~ ., data = loanSample, family = binomial(), intercept = TRUE)
+  retrainSGLM <- speedglm::speedglm(isGoodLoan ~ ., data = loanSample, family = binomial(), intercept = TRUE)
   cat(proc.time() - startTime)
 }
 
 
-#saveRDS(trainSGLM, "datasets/modelSGLM100.rds")
+# saveRDS(trainSGLM, "datasets/modelSGLM100retrain.rds")
 
 summary(retrainSGLM)
 
@@ -484,6 +487,12 @@ retrainmodelNames <- attr(retrainSGLM$coefficients, "names") %>%
   dplyr::as_tibble() %>%
   dplyr::rename(modelName = "value")
 
+# List of variables with a significance value higher than 2
+retrainlistVars <- summary(retrainSGLM)$coefficients %>%
+  dplyr::as_tibble() %>%
+  cbind(retrainmodelNames) %>%
+  dplyr::rename(zValue = "z value") %>%
+  dplyr::filter(!is.na(zValue) & abs(zValue) >= 2)
 
 # Score card formula: score = coefficient x Factor + Offset
 #
@@ -493,16 +502,12 @@ retrainmodelNames <- attr(retrainSGLM$coefficients, "names") %>%
 # Offset is cosmetic to only have positive value (no negative scores)
 
 ScoreFactor <- 100 / log(5)
-ScoreOffset <- - floor(min(ScoreFactor * retrainlistVars$Estimate) / 10) * 10
+ScoreOffset <- -floor(min(ScoreFactor * retrainlistVars$Estimate) / 10) * 10
 
 
-
-# List of variables with a significance value higher than 2
-retrainlistVars <- summary(retrainSGLM)$coefficients %>%
-  dplyr::as_tibble() %>%
-  cbind(retrainmodelNames) %>%
-  dplyr::rename(zValue = "z value") %>%
-  dplyr::mutate(scoreCard = round(ScoreFactor * Estimate + ScoreOffset)) %>%
+# Create scorecard weight
+retrainlistVars <- retrainlistVars %>% 
+  dplyr::mutate(scoreCard = round(ScoreFactor * Estimate + ScoreOffset)) %>% 
 
   # Remove the intercept row
   dplyr::filter(modelName != "(Intercept)")
@@ -513,19 +518,22 @@ retrainlistVars <- summary(retrainSGLM)$coefficients %>%
 
 Scoring the loans is a simple matrix multiplication $\text{Loan matrix} \times \text{Scorecard weights}$
 
-  ## Training set
+## Training set
 
   ```{r}
-# Convert the training samples to a matrix
 
-loanMatrix <- loanSample %>%
-  dplyr::select(-isGoodLoan) %>%
-  as.matrix()
+# Convert the training samples to a matrix
+# After removing any column whose name does not appear in the scorecards weights
+# WARNING: 900MB
+loanMatrix <- loanSample[, !is.na(match(names(loanSample), str_remove_all(retrainlistVars$modelName, "\`")))] %>% as.matrix()
+dim(loanMatrix)
 
 scorecardVector <- retrainlistVars$scoreCard %>%
   as.matrix()
+dim(scorecardVector)
 
 sampleScores <- loanMatrix %*% scorecardVector
+
 ```
 
 
@@ -556,10 +564,7 @@ ncol(predictionCategories)
 
 
 # Convert the training samples to a matrix
-
-predictionMatrix <- predictionCategories %>%
-  dplyr::select(-isGoodLoan) %>%
-  as.matrix()
+predictionMatrix <- predictionCategories[, !is.na(match(names(predictionCategories), str_remove_all(retrainlistVars$modelName, "\`")))] %>% as.matrix()
 
 predictionScores <- predictionMatrix %*% scorecardVector
 ```
@@ -577,14 +582,25 @@ loansTraining %>%
   summarise(Mean = mean(Score))
 
 
-
-dplyr::sample_n(50000) %>%
+loansTraining %>%
+  dplyr::select(sub_grade) %>%
+  cbind(sampleScores %>% as_tibble()) %>%
+  dplyr::rename(Score = V1) %>%
+  dplyr::sample_n(50000) %>%
   ggplot(aes(sub_grade, Score)) +
   geom_point()
+
 
 ```
 
 
+```{r}
+# List of variables with a significance value higher than 2
+listVars <- listVars %>%
+  dplyr::filter(!is.na(zValue) & abs(zValue) >= 2)
+
+
+```
 
 
 
@@ -642,31 +658,82 @@ smbinning.plot(resultSmbinning, option = "badrate", sub = "Time on Books (Months
 smbinning.plot(resultSmbinning, option = "WoE", sub = "Time on Books (Months)")
 ```
 
-## Create bins
+## Try all variables
 
 ```{r}
+allBins <- listBins %>%
+  arrange(desc(IV)) %>%
+  filter(!(variable %in% c(
+    "loanID", "term", "int_rate", "creditMargin", "loan_status",
+    "grade", "sub_grade", "grade_num", "sub_grade_num",
+    "emp_length", "home_ownership", "monthDefault",
+    "principal_loss_pct", "creditMargin", "monthDefault",
+    "isGoodLoan")))
+
+# Variable will contain all the categories for all the variables.
+# WARNING: 3.3 GB dataframe
+allCategories <- loansTraining[,"loanID"]
+
+for (index in 1:length(allBins$variable)) {
+
+  binned <- categoriseFromWoE(df = loansTraining,
+                              varName =  allBins$variable[index],
+                              woeTable = allBins$WoE[[index]])
+
+  allCategories <- cbind(allCategories, binned)
+}
+
+allCategories <- allCategories[, 2:length(names(allCategories))] %>%
+  cbind(loansTraining$isGoodLoan) %>%
+  dplyr::rename(isGoodLoan = "loansTraining$isGoodLoan") %>%
+  dplyr::mutate(isGoodLoan = if_else(isGoodLoan, 1, 0)) %>%
+  as.data.frame()
+ncol(allCategories)
+
+# Remove any categories uniformaly constant (only 0)
+# This is important when working on an extract of the dataset for variables that are seldom used (e.g. customers from particular states)
+allCategories <- allCategories[, colSums(allCategories) != 0]
+ncol(allCategories)
+
+# About 8min. to complete training dataset
+{
+  startTime <- proc.time()
+  trainSGLMmax <- speedglm::speedglm(isGoodLoan ~ ., data = allCategories, family = binomial(), intercept = TRUE)
+  cat(proc.time() - startTime)
+}
+
+
+summary(trainSGLMmax)
+
+# List of model variables
+modelNames <- attr(trainSGLM$coefficients, "names") %>%
+  tibble::enframe() %>%
+  dplyr::rename(modelName = "value")
+
+
+# Score card formula: score = coefficient x Factor + Offset
+#
+# Factor: P points <=> T times more likely than not to defaults
+# Factor= P / log(T)
+#
+# Offset is cosmetic to only have positive value (no negative scores)
+
+ScoreFactor <- 100 / log(5)
+ScoreOffset <- -floor(min(ScoreFactor * retrainlistVars$Estimate) / 10) * 10
+
+
+# Create scorecard weight
+listVars <- summary(trainSGLM)$coefficients %>%
+  dplyr::as_tibble() %>%
+  cbind(modelNames) %>%
+  dplyr::rename(zValue = "z value") %>% 
+  dplyr::mutate(scoreCard = round(ScoreFactor * Estimate + ScoreOffset)) %>% 
+
+  # Remove the intercept row
+  dplyr::filter(modelName != "(Intercept)")
+
+
+
+
 
 ```
-
-
-
-
-
-# Logistic regression
-
-```{r}
-library(caret)
-
-# Load the best variables and their `bins`
-varBins <- readRDS("datasets/listBins20.rds")
-bestVars <- readRDS("datasets/bestBins20.rds")
-```
-
-
-
-
-
-
-
-
-
