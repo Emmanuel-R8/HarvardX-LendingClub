@@ -6,4 +6,9 @@
 
 > This report was one of those "it-builds-character" endeavour. Facing such a large dataset, it took a very long time before settling to address a particular question. Exploring the data lead to many blind alleys with little interest.
 
-> As a practical tool, this approach would not work in real life: we have no data on rejected loans. Using this model to accept/reject loans would need more work (using Reject Inference). 
+> As a practical tool, this approach would not work in real life: we have no data on rejected loans. Using this model to accept/reject loans would need more work (using Reject Inference).
+
+> Use regularising regression method to chose significant variables incrementally
+
+> Currently only look at PD. Extend to LGD with Good Dollars and Bad Dollars instead of Good Loans / Bad Loans
+
