@@ -37,6 +37,7 @@ if (!exists("loans")) {
 ###################################################################################################
 ##
 ## Response variables
+## 
 if (!exists("LoansNPV")) {
   LoansNPV <- read.csv(gzfile("datasets/LoansNPV.csv.gz")) %>%
     as_tibble()
@@ -62,6 +63,7 @@ if (!exists("LoansMargin")) {
 ###################################################################################################
 ##
 ## Interest rate swaps
+## 
 if (!exists("RATES")) {
   RATES <- readRDS("datasets/rates.rds")
 }
@@ -80,20 +82,30 @@ if (!exists("RATES5Y")) {
 ###################################################################################################
 ##
 ## ZIP/FIPS code data
-if (!exists("zips"))
+##
+if (!exists("zips")) {
   zips <- readRDS("datasets/zips.rds")
-if (!exists("zipfips"))
+}
+
+if (!exists("zipfips")) {
   zipfips <- readRDS("datasets/kaggleCodes.rds")
+}
 
 ###################################################################################################
 ##
 ## Macro data
-if (!exists("medianIncome"))
+##
+if (!exists("medianIncome")) {
   medianIncome <- readRDS("datasets/medianincome.rds")
-if (!exists("personalIncome"))
+}
+
+if (!exists("personalIncome")) {
   personalIncome <- readRDS("datasets/personalincome.rds")
-if (!exists("unemploymentRate"))
+}
+
+if (!exists("unemploymentRate")) {
   unemploymentRate <- readRDS("datasets/unemployment.rds")
+}
 ```
 
 
@@ -109,7 +121,8 @@ loansWorkingSet <- loans %>%
   # add a % principal loss variable
   mutate(principal_loss_pct = (funded_amnt - total_rec_prncp) / funded_amnt)
 
-nSamples <- nrow(loans)
+
+# saveRDS(loansWorkingSet, "datasets/LoansWorkingSet.rds")
 ```
 
 
@@ -118,6 +131,7 @@ nSamples <- nrow(loans)
 ##
 ## Mostly generated from a LibreOffice spreadsheet for convenience purposes, then reformatted
 ## by RStudio.
+## 
 
 LC_variable <-
   tibble(

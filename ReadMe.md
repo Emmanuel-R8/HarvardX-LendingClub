@@ -13,5 +13,7 @@ Pratical notes:
 - In addition, the bookdown assumes that the original datasets have already been loaded, converted to R tibbles and saved in the documents subdirectory. This original dataset is a couple of GB, it is reduced to ca.270MB after conversion and compression. The datasets are not included in this Github repo. Source code to download and replicate those steps are given in the report's appendix. It is also included in the R file that carries out the modeling. 
 
 
+List of packages: digest, speedglm, tidyverse, lubridate, gridExtra, kableExtra, lubridate, dslabs, doMC, ROCR
+
 
 
