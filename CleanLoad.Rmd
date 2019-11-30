@@ -284,7 +284,7 @@ LC_variable <-
   add_row(
     variable_name = 'zip_code' ,
     description = 'The first 3 numbers of the zip code provided by the borrower in the loan application.',
-    inModel = TRUE,
+    inModel = FALSE,
     inPrediction = FALSE,
     inPricing = FALSE
   ) %>%

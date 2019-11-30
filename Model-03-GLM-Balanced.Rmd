@@ -1,0 +1,137 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Logistic Regression
+
+## Balanced training
+
+### Train on balanced subset of good loans
+
+Remove the same duplicate and NAs as before
+
+```{r}
+
+loanSample <- readRDS("datasets/LoanSample.rds")
+
+# Add the desired response
+loanSample <-
+  allBins[, 2:length(names(allBins))] %>%
+  cbind(loansTraining$isGoodLoan) %>%
+  rename(isGoodLoan = "loansTraining$isGoodLoan") %>%
+  mutate(isGoodLoan = if_else(isGoodLoan, 1, 0)) %>%
+  select(-one_of(duplicateNames)) %>%
+  as.data.frame()
+
+
+
+NAsFirstTraining <-
+  tibble(
+    name = rownames(summary(SGLMtrain)$coefficient),
+    estimate = summary(SGLMtrain)$coefficient$Estimate
+  ) %>%
+  mutate(name = stringr::str_remove_all(name, "\`")) %>%
+  filter(name != "isGoodLoan") %>%
+  filter(!is.na(estimate))
+
+
+# We will remove those variables from the dataset.
+loanSample %>%
+  select(-one_of(NAsFirstTraining$name))
+
+
+ncol(loanSample)
+
+```
+
+How many bad loans
+
+
+```{r}
+loanSample %>%
+  group_by(isGoodLoan) %>%
+  summarise(n= n())
+
+```
+
+Create balanced training sets with equal numbers of each.
+
+```{r}
+loanSampleBad <-
+  loanSample %>%
+  filter(isGoodLoan == 0)
+
+nBad <- nrow(loanSampleBad)
+
+kSubSet <- 2
+
+listGLM <- list()
+
+for (i in 1:kSubSet) {
+  loanSampleBalanced <-
+
+    # From the sample of loans
+    loanSample %>%
+
+    # From the good loans
+    filter(isGoodLoan == 1) %>%
+
+    # Select the same number as bad
+    sample_n(nBad) %>%
+
+    # To create a new balanced dataset
+    rbind(loanSampleBad)
+
+  # Train on the balanced set - About 30 sec per training
+  startTime <- proc.time()
+  doMC::registerDoMC(cores = 3)
+  modelBalanced <-
+    speedglm::speedglm(
+      isGoodLoan ~ .,
+      data = loanSampleBalanced,
+      family = binomial())
+
+  doMC::registerDoMC(cores = NULL)
+  cat(proc.time() - startTime, "\n")
+
+  listGLM <- c(listGLM, list(modelBalanced))
+}
+
+
+```
+
+```{r}
+summary(listGLM[[2]])
+summary(listGLM[[2]])$coefficients$Estimate
+```
+
+
+
+```{r}
+gc(full = TRUE)
+
+# Start the model training again. About 350 sec.
+{
+  startTime <- proc.time()
+  doMC::registerDoMC(cores = 3)
+
+  SGLMreretrain <-
+    speedglm::speedglm(
+      isGoodLoan ~ .,
+      data = loanSample,
+      family = binomial(),
+      intercept = TRUE
+    )
+
+  doMC::registerDoMC(cores = NULL)
+  cat(proc.time() - startTime)
+}
+
+summary(SGLMreretrain)
+
+# saveRDS(SGLMreretrain, "datasets/SGLMreretrain.rds")
+
+```
+
+

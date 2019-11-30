@@ -1,0 +1,233 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Logistic Regression
+
+## Logistic regression using the `SpeedGLM` package
+
+
+> NOTE: `speedglm` has a `select()` function which would shadow `dplyr::select()`, so it is only used fully qualified to avoid any collision.
+
+
+```{r}
+
+# Cleanup and reload
+
+rm(list = ls(all.names = TRUE))
+library(tidyverse)
+
+loansTraining <- readRDS("datasets/LoansTraining.rds")
+
+# Training results to speed up analysis
+# load("datasets/GLModelResults.rda")
+
+# WARNING: 3.3 GB dataframe 
+# Take the allBins dataset (without `loanID`)
+# Add the desired response
+loanSample <- 
+  readRDS("datasets/allBins100.rds") %>% 
+  select(-loanID) %>%
+  cbind(loansTraining$isGoodLoan) %>%
+  rename(isGoodLoan = "loansTraining$isGoodLoan") %>%
+  mutate(isGoodLoan = if_else(isGoodLoan, 1, 0)) %>%
+  as.data.frame()
+
+rm(loansTraining)
+
+gc(full = TRUE)
+ncol(loanSample)
+
+```
+
+
+
+### Remove identical bins
+
+```{r}
+
+# Starting list of names
+namesBins <- names(loanSample)
+
+# Running GLM would give a number of NAs if some columns are linearly dependant (in our case actually equal).
+# A "trick" to identify them is to run a hash digest on each column and spot identical hashes
+# The original variables were not identical, but when split into categories, they can become identical. 
+# For example, if no income is provided (income=NA category), no debt-to-income ratio can be calculated (dti=NA).
+duplicateNames <- loanSample[duplicated(lapply(loanSample, digest::digest))] %>% names()
+duplicateNames
+
+# Remove any categories uniformaly constant (only 0)
+# This is important when working on a small extract of the dataset for variables that are seldom used (e.g. customers
+# from certain states).
+zeroColumnsNames <- loanSample[, colSums(loanSample) == 0] %>% names()
+
+```
+
+
+### First training on variables previously selected on their Information Value
+
+
+We use `speedglm` being quick. Note that alternatives were also tried: `glm` crashed on even small extracts of the dataset. `glmnet` returns errors that were not understandable or documented on the internet. 
+
+
+```{r}
+gc(full = TRUE)
+
+
+# About 700 sec wall-time to complete training dataset
+# The dataset is the sample less duplicate, less zero-ed columns
+{
+  doMC::registerDoMC(cores = 1) # Too many processes push over 32GB
+  startTime <- proc.time()
+  
+  loansTrainingBins <- loanSample %>%
+    select(-one_of( c(duplicateNames, 
+                      zeroColumnsNames)))
+  
+  SGLMtrain <- speedglm::speedglm(isGoodLoan ~ .,
+                                  data = loansTrainingBins,
+                                  family = binomial())
+  
+  doMC::registerDoMC(cores = NULL)
+  cat(proc.time() - startTime, "\n")
+}
+
+summary(SGLMtrain)
+
+# saveRDS(SGLMtrain, "datasets/SGLMtrain.rds")
+
+
+```
+
+
+
+```{r}
+# Does the model throw NAs? They are produced not only for identical variables, but also co-linear
+# combinations.
+# Let us select those variables:
+
+NAsFirstTraining <-
+  
+  # Take the results (just the estimated coefficients) from the model
+  tibble(
+    name = rownames(summary(SGLMtrain)$coefficient),
+    estimate = summary(SGLMtrain)$coefficient$Estimate
+  ) %>%
+  
+  # Reformat the names to be the same as in the bins
+  mutate(name = stringr::str_remove_all(name, "\`")) %>% 
+  
+  # Make sure that repsonse is not deleted by mistake and list all NAs
+  filter(name != "isGoodLoan" & is.na(estimate)) 
+
+NAsFirstTraining <- NAsFirstTraining$name
+
+```
+
+### Second training
+
+```{r}
+gc(full = TRUE)
+
+# Start the model training again
+{
+  startTime <- proc.time()
+  doMC::registerDoMC(cores = 2) # Too many processes push over 32GB
+  
+  loansTrainingBins <- loanSample %>%
+    select(-one_of( c(duplicateNames, 
+                      zeroColumnsNames, 
+                      NAsFirstTraining)))
+  
+  SGLMretrain <- speedglm::speedglm(isGoodLoan ~ .,
+                                  data = loansTrainingBins,
+                                  family = binomial())
+  
+  doMC::registerDoMC(cores = NULL)
+  cat(proc.time() - startTime)
+}
+
+summary(SGLMretrain)
+# saveRDS(SGLMretrain, "datasets/SGLMretrain.rds")
+
+```
+
+
+```{r}
+# Just in case, new NAs popped up 
+# Actual variables after excluding intercept coefficient
+
+NAsSecondTraining <-
+  tibble(
+    name = rownames(summary(SGLMretrain)$coefficient),
+    estimate = summary(SGLMretrain)$coefficient$Estimate, 
+    zValue = abs(summary(SGLMretrain)$coefficient$"z value")
+  ) %>%
+  mutate(name = stringr::str_remove_all(name, "\`")) %>% 
+  filter(name != "isGoodLoan") %>%
+  
+  # Remove stray NAs or anything less than 2 sigmas
+  filter(is.na(estimate) | zValue < 2)
+
+NAsSecondTraining <- NAsSecondTraining$name
+
+
+```
+
+### Third training
+
+
+```{r}
+gc(full = TRUE)
+
+# Start the model training again. About 350 sec.
+{
+  startTime <- proc.time()
+  doMC::registerDoMC(cores = 2)
+  
+  loansTrainingBins <- loanSample %>%
+    select(-one_of( c(duplicateNames, 
+                      zeroColumnsNames, 
+                      NAsFirstTraining, 
+                      NAsSecondTraining)))
+  
+  SGLMreretrain <- speedglm::speedglm(isGoodLoan ~ .,
+                                  data = loansTrainingBins,
+                                  family = binomial())
+  
+  doMC::registerDoMC(cores = NULL)
+  cat(proc.time() - startTime)
+}
+
+summary(SGLMreretrain)
+
+```
+
+
+```{r}
+NAsThirdTraining <-
+  tibble(
+    name     = rownames(summary(SGLMreretrain)$coefficient),
+    estimate = summary(SGLMreretrain)$coefficient$Estimate, 
+    zValue   = abs(summary(SGLMreretrain)$coefficient$"z value")
+  ) %>%
+  mutate(name = stringr::str_remove_all(name, "\`")) %>% 
+  filter(name != "isGoodLoan") %>%
+  
+  # Remove stray NAs (Shouldn't be any) or less than 2 sigmas
+  filter(is.na(estimate) | zValue < 2)
+
+NAsThirdTraining <- NAsThirdTraining$name
+
+```
+
+```{r}
+save(list = c("NAsFirstTraining", "SGLMtrain",
+              "NAsSecondTraining", "SGLMretrain", 
+              "NAsThirdTraining", "SGLMreretrain"), 
+     file = "datasets/GLModelResults.rda")
+
+```
+
+

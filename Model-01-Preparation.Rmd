@@ -11,9 +11,12 @@ output: html_notebook
 
 >
 > WARNING: Execute `CleanLoad.Rmd` first
+>
 
 ```{r}
-# Not used later on
+# AFTER EXECUTION OF `CleanLoad.Rmd`
+
+# Not used
 rm(loans)
 ```
 
@@ -23,33 +26,27 @@ rm(loans)
 # Datasets to be ready for first training
 loansTraining <- readRDS("datasets/LoansTraining.rds")
 loansTest     <- readRDS("datasets/LoansTest.rds")
-listIV        <- readRDS("datasets/listIV100.rds")
+informationValues        <- readRDS("datasets/informationValues100.rds")
 listBins      <- readRDS("datasets/listBins100.rds")
 bestBins      <- readRDS("datasets/bestBins100.rds")
 allBins       <- readRDS("datasets/allBins100.rds")
-# loansWorkingSet <- readRDS("datasets/LoansWorkingSet.rds") # Not on github
+# loansWorkingSet <- readRDS("datasets/LoansWorkingSet.rds") # Not on github because too big
 loanSample    <- readRDS("datasets/LoanSample.rds")
 
-# First training result
-SGLMtrain     <- readRDS("datasets/SGLMtrain.rds")
-
-# re-training result
-SGLMretrain   <- readRDS("datasets/SGLMretrain.rds")
-
-# re-re-training result
-SGLMreretrain   <- readRDS("datasets/SGLMreretrain.rds")
-
 ```
-
 
 
 ```{r}
 # select the variables checked in 01-startup.Rmd
 modelVarsIn <- c(LC_variable[LC_variable$inModel == TRUE, "variable_name"])$variable_name
-modelVarsIn <- c(modelVarsIn, "grade_num", "sub_grade_num", "principal_loss_pct", "creditMargin", "monthDefault")
+modelVarsIn <- c(modelVarsIn, 
+                 "grade_num", "sub_grade_num", 
+                 "principal_loss_pct", "creditMargin", "monthDefault")
 
 # Make sure that some variables are NOT in included in the final training set
-modelVarsOut <- c("grade_num", "sub_grade_num", "principal_loss_pct", "creditMargin", "monthDefault")
+modelVarsOut <- c("grade_num", "sub_grade_num", 
+                  "principal_loss_pct", "creditMargin", "monthDefault", 
+                  "zip_code")
 ```
 
 
@@ -119,19 +116,159 @@ rm(loansWorkingSet, loansPredictors, LoansNPV, LoansIRR, LoansMargin, RATES, RAT
 gc(full = TRUE)
 ```
 
-## Binning
+
+
+# Model using all samples
 
 ```{r reinstall-binner,eval=FALSE}
+
+# Ensure that `binner` is here and available
 if ("package:binner" %in% search()) { 
   detach("package:binner", unload = TRUE, force = TRUE) 
 }
 
-if (!require("binner")) {
+if (!("binner" %in% installed.packages()[,1])) {
   devtools::install_local("~/Development/R/DVPT-PACKAGES/Score_modeling_binning/binner", force = TRUE, quiet = TRUE)
   # devtools::install_github("Emmanuel-R8/SMBinning")
 }
 
+library(binner)
 ```
+
+## Loop through all variables
+
+```{r}
+loansBinning <- loansTraining %>%
+  mutate(
+    home_ownership = as_factor(home_ownership),
+    emp_length = as_factor(emp_length),
+    grade = as_factor(grade)
+  )
+
+informationValues <- tibble(variable = names(loansBinning), IV = -1.0)
+
+listBins <-
+  tibble(
+    variable = "",
+    type = "",
+    IV = 0.0,
+    WoE = list(),
+    .rows = 0
+  )
+
+# About 500 sec wall-time
+startTime <- proc.time()
+for (n in informationValues$variable) {
+  cat("Variable: ", n)
+
+  # We don't test the response with itself
+  if (n %in% c("isGoodLoan")) {
+    cat("\n")
+
+  } else {
+    if (class(loansBinning[[1, n]]) == "factor") {
+      cat(" is a factor, ")
+      result <- WoETableCategorical(
+        df = loansBinning,
+        x = n,
+        y = "isGoodLoan",
+        maxCategories = 100)
+
+    } else {
+      cat(" is numeric, ")
+      result <- WoETableContinuous(df = loansBinning,
+                                   x = n,
+                                   y = "isGoodLoan",
+                                   p = 0.05)
+    }
+
+    tryCatch({
+      if (is.na(result)) {
+        cat("Variable skipped.\n")
+        add_row(
+          listBins,
+          variable = n,
+          type = NA,
+          IV = NA
+        )
+      } else {
+        cat("     IV : ", result$IV, "\n")
+
+        listBins <- listBins %>%
+          add_row(
+            variable = n,
+            type = result$type,
+            IV = result$IV,
+            WoE = list(result$table)
+          )
+        
+        informationValues[n] <- result$IV
+        
+        }
+    },
+    finally = {})
+  }
+}
+proc.time() - startTime
+
+# saveRDS(informationValues, "datasets/informationValues100.rds")
+# saveRDS(listBins, "datasets/listBins100.rds")
+
+```
+
+## Select relevant variables
+
+Ignore the variables that would not be available at the time the credit scoring is performed.
+
+```{r}
+
+# This shows that almost all variables have an information value above 2% which is considered the threshold to be weakly
+# useful. Useless variables are all related to F and G ratings which we do not use anyway.
+for (i in 1:length(listBins$variable)) {
+  useless <- listBins$WoE[i] %>% as.data.frame() %>% filter(IV <= 0.02)
+  if (nrow(useless) > 0) print(useless)
+}
+
+bestBins <- listBins %>%
+  arrange(desc(IV)) %>%
+  filter(!(variable %in% c(
+    "loanID", "term", "int_rate", "creditMargin", "loan_status",
+    "grade", "sub_grade", "grade_num", "sub_grade_num",
+    "emp_length", "home_ownership", "monthDefault",
+    "principal_loss_pct", "creditMargin", "monthDefault",
+    "isGoodLoan")))
+
+
+bestBins
+
+# saveRDS(bestBins, "datasets/bestBins100.rds")
+
+```
+
+## Create data table with only binary variables (transform every bin to a 0/1 value)
+
+For each variable, create new variables for each bin in the WoE table of that variable.
+
+```{r}
+# Variable will contain all the categories for all the variables.
+# WARNING: 3.3 GB dataframe
+allBins <- loansTraining[,"loanID"]
+
+for (index in 1:length(bestBins$variable)) {
+
+  binned <- categoriseFromWoE(df = loansTraining,
+                              varName =  bestBins$variable[index],
+                              woeTable = bestBins$WoE[[index]])
+
+  allBins <- cbind(allBins, binned)
+}
+
+# saveRDS(allBins, "datasets/allBins100.rds")
+```
+
+
+
+# Individual examples
 
 
 ```{r}
@@ -291,143 +428,3 @@ resultAmnt <- WoETable(
 resultAmnt
 resultAmnt$IV
 ```
-
-# Model using all samples
-
-## Loop through all variables
-
-```{r}
-loansBinning <- loansTraining %>%
-  mutate(
-    home_ownership = as_factor(home_ownership),
-    emp_length = as_factor(emp_length),
-    grade = as_factor(grade)
-  )
-
-listIV <- tibble(variable = names(loansBinning), IV = -1.0)
-listBins <-
-  tibble(
-    variable = "",
-    type = "",
-    IV = 0.0,
-    WoE = list(),
-    .rows = 0
-  )
-
-# About 500 sec wall-time
-startTime <- proc.time()
-for (n in listIV$variable) {
-  cat("Variable: ", n)
-
-  # We don't test the response with itself
-  if (n %in% c("isGoodLoan")) {
-    cat("\n")
-
-  } else {
-    if (class(loansBinning[[1, n]]) == "factor") {
-      cat(" is a factor, ")
-      result <- WoETableCategorical(
-        df = loansBinning,
-        x = n,
-        y = "isGoodLoan",
-        maxCategories = 100)
-
-    } else {
-      cat(" is numeric, ")
-      result <- WoETableContinuous(df = loansBinning,
-                                   x = n,
-                                   y = "isGoodLoan",
-                                   p = 0.05)
-    }
-
-    tryCatch({
-      if (is.na(result)) {
-        cat("Variable skipped.\n")
-        add_row(
-          listBins,
-          variable = n,
-          type = NA,
-          IV = NA
-        )
-      } else {
-        cat("     IV : ", result$IV, "\n")
-
-        listBins <- listBins %>%
-          add_row(
-            variable = n,
-            type = result$type,
-            IV = result$IV,
-            WoE = list(result$table)
-          )
-        
-        listIV[n] <- result$IV
-        
-        }
-    },
-    finally = {})
-  }
-}
-proc.time() - startTime
-
-# saveRDS(listIV, "datasets/listIV100.rds")
-# saveRDS(listBins, "datasets/listBins100.rds")
-
-```
-
-## Select relevant variables
-
-Ignore the variables that would not be available at the time the credit scoring is performed.
-
-```{r}
-
-# This shows that almost all variables have an information value above 2% which is considered the threshold to be weakly
-# useful. Useless variables are all related to F and G ratings which we do not use anyway.
-for (i in 1:length(listBins$variable)) {
-  useless <- listBins$WoE[i] %>% as.data.frame() %>% filter(IV <= 0.02)
-  if (nrow(useless) > 0) print(useless)
-}
-
-bestBins <- listBins %>%
-  arrange(desc(IV)) %>%
-  filter(!(variable %in% c(
-    "loanID", "term", "int_rate", "creditMargin", "loan_status",
-    "grade", "sub_grade", "grade_num", "sub_grade_num",
-    "emp_length", "home_ownership", "monthDefault",
-    "principal_loss_pct", "creditMargin", "monthDefault",
-    "isGoodLoan")))
-
-
-bestBins
-
-# saveRDS(bestBins, "datasets/bestBins100.rds")
-
-```
-
-## Create data table with only binary variables (transform every bin to a 0/1 value)
-
-For each variable, create new variables for each bin in the WoE table of that variable.
-
-```{r}
-# Variable will contain all the categories for all the variables.
-# WARNING: 3.3 GB dataframe
-allBins <- loansTraining[,"loanID"]
-
-for (index in 1:length(bestBins$variable)) {
-
-  binned <- categoriseFromWoE(df = loansTraining,
-                              varName =  bestBins$variable[index],
-                              woeTable = bestBins$WoE[[index]])
-
-  allBins <- cbind(allBins, binned)
-}
-
-# saveRDS(allBins, "datasets/allBins100.rds")
-```
-
-
-
-
-
-
-# OLD STUFF
-
