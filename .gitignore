@@ -13,19 +13,23 @@ HarvardX-LendingClub.Rmd
 
 rsconnect
 *.log
+*.swp
 *.tex
 *.ods#
+/*.nb.html
 
-Research
-old
 
 scratchpad.*
 
-./build
+/build
+/OLD
+/Research
 
 datasets/simplemaps_uszips_basicv1.6
 datasets/lending_club.csv
+datasets/lending_club.sqlite.zip
 datasets/lending_club.sqlite
 datasets/LendingClub.csv.gz
 datasets/lending_club_reformatted.rds
 datasets/lending_club_reformatted_paid.rds
+datasets/LoansWorkingSet.rds
