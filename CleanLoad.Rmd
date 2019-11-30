@@ -1,4 +1,13 @@
 
+
+Start from a blank slate
+
+```{r}
+rm(list = ls(all.names = TRUE))
+```
+
+
+
 ```{r cl-load-data,echo=FALSE,message=FALSE}
 # Load libraries
 library(tidyverse)

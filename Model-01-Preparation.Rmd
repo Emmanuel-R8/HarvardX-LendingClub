@@ -37,7 +37,7 @@ loanSample    <- readRDS("datasets/LoanSample.rds")
 
 
 ```{r}
-# select the variables checked in 01-startup.Rmd
+# select the variables that might be used to create the training+test set 
 modelVarsIn <- c(LC_variable[LC_variable$inModel == TRUE, "variable_name"])$variable_name
 modelVarsIn <- c(modelVarsIn, 
                  "grade_num", "sub_grade_num", 
@@ -254,16 +254,24 @@ For each variable, create new variables for each bin in the WoE table of that va
 # WARNING: 3.3 GB dataframe
 allBins <- loansTraining[,"loanID"]
 
-for (index in 1:length(bestBins$variable)) {
+for (index in 1:nrow(bestBins)) {
+  
+  name <- bestBins$variable[index][[1]]
 
-  binned <- categoriseFromWoE(df = loansTraining,
-                              varName =  bestBins$variable[index],
-                              woeTable = bestBins$WoE[[index]])
+  cat("\n--------------------", index, "--", name, "------------------------------\n")
+  ltIndex <- which(names(loansTraining) == name)
 
+  binned <- categoriseFromWoE(df = loansTraining[, ltIndex],
+                              varName =  name,
+                              woeTable = bestBins$WoE[index][[1]])
+
+  names(binned) <- c(name)
   allBins <- cbind(allBins, binned)
 }
 
 # saveRDS(allBins, "datasets/allBins100.rds")
+
+
 ```
 
 
@@ -427,4 +435,10 @@ resultAmnt <- WoETable(
 
 resultAmnt
 resultAmnt$IV
+
+categoriseFromWoE(df = loansBinning, 
+                  varName = "loan_amnt", 
+                  woeTable = resultAmnt,
+                  verbose = TRUE)
+
 ```

@@ -8,10 +8,12 @@ output: html_notebook
 ### Final list of variables
 
 ```{r}
-
 # Saved at the end of the modeling file
 load("datasets/GLModelResults.rda")
+```
 
+
+```{r}
 # Model to use
 GLModel <-  SGLMretrain
 
@@ -60,11 +62,11 @@ Intercept <- summary(GLModel)$coefficients["(Intercept)", "Estimate"]
 
 ScorePerVariable <- (ScoreFactor * Intercept  + ScoreOffset) / nrow(modelNames)
 
-GLMCoefficients %>% 
+GLMScores <- 
+  GLMCoefficients %>% 
   mutate(weight = Estimate * ScoreFactor, 
          weightScaled = weight + ScorePerVariable, 
-         points = round(weightScaled)) %>% 
-  View()
+         points = round(weightScaled))
 
 ```
 

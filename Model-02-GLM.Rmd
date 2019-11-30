@@ -26,8 +26,11 @@ loansTraining <- readRDS("datasets/LoansTraining.rds")
 # WARNING: 3.3 GB dataframe 
 # Take the allBins dataset (without `loanID`)
 # Add the desired response
+
+allBins <- readRDS("datasets/allBins100.rds")
+
 loanSample <- 
-  readRDS("datasets/allBins100.rds") %>% 
+  allBins %>% 
   select(-loanID) %>%
   cbind(loansTraining$isGoodLoan) %>%
   rename(isGoodLoan = "loansTraining$isGoodLoan") %>%
@@ -73,7 +76,6 @@ We use `speedglm` being quick. Note that alternatives were also tried: `glm` cra
 
 ```{r}
 gc(full = TRUE)
-
 
 # About 700 sec wall-time to complete training dataset
 # The dataset is the sample less duplicate, less zero-ed columns
@@ -201,6 +203,8 @@ gc(full = TRUE)
 }
 
 summary(SGLMreretrain)
+
+# saveRDS(SGLMreretrain, "datasets/SGLMreretrain.rds")
 
 ```
 
