@@ -2,13 +2,29 @@
 
 > Is the interest rate proposed by LC high enough?
 
-> We use the entire dataset to estimate the impact of time  as a polynomial curve. To assess future loans, this would not be acceptable. Only an online algorithm should be used. For example ARMA/ARIMA, Kalman filtering of the time-trend trajectory. 
-
 > This report was one of those "it-builds-character" endeavour. Facing such a large dataset, it took a very long time before settling to address a particular question. Exploring the data lead to many blind alleys with little interest.
 
 > As a practical tool, this approach would not work in real life: we have no data on rejected loans. Using this model to accept/reject loans would need more work (using Reject Inference).
 
-> Use regularising regression method to chose significant variables incrementally
-
 > Currently only look at PD. Extend to LGD with Good Dollars and Bad Dollars instead of Good Loans / Bad Loans
+
+
+Further possible explorations:
+
++ Address the unbalanced dataset by sampling a number of training samples whose size is identical to the test dataset.
+
++ Improve the regularisation of the model parameters.
+
++ Explore economic cycles/situations as additional entry.
+
++ We use the entire dataset to estimate the impact of time  as a polynomial curve. To assess future loans, this would not be acceptable. Only an online algorithm should be used. For example ARMA/ARIMA, Kalman filtering of the time-trend trajectory. 
+
++ Loss amount where good loan/bad loan proportion is replaced by a good dollar (repaid) / bad dollars (lost) fraction. See SAS Global Forum 2012.
+
++ The size of the dataset is an issue to apply other techinques. But with stochastics methods, possible other models could be:
+    
+    - Tree models which have numerous variations (CART generally, and simple or aggregated boosted decision trees specifically)
+    
+    - Neural network 
+
 

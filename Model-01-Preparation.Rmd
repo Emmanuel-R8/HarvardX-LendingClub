@@ -26,7 +26,7 @@ rm(loans)
 # Datasets to be ready for first training
 loansTraining <- readRDS("datasets/LoansTraining.rds")
 loansTest     <- readRDS("datasets/LoansTest.rds")
-informationValues        <- readRDS("datasets/informationValues100.rds")
+informationValues <- readRDS("datasets/informationValues100.rds")
 listBins      <- readRDS("datasets/listBins100.rds")
 bestBins      <- readRDS("datasets/bestBins100.rds")
 allBins       <- readRDS("datasets/allBins100.rds")
@@ -51,10 +51,10 @@ modelVarsOut <- c("grade_num", "sub_grade_num",
 
 
 ```{r}
-#################################################################################################
+## ###############################################################################################
 ##
 ## Prepare a dataset with ONLY the predictors NOT removing NA's
-##
+## 
 loansPredictors <-
   loansWorkingSet %>%
 
@@ -84,7 +84,7 @@ loansPredictors <-
 
 
 
-#################################################################################################
+## ###############################################################################################
 ##
 ## Create training / test sets 80%/20%
 ##
@@ -128,7 +128,9 @@ if ("package:binner" %in% search()) {
 }
 
 if (!("binner" %in% installed.packages()[,1])) {
-  devtools::install_local("~/Development/R/DVPT-PACKAGES/Score_modeling_binning/binner", force = TRUE, quiet = TRUE)
+  devtools::install_local("~/Development/R/DVPT-PACKAGES/Score_modeling_binning/binner", 
+                          force = TRUE, 
+                          quiet = TRUE)
   # devtools::install_github("Emmanuel-R8/SMBinning")
 }
 
@@ -250,27 +252,45 @@ bestBins
 For each variable, create new variables for each bin in the WoE table of that variable.
 
 ```{r}
-# Variable will contain all the categories for all the variables.
-# WARNING: 3.3 GB dataframe
-allBins <- loansTraining[,"loanID"]
+# Variable will contain all the best characteristics. Every continuous variable is reformatted
+# into factors reflecting the appropriate bins
+
+allFactorsAsCharacteristics <- loansTraining[,"loanID"]
+allFactorsAsBins <- loansTraining[,"loanID"]
+
+
 
 for (index in 1:nrow(bestBins)) {
-  
+#for (index in 1:3) {
   name <- bestBins$variable[index][[1]]
-
-  cat("\n--------------------", index, "--", name, "------------------------------\n")
+  
+  cat("--------------------",
+      index,
+      "--",
+      name, "\n")
+  
   ltIndex <- which(names(loansTraining) == name)
-
-  binned <- categoriseFromWoE(df = loansTraining[, ltIndex],
-                              varName =  name,
-                              woeTable = bestBins$WoE[index][[1]])
-
-  names(binned) <- c(name)
-  allBins <- cbind(allBins, binned)
+  
+  characteristic <- categoriseFromWoE(df = loansTraining[, ltIndex],
+                                      varName =  name,
+                                      woeTable = bestBins$WoE[index][[1]])
+  
+  bins <- categoriseFromWoE.Wide(df = loansTraining[, ltIndex],
+                                 varName =  name,
+                                 woeTable = bestBins$WoE[index][[1]])
+  
+  allFactorsAsCharacteristics <-
+    allFactorsAsCharacteristics %>%
+    cbind(characteristic)
+  
+  
+  allFactorsAsBins <-
+    allFactorsAsBins %>%
+    cbind(bins)
+  
 }
 
-# saveRDS(allBins, "datasets/allBins100.rds")
-
+# saveRDS(allFactorsAsCharacteristics, "datasets/allCharacteristics100.rds") ; saveRDS(allFactorsAsBins, "datasets/allBins100.rds")
 
 ```
 

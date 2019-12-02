@@ -25,7 +25,6 @@ loanSample <-
   as.data.frame()
 
 
-
 NAsFirstTraining <-
   tibble(
     name = rownames(summary(SGLMtrain)$coefficient),

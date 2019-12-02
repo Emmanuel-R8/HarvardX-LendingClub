@@ -3,43 +3,55 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-# Model performance
+# Model result
 
-### Final list of variables
+## Final list of variables
 
 ```{r}
+# Clean up
+rm(list = ls(all.names = TRUE))
+
+library(tidyverse)
+library(stringr)
+
 # Saved at the end of the modeling file
-load("datasets/GLModelResults.rda")
+SGLM_B_train <- readRDS("datasets/SGLM_B_train.rds")
+SGLM_B_retrain <- readRDS("datasets/SGLM_B_retrain.rds")
+SGLM_B_reretrain <- readRDS("datasets/SGLM_B_reretrain.rds")
 ```
 
 
 ```{r}
 # Model to use
-GLModel <-  SGLMretrain
+GLModel <- SGLM_B_retrain
 
 # List of model variables
-modelNames <- attr(GLModel$coefficients, "names") %>%
+modelNames <- 
+  attr(GLModel$coefficients, "names") %>%
   enframe(x = .) %>%
-  rename(variableName = "value") %>% 
-  select(variableName) %>% 
+  rename(variableName = "value") %>%
+  select(variableName) %>%
   mutate(variableName = str_remove_all(variableName, "\`"))
 
 
 # and their coefficients in the model
-GLMCoefficients <- summary(GLModel)$coefficients %>%
+GLMCoefficients <- 
+  summary(GLModel)$coefficients %>%
   as_tibble() %>%
   cbind(modelNames) %>%
-  rename(zValue = "z value",
-         pValue = "Pr(>|z|)",
-         stdErr = "Std. Error") %>% 
-  
+  rename(
+    zValue = "z value",
+    pValue = "Pr(>|z|)",
+    stdErr = "Std. Error"
+  ) %>%
+
   # reorder columns to have names first
   select(variableName, everything())
 
 ```
 
 
-### Scoring
+## Scoring
 
 Scoring expresses the coefficients that were estimated during the logistic regression into points on a scale. The conversion is done using  three parameters that are chosen somewhat arbitrarily.
 
@@ -47,26 +59,83 @@ Scoring expresses the coefficients that were estimated during the logistic regre
 
 + an _anchoring_ score reflecting a particular odd.
 
-For our purpose, we will choose 1,000 points being equivalent to 1 in a 100 to default, i.e. 2,000 points <=> odds = 99. We will also choose 50 to reflect _times 2_ change in odds.
+For our purpose, we will choose ($Score_{anchor}$) 5,000 points being equivalent to 1 in a 20 to default ($Odds_{anchor}$), i.e. 5,000 points <=> $Odds_{Anchor} = \frac{1 / 20}{1 - 1/20}$. We will also choose 100 to reflect _times 2_ change in odds ($DoubleOdds$). Those choices are completely arbitrary. Basically, the score is a linear representation of the odds. The score is defined by a point (the anchor) and the slope of the line going through that point.
+
+Those values will reflect the total estimated score for a borrower (i.e. loan sample). The number of characteristics (information points gathered in a credit application), or number of bins, have to be irrelevant in calculating this score. In other words, if LendingClub were to gather 5 more information points, the score should, __mutatis mutandis__, be unchanged. (However, we would hope that the quality of the estimated score would improve.)
+
+The score per variable needs to be adjusted using the number of information points, that is the number of characteristics. Here, the model has been trained on the number of bins. We first need to determine how many characteristics are used in the model.
 
 
 ```{r}
+
+# The list of characteristics is extracted from the list of bins names.
+numberOfCharacteristics <-
+
+  modelNames %>%
+
+  # List of all names excluding the intercept which is not part of the scoring calculations (it
+  # would mean giving points for free as a base line)
+  filter(variableName != "(Intercept)") %>%
+
+  # Extract strings ("[a-zA-Z0-9-_]*") preceded by an opening bracket ("(?<=\\()") and followed by a
+  # closing bracket ("(?=\\))"). (The column names were formatted this way for that purpose.) See
+  # "https://github.com/rstudio/cheatsheets/blob/master/strings.pdf" for details on the regex.
+  mutate(characteristic = str_match(variableName, "(?<=\\()[a-zA-Z0-9-_]*(?=\\))")) %>%
+
+  # We are only interested in how many distinct characteristic there are.
+  distinct(characteristic) %>%
+  nrow()
+
+numberOfCharacteristics
+```
+
+
+We can now perform the scoring calculation. 
+
+
+```{r}
+
+ProbDefaultAtAnchor <- 1/20
+
+# The model is trained so that the 'Good' outcome is that a loan does not default. The odds that
+# therefore calculated on the probability of no default.
+ProbAtAnchor <- 1 - ProbDefaultAtAnchor
+OddsAnchor <- ProbAtAnchor / (1 - ProbAtAnchor)
+ScoreAnchor <- 2000
+
 # Doubling odds = 100 points
-ScoreFactor <- 100 / log(2)
+DoubleOdds <- 100
+
+ScoreFactor <- OddsAnchor / log(2)
 
 # 5,000 points is 20:1 odds of default
-ScoreOffset <- 5000 - ScoreFactor * log(20)
+ScoreOffset <- ScoreAnchor - ScoreFactor * log(OddsAnchor)
 
 # Score at the intercept
 Intercept <- summary(GLModel)$coefficients["(Intercept)", "Estimate"]
+```
 
-ScorePerVariable <- (ScoreFactor * Intercept  + ScoreOffset) / nrow(modelNames)
+Then we apportion across characteristics.
 
-GLMScores <- 
-  GLMCoefficients %>% 
-  mutate(weight = Estimate * ScoreFactor, 
-         weightScaled = weight + ScorePerVariable, 
-         points = round(weightScaled))
+```{r}
+ScorePerVariable <- (ScoreFactor * Intercept + ScoreOffset) / numberOfCharacteristics 
+InterceptPerVariable <- Intercept * ScoreFactor / numberOfCharacteristics
+
+GLMScores <-
+  GLMCoefficients %>%
+  mutate(
+    weight = Estimate * ScoreFactor,
+    weightScaled = weight + ScorePerVariable,
+    points = round(weightScaled)
+  )
+```
+
+> VERY IMPORTANT:
+
+The intercept points have been allocated across all characteristics. Therefore the regression coefficient estimated for the intercept becomes redundant and needs removing.
+
+```{r}
+GLMScores[1, "points"] <-  0
 
 ```
 
@@ -75,13 +144,13 @@ GLMScores <-
 
 Using the model is a simple matrix multiplication: $\text{Loan matrix} \times \text{Scorecard weights}$
 
-  ## Training set
+## Training set
 
-  ```{r}
+```{r}
 # Reload the right datasets
-allBins <- readRDS("datasets/allBins100.rds")
+allFactorsAsBins <- readRDS("datasets/allBins100.rds")
 loansTraining <- readRDS("datasets/LoansTraining.rds")
-loansTest     <- readRDS("datasets/LoansTest.rds")
+loansTest <- readRDS("datasets/LoansTest.rds")
 gc(full = TRUE)
 ```
 
@@ -89,16 +158,21 @@ gc(full = TRUE)
 ```{r}
 # Remove every variable that is not in the list of variables in the model then convert into a matrix
 allMatrix <-
-  allBins[, !is.na(match(names(allBins),
-                         str_remove_all(GLMCoefficients$modelName, "\`")))] %>%
+  allFactorsAsBins[, !is.na(match(
+    names(allFactorsAsBins),
+    str_remove_all(GLMCoefficients$variableName, "\`")
+  ))] %>%
   as.matrix()
 
 # Add a column of 1s for the intercept
-allMatrix <- cbind( as.vector(rep.int(x = 1, times = dim(allMatrix)[1])), allMatrix )
+allMatrix <-
+  cbind(as.vector(rep.int(
+    x = 1, times = dim(allMatrix)[1]
+  )), allMatrix)
 dim(allMatrix)
 
 # Done with this dataset
-rm(allBins)
+rm(allFactorsAsBins)
 gc(full = TRUE)
 ```
 
@@ -107,163 +181,116 @@ gc(full = TRUE)
 estimateVector <- GLMCoefficients$Estimate %>% as.matrix()
 
 # Score per variable
-estimateScore <- ScoreFactor * estimateVector + ScorePerVariable
-estimateScore[is.na(estimateScore)] <- 0
+estimateScorecard <- allMatrix %*% ( GLMScores$points %>% as.matrix() ) 
+
 
 dim(estimateVector)
 dim(estimateScore)
 
 
-# Any variable with NAs?
-GLMCoefficients$modelName[which(is.na(estimateVector))]
+# CHECK: Any variable with NAs?
+# GLMCoefficients$modelName[which(is.na(estimateVector))]
+# estimateVector[is.na(estimateVector)] <- 0
+# dim(estimateVector)
 
-estimateVector[is.na(estimateVector)] <- 0
-dim(estimateVector)
-
-estimateCoefficients <- allMatrix %*% estimateVector
-estimateCoefficients <-
-  tibble::enframe(estimateCoefficients[,1]) %>%
-  mutate(p = 1 / (1 + exp(-value)),
-         oddsGood = if_else(is.infinite(p / (1 - p)), 1e10, p / (1 - p)),
-         score = oddsGood * ScoreFactor + ScoreOffset)
+estimateLogit <- allMatrix %*% estimateVector
+estimateLogit <-
+  enframe(estimateLogit[, 1]) %>%
+  mutate(oddsGood = exp(value),
+         p = 1 / (1 + oddsGood)) %>% 
+  cbind(estimateScorecard)
 
 
-estimateScorecard <- allMatrix %*% estimateScore
 ```
 
 
-# Histogram of the scores
+## Histogram of the scores
+
 
 ```{r}
 loansTraining %>%
-  cbind(estimateCoefficients) %>%
-  cbind(estimateScorecard) %>%
-  ggplot(aes(estimateScorecard)) +
-  geom_histogram(bins = 25, col = "blue", fill = "lightblue")
-
+  cbind(estimateLogit) %>%
+  filter(between(value, -2, 5)) %>% 
+  ggplot(aes(value, col = grade)) +
+  geom_density(adjust = 2) 
+  
 loansTraining %>%
-  cbind(estimateCoefficients) %>%
-  ggplot(aes(oddsGood)) +
-  geom_histogram(bins = 25, col = "blue", fill = "lightblue") +
+  cbind(estimateLogit) %>%
+  ggplot(aes(p, col = grade)) +
+  geom_density(adjust = 2) +
   scale_x_log10()
-
-
+  
 loansTraining %>%
-  cbind(estimateCoefficients) %>%
-  ggplot(aes(score)) +
-  geom_histogram(bins = 25, col = "blue", fill = "lightblue") +
+  cbind(estimateLogit) %>%
+  filter(between(oddsGood, 0.1, 100)) %>% 
+  ggplot(aes(oddsGood, col = grade)) +
+  geom_density(adjust = 2) + 
   scale_x_log10()
+  
 ```
 
-
-```{r}
-median(estimateScorecard)
-
-```
-
-
-
+The following histogram shows the density plot of the scorecards. Note the log-scale for the score, and the square-root scale for the density. It mirrors the multimodal density distributions of previous visualisations. 
 
 ```{r}
 loansTraining %>%
-  select(sub_grade) %>%
-  cbind(estimateCoefficients) %>%
-  group_by(sub_grade) %>%
-  summarise(Mean = mean(oddsGood))
-
-
-loansTraining %>%
-  # Add the newly calculated estimates to the training set
-  cbind(estimateCoefficients %>% as_tibble()) %>%
-
-  # Calculate a mean estimate by sub rating
-  group_by(sub_grade) %>%
-  mutate(Mean = mean(p)) %>%
-  ungroup() %>%
-
-  sample_n(100000) %>%
-  ggplot(aes(sub_grade, p, Mean)) +
-  geom_violin(aes(sub_grade, p), alpha = 0.1, col = "blue", adjust = 0.5) +
-  geom_point(aes(sub_grade, Mean), col = "red")
-
-loansTraining %>%
-  # Add the newly calculated estimates to the training set
-  cbind(estimateCoefficients %>% as_tibble()) %>%
-
-  # Calculate a mean estimate by sub rating
-  group_by(sub_grade) %>%
-  mutate(Mean = mean(oddsGood)) %>%
-  ungroup() %>%
-
-  sample_n(100000) %>%
-  ggplot(aes(sub_grade, oddsGood, Mean)) +
-  geom_violin(aes(sub_grade, oddsGood), alpha = 0.1, col = "blue", adjust = 0.5) +
-  geom_point(aes(sub_grade, Mean), col = "red") +
-  scale_y_log10()
-
-
-loansTraining %>%
-  # Add the newly calculated scorecards to the training set
-  cbind(estimateScorecard %>% as_tibble()) %>%
-  rename(ScoreCard = V1) %>%
-
-  # Calculate a mean estimate by sub rating
-  group_by(sub_grade) %>%
-  mutate(Mean = mean(ScoreCard)) %>%
-  ungroup() %>%
-
-  sample_n(100000) %>%
-  ggplot(aes(sub_grade, ScoreCard, Mean)) +
-  geom_violin(aes(sub_grade, ScoreCard), alpha = 0.1, col = "blue", adjust = 0.5) +
-  geom_point(aes(sub_grade, Mean), col = "red")
-
+  cbind(estimateLogit) %>%
+  ggplot(aes(estimateScorecard, col = grade)) +
+  geom_density(adjust = 2) +
+  scale_x_log10() + 
+  scale_y_sqrt()
 ```
 
 
-## Test set
+
+# Test set
 
 ```{r}
 # Prepare the full test set
-predictionCategories <- loansTest[,"loanID"]
+bestBins <- readRDS("datasets/bestBins100.rds")
+
+predictionCategories <- loansTest[, "loanID"]
 
 for (index in 1:length(bestBins$variable)) {
-
   binned <-
-    binner::categoriseFromWoE(df = loansTest,
-                              varName =  bestBins$variable[index],
-                              woeTable = bestBins$WoE[[index]])
+    binner::categoriseFromWoE.Wide(
+      df = loansTest,
+      varName = bestBins$variable[index],
+      woeTable = bestBins$WoE[[index]]
+    )
 
   predictionCategories <- cbind(predictionCategories, binned)
 }
+
 dim(predictionCategories)
 
 # Retain only the relevant scorecard categories
 predictionMatrix <-
-  predictionCategories[, !is.na(match(names(predictionCategories),
-                                      str_remove_all(GLMCoefficients$modelName, "\`")))] %>%
+  predictionCategories[, !is.na(match(
+    names(predictionCategories),
+    str_remove_all(GLMCoefficients$variableName, "\`")
+  ))] %>%
   as.matrix()
 
-predictionMatrix <- cbind( as.vector(rep.int(x = 1, times = dim(predictionMatrix)[1])), predictionMatrix )
+predictionMatrix <- cbind(as.vector(rep.int(x = 1, times = dim(predictionMatrix)[1])), predictionMatrix)
 dim(predictionMatrix)
 
 
 predictionCoefficients <- predictionMatrix %*% estimateVector
 predictionCoefficients <-
-  tibble::enframe(predictionCoefficients[,1]) %>%
-  mutate(p = 1 / (1 + exp(-value)),
-         oddsGood = if_else(is.infinite(p / (1 - p)), 1e10, p / (1 - p)))
+  tibble::enframe(predictionCoefficients[, 1]) %>%
+  mutate(
+    p = 1 / (1 + exp(-value)),
+    oddsGood = if_else(is.infinite(p / (1 - p)), 1e10, p / (1 - p))
+  )
 
 predictionScorecard <- predictionMatrix %*% estimateScore
-
-
-
 ```
 
 ```{r}
 loansTest %>%
   cbind(predictionCoefficients) %>%
   cbind(predictionScorecard) %>%
-  mutate(scoreBand = floor(predictionScorecard / 20) * 20) %>%
+  mutate(scoreBand = floor(predictionScorecard / 50) * 50) %>%
   filter(predictionScorecard > 0) %>%
   group_by(scoreBand) %>%
   summarise(Count = n()) %>%
@@ -271,72 +298,44 @@ loansTest %>%
   geom_col(col = "blue")
 
 median(predictionScorecard)
-
 ```
 
 Same downward dynamics as training set
 
+
 ```{r}
 loansTest %>%
-  select(sub_grade) %>%
-  cbind(predictionCoefficients) %>%
-  group_by(sub_grade) %>%
-  summarise(Mean = mean(oddsGood))
-
-
+  cbind(estimateLogit) %>%
+  filter(between(value, -2, 5)) %>% 
+  ggplot(aes(value, col = grade)) +
+  geom_density(adjust = 2) 
+  
 loansTest %>%
-  # Add the newly calculated estimates to the training set
-  cbind(predictionCoefficients %>% as_tibble()) %>%
-
-  # Calculate a mean estimate by sub rating
-  group_by(sub_grade) %>%
-  mutate(Mean = mean(p)) %>%
-  ungroup() %>%
-
-  sample_n(100000) %>%
-  ggplot(aes(sub_grade, p, Mean)) +
-  geom_violin(aes(sub_grade, p), alpha = 0.1, col = "blue", adjust = 0.5) +
-  geom_point(aes(sub_grade, Mean), col = "red")
-
+  cbind(estimateLogit) %>%
+  ggplot(aes(p, col = grade)) +
+  geom_density(adjust = 2) +
+  scale_x_log10()
+  
 loansTest %>%
-  # Add the newly calculated estimates to the training set
-  cbind(predictionCoefficients %>% as_tibble()) %>%
-
-  # Calculate a mean estimate by sub rating
-  group_by(sub_grade) %>%
-  mutate(Mean = mean(oddsGood)) %>%
-  ungroup() %>%
-
-  sample_n(100000) %>%
-  ggplot(aes(sub_grade, oddsGood, Mean)) +
-  geom_violin(aes(sub_grade, oddsGood), alpha = 0.1, col = "blue", adjust = 0.5) +
-  geom_point(aes(sub_grade, Mean), col = "red") +
-  scale_y_log10()
-
-
-loansTest %>%
-  # Add the newly calculated scorecards to the training set
-  cbind(predictionScorecard %>% as_tibble()) %>%
-  rename(ScoreCard = V1) %>%
-
-  # Calculate a mean estimate by sub rating
-  group_by(sub_grade) %>%
-  mutate(Mean = mean(ScoreCard)) %>%
-  ungroup() %>%
-
-  sample_n(100000) %>%
-  ggplot(aes(sub_grade, ScoreCard, Mean)) +
-  geom_violin(aes(sub_grade, ScoreCard), alpha = 0.1, col = "blue", adjust = 0.5) +
-  geom_point(aes(sub_grade, Mean), col = "red")
-
-
+  cbind(estimateLogit) %>%
+  filter(between(oddsGood, 0.1, 100)) %>% 
+  ggplot(aes(oddsGood, col = grade)) +
+  geom_density(adjust = 2) + 
+  scale_x_log10()
+  
 ```
+
+
+## Correlation matrix
+
+[TODO]
 
 
 ## ROC Curve
 
 ```{r}
-ROCRPrediction <- ROCR::prediction(predictionScorecard, loansTest$isGoodLoan)
+
+ROCRPrediction <- ROCR::prediction(predictionCoefficients$value, loansTest$isGoodLoan)
 ROCRPerformance <- ROCR::performance(ROCRPrediction, "tpr", "fpr")
 
 ROCRPlot <-
@@ -358,10 +357,8 @@ ROCRPerformance@x.values
 ## Bin test set by prediction
 
 ```{r}
-probEstimates <- if_else(predictionEstimates < 0, 0, predictionEstimates)
+probEstimates <- if_else(predictionCoefficients$value < 0, 0, predictionCoefficients$value)
 
-summary(probEstimates / (1+probEstimates))
-
-
+summary(probEstimates / (1 + probEstimates))
 ```
 

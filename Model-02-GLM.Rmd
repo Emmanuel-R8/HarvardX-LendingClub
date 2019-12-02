@@ -18,19 +18,29 @@ output: html_notebook
 rm(list = ls(all.names = TRUE))
 library(tidyverse)
 
-loansTraining <- readRDS("datasets/LoansTraining.rds")
-
 # Training results to speed up analysis
 # load("datasets/GLModelResults.rda")
 
-# WARNING: 3.3 GB dataframe 
+
+
+loansTraining <- readRDS("datasets/LoansTraining.rds")
+
 # Take the allBins dataset (without `loanID`)
 # Add the desired response
 
-allBins <- readRDS("datasets/allBins100.rds")
+allFactorsAsCharacteristics <- readRDS("datasets/allCharacteristics100.rds")
+allFactorsAsBins <- readRDS("datasets/allBins100.rds")
 
-loanSample <- 
-  allBins %>% 
+loanSampleBins <- 
+  allFactorsAsBins %>% 
+  select(-loanID) %>%
+  cbind(loansTraining$isGoodLoan) %>%
+  rename(isGoodLoan = "loansTraining$isGoodLoan") %>%
+  mutate(isGoodLoan = if_else(isGoodLoan, 1, 0)) %>%
+  as.data.frame()
+
+loanSampleCharacteristics <- 
+  allFactorsAsCharacteristics %>% 
   select(-loanID) %>%
   cbind(loansTraining$isGoodLoan) %>%
   rename(isGoodLoan = "loansTraining$isGoodLoan") %>%
@@ -40,8 +50,8 @@ loanSample <-
 rm(loansTraining)
 
 gc(full = TRUE)
-ncol(loanSample)
-
+ncol(loanSampleBins)
+ncol(loanSampleCharacteristics)
 ```
 
 
@@ -50,20 +60,28 @@ ncol(loanSample)
 
 ```{r}
 
-# Starting list of names
-namesBins <- names(loanSample)
+namesCharacteristics <- names(loanSampleCharacteristics)
+namesBins <- names(loanSampleBins)
 
-# Running GLM would give a number of NAs if some columns are linearly dependant (in our case actually equal).
-# A "trick" to identify them is to run a hash digest on each column and spot identical hashes
-# The original variables were not identical, but when split into categories, they can become identical. 
-# For example, if no income is provided (income=NA category), no debt-to-income ratio can be calculated (dti=NA).
-duplicateNames <- loanSample[duplicated(lapply(loanSample, digest::digest))] %>% names()
+
+# Starting list of names
+# > The following two variables are only useful if all the bins have been given their own column (if a
+# > characteristic has 7 factors, that creates 7 bins and column).
+
+
+# Running GLM would give a number of NAs if some columns are linearly dependant (in our case
+# actually equal). A "trick" to identify them is to run a hash digest on each column and spot
+# identical hashes The original variables were not identical, but when split into categories, they
+# can become identical. For example, if no income is provided (income=NA category), no
+# debt-to-income ratio can be calculated (dti=NA).
+duplicateNames <- loanSampleBins[duplicated(lapply(loanSampleBins, digest::digest))] %>% names()
 duplicateNames
 
 # Remove any categories uniformaly constant (only 0)
-# This is important when working on a small extract of the dataset for variables that are seldom used (e.g. customers
-# from certain states).
-zeroColumnsNames <- loanSample[, colSums(loanSample) == 0] %>% names()
+#
+# This is important when working on a small extract of the dataset for variables that are seldom
+# used (e.g. customers from certain states).
+zeroColumnsNames <- loanSampleBins[, colSums(loanSampleBins) == 0] %>% names()
 
 ```
 
@@ -73,6 +91,7 @@ zeroColumnsNames <- loanSample[, colSums(loanSample) == 0] %>% names()
 
 We use `speedglm` being quick. Note that alternatives were also tried: `glm` crashed on even small extracts of the dataset. `glmnet` returns errors that were not understandable or documented on the internet. 
 
+#### GLM on characteristics
 
 ```{r}
 gc(full = TRUE)
@@ -83,38 +102,69 @@ gc(full = TRUE)
   doMC::registerDoMC(cores = 1) # Too many processes push over 32GB
   startTime <- proc.time()
   
-  loansTrainingBins <- loanSample %>%
+  loansData <- loanSampleCharacteristics %>%
     select(-one_of( c(duplicateNames, 
                       zeroColumnsNames)))
   
-  SGLMtrain <- speedglm::speedglm(isGoodLoan ~ .,
-                                  data = loansTrainingBins,
+  SGLM_C_train <- speedglm::speedglm(isGoodLoan ~ .,
+                                  data = loansData,
                                   family = binomial())
   
   doMC::registerDoMC(cores = NULL)
   cat(proc.time() - startTime, "\n")
 }
 
-summary(SGLMtrain)
+summary(SGLM_C_train)
 
-# saveRDS(SGLMtrain, "datasets/SGLMtrain.rds")
+# There are a number of NA estimates that need to be removed by removing indivual bins
+length( which(is.na(summary(SGLM_C_train)$coefficient$Estimate)) )
+
+# saveRDS(SGLM_C_train, "datasets/SGLM_C_train.rds")
+```
+
+
+#### GLM on bins
+
+```{r}
+gc(full = TRUE)
+
+# About 700 sec wall-time to complete training dataset
+# The dataset is the sample less duplicate, less zero-ed columns
+{
+  doMC::registerDoMC(cores = 1) # Too many processes push over 32GB
+  startTime <- proc.time()
+  
+  loansData <- loanSampleBins
+  
+  SGLM_B_train <- speedglm::speedglm(isGoodLoan ~ .,
+                                     data = loansData,
+                                     family = binomial())
+  
+  doMC::registerDoMC(cores = NULL)
+  cat(proc.time() - startTime, "\n")
+}
+
+# There are a number of NA estimates that need to be removed by removing indivual bins
+summary(SGLM_B_train)
+
+length(which(is.na(summary(SGLM_B_train)$coefficient$Estimate)))
+
+# saveRDS(SGLM_B_train, "datasets/SGLM_B_train.rds")
 
 
 ```
 
 
-
 ```{r}
 # Does the model throw NAs? They are produced not only for identical variables, but also co-linear
-# combinations.
-# Let us select those variables:
+# combinations. Let us select those variables:
 
 NAsFirstTraining <-
   
   # Take the results (just the estimated coefficients) from the model
   tibble(
-    name = rownames(summary(SGLMtrain)$coefficient),
-    estimate = summary(SGLMtrain)$coefficient$Estimate
+    name = rownames(summary(SGLM_B_train)$coefficient),
+    estimate = summary(SGLM_B_train)$coefficient$Estimate
   ) %>%
   
   # Reformat the names to be the same as in the bins
@@ -137,35 +187,35 @@ gc(full = TRUE)
   startTime <- proc.time()
   doMC::registerDoMC(cores = 2) # Too many processes push over 32GB
   
-  loansTrainingBins <- loanSample %>%
+  loansData <- loanSampleBins %>%
     select(-one_of( c(duplicateNames, 
                       zeroColumnsNames, 
                       NAsFirstTraining)))
   
-  SGLMretrain <- speedglm::speedglm(isGoodLoan ~ .,
-                                  data = loansTrainingBins,
-                                  family = binomial())
+  SGLM_B_retrain <- speedglm::speedglm(isGoodLoan ~ .,
+                                       data = loansData,
+                                       family = binomial())
   
   doMC::registerDoMC(cores = NULL)
   cat(proc.time() - startTime)
 }
 
-summary(SGLMretrain)
-# saveRDS(SGLMretrain, "datasets/SGLMretrain.rds")
+summary(SGLM_B_retrain)
+# saveRDS(SGLM_B_retrain, "datasets/SGLM_B_retrain.rds")
 
 ```
 
 
 ```{r}
-# Just in case, new NAs popped up 
-# Actual variables after excluding intercept coefficient
+# Just in case, new NAs popped up. Then select variables whose significance value is under 2 sigmas.
 
 NAsSecondTraining <-
   tibble(
-    name = rownames(summary(SGLMretrain)$coefficient),
-    estimate = summary(SGLMretrain)$coefficient$Estimate, 
-    zValue = abs(summary(SGLMretrain)$coefficient$"z value")
+    name = rownames(summary(SGLM_B_retrain)$coefficient),
+    estimate = summary(SGLM_B_retrain)$coefficient$Estimate, 
+    zValue = abs(summary(SGLM_B_retrain)$coefficient$"z value")
   ) %>%
+  
   mutate(name = stringr::str_remove_all(name, "\`")) %>% 
   filter(name != "isGoodLoan") %>%
   
@@ -185,26 +235,29 @@ gc(full = TRUE)
 
 # Start the model training again. About 350 sec.
 {
+  
   startTime <- proc.time()
   doMC::registerDoMC(cores = 2)
   
-  loansTrainingBins <- loanSample %>%
-    select(-one_of( c(duplicateNames, 
-                      zeroColumnsNames, 
-                      NAsFirstTraining, 
-                      NAsSecondTraining)))
+  loansData <- loanSampleBins %>%
+    select(-one_of( c(
+      duplicateNames,
+      zeroColumnsNames,
+      NAsFirstTraining,
+      NAsSecondTraining
+    )))
   
-  SGLMreretrain <- speedglm::speedglm(isGoodLoan ~ .,
-                                  data = loansTrainingBins,
-                                  family = binomial())
+  SGLM_B_reretrain <- speedglm::speedglm(isGoodLoan ~ .,
+                                         data = loansData,
+                                         family = binomial())
   
   doMC::registerDoMC(cores = NULL)
   cat(proc.time() - startTime)
 }
 
-summary(SGLMreretrain)
+summary(SGLM_B_reretrain)
 
-# saveRDS(SGLMreretrain, "datasets/SGLMreretrain.rds")
+# saveRDS(SGLM_B_reretrain, "datasets/SGLMreretrain.rds")
 
 ```
 
@@ -212,9 +265,9 @@ summary(SGLMreretrain)
 ```{r}
 NAsThirdTraining <-
   tibble(
-    name     = rownames(summary(SGLMreretrain)$coefficient),
-    estimate = summary(SGLMreretrain)$coefficient$Estimate, 
-    zValue   = abs(summary(SGLMreretrain)$coefficient$"z value")
+    name     = rownames(summary(SGLM_B_reretrain)$coefficient),
+    estimate = summary(SGLM_B_reretrain)$coefficient$Estimate, 
+    zValue   = abs(summary(SGLM_B_reretrain)$coefficient$"z value")
   ) %>%
   mutate(name = stringr::str_remove_all(name, "\`")) %>% 
   filter(name != "isGoodLoan") %>%
@@ -226,12 +279,12 @@ NAsThirdTraining <- NAsThirdTraining$name
 
 ```
 
-```{r}
-save(list = c("NAsFirstTraining", "SGLMtrain",
-              "NAsSecondTraining", "SGLMretrain", 
-              "NAsThirdTraining", "SGLMreretrain"), 
-     file = "datasets/GLModelResults.rda")
+### Model comparison
 
-```
++ re-train secures the lowest Akaike criterion and will be chosen.
+
++ On this test, the best variables are: SORT BY IV. Then WoE for the first few ones.
+
+
 
 
