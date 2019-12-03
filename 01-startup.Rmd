@@ -10,12 +10,12 @@
 ```
 
 
-```{r child="CleanLoad.Rmd"}
+```{r 01-su-clean-load,echo=FALSE,child="CleanLoad.Rmd"}
 ```
 
 
 
-```{r needed-functions}
+```{r 01-su-needed-functions}
 ############################################################################################################
 ##
 ## Given a date and a 3-digit zip, returns a triplet of:

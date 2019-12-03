@@ -1,9 +1,8 @@
 # Dataset
 
 
-```{r child="CleanLoad.Rmd",eval=FALSE}
+```{r 04-ds-clean-load,echo=FALSE,child="CleanLoad.Rmd"}
 ```
-
 
 
 The data is sourced as a _SQLite_ database that downloaded from [@KaggleLC] and imported as a `tibble dataframe` with the `RSQLite` package. The variables were reformatted according to their respective types. 
@@ -24,7 +23,7 @@ The original dataset is large: it includes `r nrow(lending_club)` loan samples, 
 
 The dataset represents a total of ca.$34bln in loan principals, which is a substantial share of the total amount stated to have been intermediated to date by LC (publicly reported to be $50bln+). About 55%/60% of the portfolio is fully repaid. See Table \@ref(tab:loan-per-status).
 
-```{r loan-per-status}
+```{r 04-loan-per-status}
 local({
   nloans <- nrow(lending_club)
   
@@ -50,7 +49,7 @@ local({
 
 Figure \@ref(fig:business-volume-per-month) plots the number, volume (cumulative principal amount) and average principal per loan. It shows that the business grew exponentially (in the common sense of the word) from inception until 2016. At this point, according to Wikipedia ^[source: https://en.wikipedia.org/wiki/LendingClub - Retrieval date 15 September 2019]:
 
-```{r business-volume-per-month,fig.cap="Business volume written per month",fig.fullwidth=TRUE}
+```{r 04-business-volume-per-month,fig.cap="Business volume written per month",fig.fullwidth=TRUE}
 volume1 <- lending_club %>%
   mutate(Monthly = ceiling_date(issue_d, unit = "month")) %>%
   group_by(Monthly) %>%
@@ -98,7 +97,7 @@ By the end of the dataset, those metrics have essentially recovered to their 201
 
 In the dataset, less loans are still outstanding than matured or "_charged off_" (term that LC use to mean partially or fully written off, i.e. there are no possibilty for LC and/or the investors to receive further payments). The share of outstanding loans is:
 
-```{r share-of-live-portfolio}
+```{r 04-share-of-live-portfolio}
 # Share of portfolio currently 'live'
 local({
   n_current <- lending_club %>%
@@ -179,7 +178,7 @@ Before a loan is approved, the borrower undergoes a review process that assess h
 
 Figure \@ref(fig:credit-margin-over-time) shows the evolution of credit margins over time grouped by ratings. The plots are made with a random sample of 300,000 loans.
 
-```{r credit-margin-over-time,fig.cap="Credit margins per grade over time"}
+```{r 04-credit-margin-over-time,fig.cap="Credit margins per grade over time"}
 
 creditMargin36 <-
   LoansMargin %>%
@@ -227,7 +226,7 @@ The graphs show considerations that are relevant to the modeling":
 
 
 
-```{r IRR-over-time,fig.cap="Credit margins per grade over time"}
+```{r 04-IRR-over-time,fig.cap="Credit margins per grade over time"}
 
 IRR36 <-
   LoansIRR %>%
@@ -256,7 +255,7 @@ grid.arrange(IRR36, IRR60, nrow = 1)
 ```
 
 
-```{r CM-over-time,fig.cap="Credit margins per grade over time"}
+```{r 04-CM-over-time,fig.cap="Credit margins per grade over time"}
 
 CM36 <-
   LoansMargin %>%
@@ -298,7 +297,7 @@ Based on this information, the loan is approved or not. Approval includes the fi
 Figure \@ref(fig:interest-rate-table) ^[source: https://www.lendingclub.com/investing/investor-education/interest-rates-and-fees] shows the predetermined interest rate depending on the initial rating as of July 2019. 
 
 
-```{r interest-rate-table2,fig.cap="Interest rates given rating",out.width="70%",out.height="70%"}
+```{r 04-interest-rate-table2,fig.cap="Interest rates given rating",out.width="70%",out.height="70%"}
 knitr::include_graphics("images/interest-rates-jul2019.png", auto_pdf = TRUE)
 ```
 
@@ -306,7 +305,7 @@ At the date of this report, the ratings range from `A` (the best) down to `D`, e
 
 Figures \@ref(fig:interest-over-time) shows the change in interest rate over time for different ratings and separated for each tenor. (Each figure is on a sample of 100,000 loans.) For each rating, we can see several parallel lines which correspond to the 5 sub-rating of each rating. We note that the range of interest rates has substantial widened over time. That is, the risk premium necessary to attract potential investors has had to substantially increase. In the most recent years, the highest rates exceed 30% which is higher than many credit cards.3-year loans are naturally considered safer (more A-rated, less G-rated). Identical ratings attract identical rates of interest.
 
-```{r interest-over-time,fig.cap="Interest rate per grade over time"}
+```{r 04-interest-over-time,fig.cap="Interest rate per grade over time"}
 
 interest36 <- loans %>%
   sample_n(100000) %>%
@@ -333,7 +332,7 @@ grid.arrange(interest36, interest60, nrow = 1)
 By comparison, we plot the 3-year (in red) and 5-year (in blue) bank swap rates in Figure \@ref(fig:swap-rates). We see that the swap curve has flattened in recent times (3-year and 5-y rates are almost identical). We also can see that in broad terms the interest rates charged reflect those underlying swap rates. It is therefore most relevant to examine the credit margins added to the swap rates.
 
 
-```{r swap-rates,fig.cap="Historical Swap Rates"}
+```{r 04-swap-rates,fig.cap="Historical Swap Rates"}
 RATES %>%
   filter(DATE >= ymd("2008-01-01")) %>%
   ggplot(aes(DATE, RATE3Y, RATE5Y)) +
@@ -344,7 +343,7 @@ RATES %>%
 
 Figures \@ref(fig:margin-over-time) shows the change in credit margin over time for different ratings and separated for each tenor. (Each figure is on a sample of 100,000 loans.) As above, for each rating, we can see several parallel lines which correspond to the 5 sub-rating of each rating. We note that the range of credit margins has widened over time but less than the interest rates. Identical ratings attract identical credit margins.
 
-```{r margin-over-time,fig.cap="Credit margins per grade over time"}
+```{r 04-margin-over-time,fig.cap="Credit margins per grade over time"}
 margin36 <-
   loans %>%
   filter(term == 36) %>%
@@ -381,7 +380,7 @@ grid.arrange(margin36, margin60, nrow = 1)
 
 When applying, a potential borrower must state the purpose of the loan. As shown in table \@ref(table:loans-per-purpose), the main purpose is the consolidation of existing debts.
 
-```{r loans-per-purpose}
+```{r 04-loans-per-purpose}
 loans %>% 
   group_by(purpose) %>% 
   summarise(Number = n()) %>% 
@@ -390,7 +389,7 @@ loans %>%
 
 ```
 
-```{r fig.cap="Histograms of credit margins per purpose"}
+```{r 04-credit-margin-hist,fig.cap="Histograms of credit margins per purpose"}
 loans %>% 
   left_join(LoansMargin, by = "loanID") %>% 
   select(purpose, creditMargin) %>% 
@@ -400,7 +399,7 @@ loans %>%
   geom_histogram()
 ```
 
-```{r fig.cap="Boxplots of credit margins per purpose"}
+```{r 04-credit-margin-boxplot,fig.cap="Boxplots of credit margins per purpose"}
 loans %>% 
   left_join(LoansMargin, by = "loanID") %>% 
   select(purpose, creditMargin) %>% 
@@ -428,7 +427,7 @@ $$
 Where $Principal$ is the amount borrowed, $rate = \frac{\text{Quoted Interest Rate}}{12}$ is the monthly interest rate, and $N$ is the number of installments (36 or 60 monthly payments). The following piece of code shows that the average error between this formula and the dataset value is about 2 cents. We therefore precisely understand this variable.
 
 
-```{r installment-amount-error,echo=TRUE,eval=FALSE}
+```{r 04-installment-amount-error,echo=TRUE,eval=FALSE}
 local({
   installmentError <- loans %>%
     mutate(
@@ -453,7 +452,7 @@ Figure \@ref(NPV-subrating) shows that as ratings worsen, the average NPV^[The a
 
 If loans were adequately priced, the excess returns (thanks to higher interest) should on average offset credit losses, that is an NPV average should be at least 100%. This seems to be the case down to ratings of about `D4`. Further down, credit losses become too frequent and/or too substantial to be covered on average. We posit that this justified rejecting loans applications rated `E1` and below.
 
-```{r NPV-subrating,fig.cap="Average NPV et credit margin (\\%) depending on sub-rating"}
+```{r 04-NPV-subrating,fig.cap="Average NPV et credit margin (\\%) depending on sub-rating"}
 loansBySubGrade <- 
   loansWorkingSet %>% 
   filter(!is.na(creditMargin)) %>% 
@@ -481,7 +480,7 @@ Figure \@ref(fig:loss-distribution-subrating) shows that for a given grade, the 
 
 Setting aside the loans rated "A" or "B", the distributions seem log-normal. Unsurprisingly, the worse the rating the larger the principal loss.
 
-```{r loss-distribution-subrating,fig.cap="Distribution of NPV (\\%) depending on rating \n(y-axis square-root scaling)"}
+```{r 04-loss-distribution-subrating,fig.cap="Distribution of NPV (\\%) depending on rating \n(y-axis square-root scaling)"}
 
 Set <- loansWorkingSet %>% 
   select(grade, funded_amnt, total_rec_prncp) %>%
@@ -518,7 +517,7 @@ Principal loss does not reflect the timing of that loss: a loss now is worse tha
 
 Figure \@ref(fig:NPV-distribution-subrating) shows that for a given grade, the NPVs are very widely spread. From top to bottom, loans are group by ratings: from quality ratings of `A` and `B`, average ratings of `C` and `D`, to poor ratings of `E` and below. From left to right, we focus on different parts of how NPVs are distributed. Note that each graph is based on a random sample of 100,000 loans (about 1/12th of the original set) and therefore the NPV densities are comparable from graph to graph. 
 
-```{r NPV-distribution-subrating,fig.cap="Distribution of NPV (\\%) depending on rating \n(y-axis square-root scaling)"}
+```{r 04-NPV-distribution-subrating,fig.cap="Distribution of NPV (\\%) depending on rating \n(y-axis square-root scaling)"}
 
 setGood <-  loansWorkingSet %>%
   filter(grade %in% c("A", "B")) %>% 
@@ -631,7 +630,7 @@ Zooming without scaling the y-axis and grouping all the ratings available for in
 + Figure \@ref(fig:NPV-top) shows a mode with a maximum around 1.25 / 1.5 being loans seemingly repaid in full (the mode is above 100% given the repayment of principal _and_ interest);
 
 
-```{r NPV-top,fig.cap="NPV \\% over 120\\% \n(no y-axis scaling)"}
+```{r 04-NPV-top,fig.cap="NPV \\% over 120\\% \n(no y-axis scaling)"}
 NPVset <- 
   loansWorkingSet %>%
   filter(grade %in% c("A", "B", "C", "D")) %>% 
@@ -647,7 +646,7 @@ NPVset %>%
 
 + Figure \@ref(fig:NPV-mid-high) and figure \@ref(fig:NPV-zero) show a second and third mode around 41% and -1%;
 
-```{r NPV-mid-high,fig.cap="NPV \\% around 41\\% \n(no y-axis scaling)"}
+```{r 04-NPV-mid-high,fig.cap="NPV \\% around 41\\% \n(no y-axis scaling)"}
 NPVset %>%
   filter(between(NPVLossPCT, 0.35, 0.50)) %>% 
   #sample_n(100000) %>% 
@@ -655,7 +654,7 @@ NPVset %>%
   geom_density(adjust = 3) 
 ```
 
-```{r NPV-zero,fig.cap="NPV \\% around -1\\% \n(no y-axis scaling)"}
+```{r 04-NPV-zero,fig.cap="NPV \\% around -1\\% \n(no y-axis scaling)"}
 NPVset %>%
   filter(between(NPVLossPCT, -0.10, 0.01)) %>% 
   #sample_n(100000) %>% 
@@ -665,7 +664,7 @@ NPVset %>%
 
 + Finally, figure \@ref(fig:NPV-total-loss) one last very diffuse mode around -100%.
 
-```{r NPV-total-loss,fig.cap="NPV \\% for close to total loss \\% \n(no y-axis scaling)"}
+```{r 04-NPV-total-loss,fig.cap="NPV \\% for close to total loss \\% \n(no y-axis scaling)"}
 NPVset %>%
   filter(between(NPVLossPCT, -1.00, -0.60)) %>% 
   #sample_n(100000) %>% 
@@ -693,7 +692,7 @@ As indicated in the introduction, our focus is on loans that have gone through t
 In this reduced dataset, we focus on loans that have matured or been terminated. It contains  `r nrow(loans)` samples. Most of the loans (ca.80%) have been repaid in full. See Table \@ref(tab:matured-loans).
 
 
-```{r matured-loans}
+```{r 04-matured-loans}
 # Share of portfolio currently 'live'
 
 # In the working set, only keep A -> D loans
@@ -726,7 +725,7 @@ When grouped by grade (Figure \@ref(fig:funded-by-subgrade)), we see a clear cor
 
 
 
-```{r funded-by-subgrade,fig.cap="Funding and Write-offs by Sub-grades"}
+```{r 04-funded-by-subgrade,fig.cap="Funding and Write-offs by Sub-grades"}
 loanSizeSummary <-
   loansWorkingSet %>%
   group_by(sub_grade) %>%

@@ -51,7 +51,7 @@ description: "HarvardX - PH125.9x Data Science Capstone"
 ```
 
 
-```{r knitr-options,eval=TRUE,echo=FALSE,message=FALSE}
+```{r knitr-options,echo=FALSE,message=FALSE}
 ###################################################################################################
 ## GLOBAL SETUP
 ##
@@ -91,13 +91,6 @@ knitr::opts_chunk$set(
   # Text size
   size = "small"
 )
-
-
-#if (knitr::is_html_output()) {
-#  knitr::opts_chunk$set(dev = "png")
-#} else {
-#  knitr::opts_chunk$set(dev = "pdf")
-#}
 
 
 # Modify the size of the code chunks

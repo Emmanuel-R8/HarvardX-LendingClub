@@ -1,12 +1,5 @@
 
-Start from a blank slate
-
-```{r}
-rm(list = ls(all.names = TRUE))
-```
-
-
-```{r cl-load-data,echo=FALSE,message=FALSE}
+```{r echo=FALSE,message=FALSE}
 # Load libraries
 library(tidyverse)
 library(lubridate)
@@ -16,31 +9,42 @@ library(kableExtra)
 library(lubridate)
 
 library(dslabs)
+library(knitr)
+library(bookdown)
+
 ds_theme_set()
 
 ```
 
+```{r eval=TRUE,echo=FALSE,message=FALSE}
+###################################################################################################
+##
+## REPEAT FROM index.Rmd
+## 
+###################################################################################################
 
-```{r cl-load-lending-club,echo=FALSE,message=FALSE}
+```
+
+```{r echo=FALSE,message=FALSE}
 ###################################################################################################
 ##
 ## LendingClub data
 ## This file is only used to create the working datasets
 ## 
-#if (!exists("lending_club")) {
-#  lending_club <- readRDS("datasets/lending_club_reformatted.rds")
-#}
+if (!exists("lending_club")) {
+ lending_club <- readRDS("datasets/lending_club_reformatted.rds")
+}
 ```
 
 
-```{r cl-load-reformatted-paid,echo=FALSE,message=FALSE}
+```{r echo=FALSE,message=FALSE}
 if (!exists("loans")) {
   loans <- readRDS("datasets/lending_club_reformatted_paid.rds")
 }
 ```
 
 
-```{r cl-load-calculations,echo=FALSE,message=FALSE}
+```{r echo=FALSE,message=FALSE}
 ###################################################################################################
 ##
 ## Response variables
@@ -66,7 +70,7 @@ if (!exists("LoansMargin")) {
 ```
 
 
-```{r cl-load-rates,echo=FALSE,message=FALSE}
+```{r echo=FALSE,message=FALSE}
 ###################################################################################################
 ##
 ## Interest rate swaps
@@ -85,7 +89,7 @@ if (!exists("RATES5Y")) {
 ```
 
 
-```{r cl-load-geography,echo=FALSE,message=FALSE}
+```{r echo=FALSE,message=FALSE}
 ###################################################################################################
 ##
 ## ZIP/FIPS code data
@@ -116,7 +120,7 @@ if (!exists("unemploymentRate")) {
 ```
 
 
-```{r create-working-set,echo=FALSE,message=FALSE}
+```{r echo=FALSE,message=FALSE}
 nSamples <- nrow(loans)
 
 loansWorkingSet <- loans %>%
@@ -133,7 +137,7 @@ loansWorkingSet <- loans %>%
 ```
 
 
-```{r create-list-variables,echo=FALSE,message=FALSE}
+```{r echo=FALSE,message=FALSE}
 ###################################################################################################
 ##
 ## Mostly generated from a LibreOffice spreadsheet for convenience purposes, then reformatted

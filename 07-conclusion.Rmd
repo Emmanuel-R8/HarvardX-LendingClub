@@ -13,6 +13,8 @@ Further possible explorations:
 
 + Address the unbalanced dataset by sampling a number of training samples whose size is identical to the test dataset.
 
++ Perform PCA beforehand
+
 + Improve the regularisation of the model parameters.
 
 + Explore economic cycles/situations as additional entry.

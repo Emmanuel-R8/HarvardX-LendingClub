@@ -1,17 +1,13 @@
----
-title: "R Notebook"
-output: html_notebook
----
 
-# Logistic Regression
+## Logistic Regression
 
-## Logistic regression using the `SpeedGLM` package
+### Logistic regression using the `SpeedGLM` package
 
 
 > NOTE: `speedglm` has a `select()` function which would shadow `dplyr::select()`, so it is only used fully qualified to avoid any collision.
 
 
-```{r}
+```{r 05-02-cleanup-load-dataset}
 
 # Cleanup and reload
 
@@ -20,7 +16,6 @@ library(tidyverse)
 
 # Training results to speed up analysis
 # load("datasets/GLModelResults.rda")
-
 
 
 loansTraining <- readRDS("datasets/LoansTraining.rds")
@@ -58,7 +53,7 @@ ncol(loanSampleCharacteristics)
 
 ### Remove identical bins
 
-```{r}
+```{r 05-02-rm-useless-bins}
 
 namesCharacteristics <- names(loanSampleCharacteristics)
 namesBins <- names(loanSampleBins)
@@ -93,7 +88,7 @@ We use `speedglm` being quick. Note that alternatives were also tried: `glm` cra
 
 #### GLM on characteristics
 
-```{r}
+```{r 05-02-first-training-C}
 gc(full = TRUE)
 
 # About 700 sec wall-time to complete training dataset
@@ -125,7 +120,7 @@ length( which(is.na(summary(SGLM_C_train)$coefficient$Estimate)) )
 
 #### GLM on bins
 
-```{r}
+```{r 05-02-first-training-B}
 gc(full = TRUE)
 
 # About 700 sec wall-time to complete training dataset
@@ -155,7 +150,7 @@ length(which(is.na(summary(SGLM_B_train)$coefficient$Estimate)))
 ```
 
 
-```{r}
+```{r  05-02-first-training-B-vars}
 # Does the model throw NAs? They are produced not only for identical variables, but also co-linear
 # combinations. Let us select those variables:
 
@@ -179,7 +174,7 @@ NAsFirstTraining <- NAsFirstTraining$name
 
 ### Second training
 
-```{r}
+```{r 05-02-second-training-B}
 gc(full = TRUE)
 
 # Start the model training again
@@ -206,7 +201,7 @@ summary(SGLM_B_retrain)
 ```
 
 
-```{r}
+```{r 05-02-second-training-B-vars}
 # Just in case, new NAs popped up. Then select variables whose significance value is under 2 sigmas.
 
 NAsSecondTraining <-
@@ -230,7 +225,7 @@ NAsSecondTraining <- NAsSecondTraining$name
 ### Third training
 
 
-```{r}
+```{r 05-02-third-training-B}
 gc(full = TRUE)
 
 # Start the model training again. About 350 sec.
@@ -262,7 +257,7 @@ summary(SGLM_B_reretrain)
 ```
 
 
-```{r}
+```{r 05-02-third-training-B-vars}
 NAsThirdTraining <-
   tibble(
     name     = rownames(summary(SGLM_B_reretrain)$coefficient),
@@ -278,12 +273,6 @@ NAsThirdTraining <-
 NAsThirdTraining <- NAsThirdTraining$name
 
 ```
-
-### Model comparison
-
-+ re-train secures the lowest Akaike criterion and will be chosen.
-
-+ On this test, the best variables are: SORT BY IV. Then WoE for the first few ones.
 
 
 

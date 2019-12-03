@@ -1,13 +1,9 @@
----
-title: "R Notebook"
-output: html_notebook
----
 
-# Model result
+## Model result
 
-## Final list of variables
+### Final list of variables
 
-```{r}
+```{r 05-03-load-models}
 # Clean up
 rm(list = ls(all.names = TRUE))
 
@@ -21,7 +17,7 @@ SGLM_B_reretrain <- readRDS("datasets/SGLM_B_reretrain.rds")
 ```
 
 
-```{r}
+```{r 05-03-extract-coefficients}
 # Model to use
 GLModel <- SGLM_B_retrain
 
@@ -51,7 +47,7 @@ GLMCoefficients <-
 ```
 
 
-## Scoring
+### Scoring
 
 Scoring expresses the coefficients that were estimated during the logistic regression into points on a scale. The conversion is done using  three parameters that are chosen somewhat arbitrarily.
 
@@ -66,7 +62,7 @@ Those values will reflect the total estimated score for a borrower (i.e. loan sa
 The score per variable needs to be adjusted using the number of information points, that is the number of characteristics. Here, the model has been trained on the number of bins. We first need to determine how many characteristics are used in the model.
 
 
-```{r}
+```{r 05-03-calculate-n-characteristics}
 
 # The list of characteristics is extracted from the list of bins names.
 numberOfCharacteristics <-
@@ -93,7 +89,7 @@ numberOfCharacteristics
 We can now perform the scoring calculation. 
 
 
-```{r}
+```{r 05-03-scoring-parameters}
 
 ProbDefaultAtAnchor <- 1/20
 
@@ -117,7 +113,7 @@ Intercept <- summary(GLModel)$coefficients["(Intercept)", "Estimate"]
 
 Then we apportion across characteristics.
 
-```{r}
+```{r 05-03-parameters-per-chr}
 ScorePerVariable <- (ScoreFactor * Intercept + ScoreOffset) / numberOfCharacteristics 
 InterceptPerVariable <- Intercept * ScoreFactor / numberOfCharacteristics
 
@@ -146,7 +142,7 @@ Using the model is a simple matrix multiplication: $\text{Loan matrix} \times \t
 
 ## Training set
 
-```{r}
+```{r 05-03-load-factored-datasets}
 # Reload the right datasets
 allFactorsAsBins <- readRDS("datasets/allBins100.rds")
 loansTraining <- readRDS("datasets/LoansTraining.rds")
@@ -155,7 +151,7 @@ gc(full = TRUE)
 ```
 
 
-```{r}
+```{r 05-03-covert-to-matrix}
 # Remove every variable that is not in the list of variables in the model then convert into a matrix
 allMatrix <-
   allFactorsAsBins[, !is.na(match(
@@ -177,7 +173,7 @@ gc(full = TRUE)
 ```
 
 
-```{r}
+```{r 05-03-logit-estimates}
 estimateVector <- GLMCoefficients$Estimate %>% as.matrix()
 
 # Score per variable
@@ -204,10 +200,10 @@ estimateLogit <-
 ```
 
 
-## Histogram of the scores
+### Histogram of the scores
 
 
-```{r}
+```{r 05-03-training-hists}
 loansTraining %>%
   cbind(estimateLogit) %>%
   filter(between(value, -2, 5)) %>% 
@@ -231,7 +227,7 @@ loansTraining %>%
 
 The following histogram shows the density plot of the scorecards. Note the log-scale for the score, and the square-root scale for the density. It mirrors the multimodal density distributions of previous visualisations. 
 
-```{r}
+```{r 05-03-training-scores}
 loansTraining %>%
   cbind(estimateLogit) %>%
   ggplot(aes(estimateScorecard, col = grade)) +
@@ -242,9 +238,9 @@ loansTraining %>%
 
 
 
-# Test set
+## Test set
 
-```{r}
+```{r 05-03-test-bins}
 # Prepare the full test set
 bestBins <- readRDS("datasets/bestBins100.rds")
 
@@ -262,7 +258,10 @@ for (index in 1:length(bestBins$variable)) {
 }
 
 dim(predictionCategories)
+```
 
+
+```{r 05-03-test-matrix}
 # Retain only the relevant scorecard categories
 predictionMatrix <-
   predictionCategories[, !is.na(match(
@@ -286,7 +285,7 @@ predictionCoefficients <-
 predictionScorecard <- predictionMatrix %*% estimateScore
 ```
 
-```{r}
+```{r 05-03-test-estimates}
 loansTest %>%
   cbind(predictionCoefficients) %>%
   cbind(predictionScorecard) %>%
@@ -303,7 +302,7 @@ median(predictionScorecard)
 Same downward dynamics as training set
 
 
-```{r}
+```{r 05-03-test-viz}
 loansTest %>%
   cbind(estimateLogit) %>%
   filter(between(value, -2, 5)) %>% 
@@ -333,7 +332,7 @@ loansTest %>%
 
 ## ROC Curve
 
-```{r}
+```{r 05-03-test-ROC}
 
 ROCRPrediction <- ROCR::prediction(predictionCoefficients$value, loansTest$isGoodLoan)
 ROCRPerformance <- ROCR::performance(ROCRPrediction, "tpr", "fpr")

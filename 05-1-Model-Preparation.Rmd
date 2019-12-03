@@ -1,42 +1,88 @@
----
-title: "R Notebook"
-output: html_notebook
----
+# Logistic Regression Model and Credit Scorecard
+
+
+At the outset, the dataset presents a number of challenges:
+
++ There is a mix of continuous and categorical data.
+
++ The number of observations is very large. 
+
++ The possible number of predictors is large (partially due to one-hot encoding of categorical values).
+
++ As shown in the previous section, credit margins have changed over time. This is clearly related to the wider US economic environment. Financial hardship is a key driver for some of the loans. Availability of disposable income is important to assess the ability to repay. Therefore, the cost of living, which varies from state to state, seems relevant. 
+
+
+[TODO: Bias/Complexity trade-off]
+[TODO: AoC? or AuC?]
+
+
+## Introduction
+
+### Split
+
+The dataset was randomly split into training and validation sets (80/20 ratio).
+
+We initiated the exploration of potential models with Principal Component Analysis, Linear Regression, Extreme Boosting and Random Forest. No model could be trained on the full set. We therefore came to limit the training set on a random sample of 0.1% (1 thousandth) of the initial full set.
+
+Any model will require training in batch (e.g. stochastic gradient descent) or online. Our untested intuition is that online methods are not adapted to an unbalanced dataset: the number of defaults/write-offs is fairly low for high quality ratings. However, the dataset is evidently a time series which points to online training. We will not explore that line of investigation, although exploring that tension would be an interesting subject.
+
+### The modeling task
+
+Two step process:
+- Given dataset (+/- rating?) find a score between -5 and +5
+- Given a score between -5 and +5 given the right parameters for the modes
+- Given a density curve extrapolate the required margin
+
+- Make money or not?
+
+
 
 > WARNING: To run this model, you will need at least 32GB of memory (real plus virtual/swap space) 
 
-# Weight of evidence binning
+## Weight of evidence binning
 
-## Data preparation
+### Data preparation
 
 >
 > WARNING: Execute `CleanLoad.Rmd` first
 >
 
+
+```{r 05-01-m1-clean-load,echo=FALSE,child="CleanLoad.Rmd"}
+```
 ```{r}
 # AFTER EXECUTION OF `CleanLoad.Rmd`
 
-# Not used
-rm(loans)
+# Variables not used
+rm(lending_club, loans)
 ```
-
-```{r eval=FALSE,echo=FALSE}
-# To speedup. 
-
+```{r 05-01-load-loans-training,echo=FALSE}
 # Datasets to be ready for first training
 loansTraining <- readRDS("datasets/LoansTraining.rds")
+```
+```{r 05-01-load-loans-test,echo=FALSE}
 loansTest     <- readRDS("datasets/LoansTest.rds")
-informationValues <- readRDS("datasets/informationValues100.rds")
-listBins      <- readRDS("datasets/listBins100.rds")
-bestBins      <- readRDS("datasets/bestBins100.rds")
-allBins       <- readRDS("datasets/allBins100.rds")
+```
+```{r 05-01-load-IV,echo=FALSE}
+#informationValues <- readRDS("datasets/informationValues100.rds")
+```
+```{r 05-01-load-listBins,echo=FALSE}
+#listBins      <- readRDS("datasets/listBins100.rds")
+```
+```{r 05-01-load-bestBins,echo=FALSE}
+#bestBins      <- readRDS("datasets/bestBins100.rds")
+```
+```{r 05-01-load-allBins,echo=FALSE}
+#allBins       <- readRDS("datasets/allBins100.rds")
+```
+```{r 05-01-load-loans-samples,echo=FALSE}
 # loansWorkingSet <- readRDS("datasets/LoansWorkingSet.rds") # Not on github because too big
-loanSample    <- readRDS("datasets/LoanSample.rds")
+#loanSample    <- readRDS("datasets/LoanSample.rds")
 
 ```
 
 
-```{r}
+```{r 05-01-vars-inout}
 # select the variables that might be used to create the training+test set 
 modelVarsIn <- c(LC_variable[LC_variable$inModel == TRUE, "variable_name"])$variable_name
 modelVarsIn <- c(modelVarsIn, 
@@ -50,7 +96,7 @@ modelVarsOut <- c("grade_num", "sub_grade_num",
 ```
 
 
-```{r}
+```{r 05-01-loan-predictors}
 ## ###############################################################################################
 ##
 ## Prepare a dataset with ONLY the predictors NOT removing NA's
@@ -110,7 +156,7 @@ sample20 <- sample(1:nSamplesTraining, floor(nSamplesTraining * 0.20), replace =
 loans20 <- loansTraining %>% slice(sample20)
 ```
 
-```{r}
+```{r 05-01-cleanup}
 # Not used later on
 rm(loansWorkingSet, loansPredictors, LoansNPV, LoansIRR, LoansMargin, RATES, RATES3Y, RATES5Y)
 gc(full = TRUE)
@@ -118,9 +164,9 @@ gc(full = TRUE)
 
 
 
-# Model using all samples
+## Model using all samples
 
-```{r reinstall-binner,eval=FALSE}
+```{r 05-01-reinstall-binner}
 
 # Ensure that `binner` is here and available
 if ("package:binner" %in% search()) { 
@@ -137,9 +183,9 @@ if (!("binner" %in% installed.packages()[,1])) {
 library(binner)
 ```
 
-## Loop through all variables
+### Loop through all variables
 
-```{r}
+```{r 05-01-create-all-bins}
 loansBinning <- loansTraining %>%
   mutate(
     home_ownership = as_factor(home_ownership),
@@ -218,11 +264,11 @@ proc.time() - startTime
 
 ```
 
-## Select relevant variables
+### Select relevant variables
 
 Ignore the variables that would not be available at the time the credit scoring is performed.
 
-```{r}
+```{r 05-01-create-bestbins}
 
 # This shows that almost all variables have an information value above 2% which is considered the threshold to be weakly
 # useful. Useless variables are all related to F and G ratings which we do not use anyway.
@@ -247,11 +293,11 @@ bestBins
 
 ```
 
-## Create data table with only binary variables (transform every bin to a 0/1 value)
+### Create data table with only binary variables (transform every bin to a 0/1 value)
 
 For each variable, create new variables for each bin in the WoE table of that variable.
 
-```{r}
+```{r 05-01-create-factored-datasets}
 # Variable will contain all the best characteristics. Every continuous variable is reformatted
 # into factors reflecting the appropriate bins
 
@@ -296,7 +342,18 @@ for (index in 1:nrow(bestBins)) {
 
 
 
-# Individual examples
+### Comparison of individual characteristics
+
+>
+> [TODO]
+> Present data by order of IV
+> Sort WoE buildup for key IV
+
+
++ re-train secures the lowest Akaike criterion and will be chosen.
+
++ On this test, the best variables are: SORT BY IV. Then WoE for the first few ones.
+
 
 
 ```{r}
@@ -307,7 +364,7 @@ loansBinning <- loans20 %>%
   )
 ```
 
-### dti
+#### dti
 
 ```{r}
 resultHome <- WoETableContinuous(
@@ -321,7 +378,7 @@ resultHome$table
 resultHome$IV
 ```
 
-### Home ownership
+#### Home ownership
 
 ```{r}
 resultHome <- WoETable(
@@ -335,7 +392,7 @@ resultHome
 resultHome$IV
 ```
 
-### Verification Status
+#### Verification Status
 
 ```{r}
 resultVerif <- WoETable(
@@ -351,7 +408,7 @@ resultVerif$IV
 
 
 
-### Purpose
+#### Purpose
 
 ```{r}
 resultHome <- WoETable(
@@ -366,7 +423,7 @@ resultHome$IV
 ```
 
 
-### Sub grade
+#### Sub grade
 
 ```{r}
 resultSubgrade <- WoETable(
@@ -382,7 +439,7 @@ resultSubgrade$IV
 
 
 
-### Employment years
+#### Employment years
 
 ```{r}
 resultEmp <- WoETable(
@@ -398,7 +455,7 @@ resultEmp$IV
 
 
 
-### Bank card utilisation
+#### Bank card utilisation
 
 ```{r}
 resultBC <- WoETable(
@@ -412,7 +469,7 @@ resultBC
 resultBC$IV
 ```
 
-### State
+#### State
 
 ```{r}
 resultState <- WoETable(
@@ -427,7 +484,7 @@ resultState$IV
 ```
 
 
-### Annual income
+#### Annual income
 
 ```{r}
 which(names(loansBinning) == "annual_inc_joint")
@@ -443,7 +500,7 @@ resultHome
 resultHome$iv
 ```
 
-### Loan amount
+#### Loan amount
 
 ```{r}
 resultAmnt <- WoETable(

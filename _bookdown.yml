@@ -11,8 +11,11 @@ rmd_files: [
   "02-intro.Rmd",
   "03-responses.Rmd",
   "04-dataset.Rmd",
-  "05-model.Rmd",
-  "06-SGD.Rmd",
+
+  "05-1-Model-Preparation.Rmd",
+  "05-2-GLM.Rmd",
+  "05-3-Scoring.Rmd",
+
   "07-conclusion.Rmd",
   "08-appendix.Rmd",
   "09-references.Rmd"
