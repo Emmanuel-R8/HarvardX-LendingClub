@@ -1,6 +1,22 @@
 # Logistic Regression Model and Credit Scorecard
 
 
+```{r 05-01-change-printoutoption,echo=FALSE}
+
+# knitr global settings - By default, the final document will not include source code unless
+# expressly stated.
+knitr::opts_chunk$set(
+  # Chunks
+  eval = TRUE,
+  cache = TRUE,
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE)
+
+
+```
+
+
 At the outset, the dataset presents a number of challenges:
 
 + There is a mix of continuous and categorical data.
@@ -37,9 +53,28 @@ Two step process:
 
 
 
-> WARNING: To run this model, you will need at least 32GB of memory (real plus virtual/swap space) 
+## Logistic Regression
 
-## Weight of evidence binning
+__Logistic models__ (also called __logit model__) are used to model binary events. Examples would be passing or failing an exam,  a newborn being a boy or a girl, a voter choosing a particular political party, or -- relevant to us -- a borrower defaulting or not on a loan. If the binary variable is modeled as a 0/1 outcome, the model will yield a value between 0 and 1 which can be used as a probabilty. 
+
+We are interested in using a number of variables (being continuous and/or categorical) to model the binary response. A natural model is a linear combination of the variables. Since the predicted value would be continuous and not be bounded by 0/1, the outcome is transformed. A commonly used transformation of the logodds (logarithm of the odds given a particular probability) $\log \left( \frac{p}{1 - p} \right)$. This expression has a few advantages: it converts any value (between $- \infty$ and $+\infty$ produced by the linear regression), and it is symmetrical around $x = 0$ and $y = 1/2$. That is, using the odds instead of the probability avoids infinity; it behaves identically when p approaches 0 or 1 (this would not be the case using p). The reciprocal of the logodds is $p = \frac{1}{1 - e^{-x}}$. 
+
+For a number of $X_i$ variables, the model to fit is then:
+
+$$p =  \frac{1}{1 - e^{-\sum_i{\alpha_i X_i}}}$$
+
+The commonly used method to evaluate the creditworthiness of a borrower is to create scorecards whereby particular characteristics are segmented into intervals and attributed discrete scores. In plain English, a continuous variable (say the age of the applicant) is segmented into intervals (e.g. 0-18 year-olds, 18-26 year-olds,...), and then given a score. Those different segments become categorical variables. The task of the model is to:
+ 
+ + identify the best way to segment a continuous variable to maximise the information value of the different segments (called bins): intuitively empty or quasi-empty  bins (either no or few applicants in the bin) are not informative; bins for which the response is completely random are not predictive, whereas a bin where the response always has the same response is informative (i.e. anybody with income of 0 and 10 dolars per year will default, anybody with a salary of $1 million per month will repay).
+ 
+ + use a generalised linear model using the new categorical variables; 
+ 
+ + transforms the linear coefficients estimated for each category into numerical scores.
+
+
+
+
+> WARNING: To run this model, you will need at least 32GB of memory (real plus virtual/swap space) 
 
 ### Data preparation
 
@@ -56,30 +91,7 @@ Two step process:
 # Variables not used
 rm(lending_club, loans)
 ```
-```{r 05-01-load-loans-training,echo=FALSE}
-# Datasets to be ready for first training
-loansTraining <- readRDS("datasets/LoansTraining.rds")
-```
-```{r 05-01-load-loans-test,echo=FALSE}
-loansTest     <- readRDS("datasets/LoansTest.rds")
-```
-```{r 05-01-load-IV,echo=FALSE}
-#informationValues <- readRDS("datasets/informationValues100.rds")
-```
-```{r 05-01-load-listBins,echo=FALSE}
-#listBins      <- readRDS("datasets/listBins100.rds")
-```
-```{r 05-01-load-bestBins,echo=FALSE}
-#bestBins      <- readRDS("datasets/bestBins100.rds")
-```
-```{r 05-01-load-allBins,echo=FALSE}
-#allBins       <- readRDS("datasets/allBins100.rds")
-```
-```{r 05-01-load-loans-samples,echo=FALSE}
-# loansWorkingSet <- readRDS("datasets/LoansWorkingSet.rds") # Not on github because too big
-#loanSample    <- readRDS("datasets/LoanSample.rds")
 
-```
 
 
 ```{r 05-01-vars-inout}
@@ -163,8 +175,23 @@ gc(full = TRUE)
 ```
 
 
+## Binning and Weight of Evidence
 
-## Model using all samples
+This subsection owes a lot influence to the `smbinning` package source code from which we reimplemented some aspects using the `tidyverse` __style__  (the original source code uses SQL statements to access dataframes), and the `Information` package vignette ^[ [](https://cran.r-project.org/web/packages/Information/vignettes/Information-vignette.html)].
+
+
+To identify the various bins (and number and location)
+
+
+Let’s say that we have a binary dependent variable Y and a set of predictive variables X1,,Xp. As mentioned above, Y can capture a wide range of outcomes, such as defaulting on a loan, clicking on an ad, or terminating a subscription.
+
+WOE and IV play two distinct roles when analyzing data:
+
+    WOE describes the relationship between a predictive variable and a binary target variable.
+    IV measures the strength of that relationship.
+
+
+
 
 ```{r 05-01-reinstall-binner}
 
@@ -185,7 +212,7 @@ library(binner)
 
 ### Loop through all variables
 
-```{r 05-01-create-all-bins}
+```{r 05-01-create-list-bins}
 loansBinning <- loansTraining %>%
   mutate(
     home_ownership = as_factor(home_ownership),
@@ -203,7 +230,10 @@ listBins <-
     WoE = list(),
     .rows = 0
   )
+```
 
+
+```{r 05-01-create-all-bins,message=FALSE}
 # About 500 sec wall-time
 startTime <- proc.time()
 for (n in informationValues$variable) {
@@ -259,26 +289,37 @@ for (n in informationValues$variable) {
 }
 proc.time() - startTime
 
-# saveRDS(informationValues, "datasets/informationValues100.rds")
-# saveRDS(listBins, "datasets/listBins100.rds")
+saveRDS(informationValues, "datasets/informationValues100.rds")
+saveRDS(listBins, "datasets/listBins100.rds")
 
 ```
 
 ### Select relevant variables
 
-Ignore the variables that would not be available at the time the credit scoring is performed.
+It is considered that information value below 2% is useless. 
+
+```{r}
+bestBins <- 
+  listBins %>% 
+  filter(IV >= 0.02)
+
+```
+
+
+```{r 05-01-create-bestbins-10best}
+bestBins %>% 
+  select(variable, IV) %>% 
+  mutate(IV = round(IV, digits = 5)) %>% 
+  arrange(desc(IV)) %>% 
+  slice(1:10)
+```
+
+
+However, we should ignore the variables that would not be available at the time the credit scoring is performed. 
+
 
 ```{r 05-01-create-bestbins}
-
-# This shows that almost all variables have an information value above 2% which is considered the threshold to be weakly
-# useful. Useless variables are all related to F and G ratings which we do not use anyway.
-for (i in 1:length(listBins$variable)) {
-  useless <- listBins$WoE[i] %>% as.data.frame() %>% filter(IV <= 0.02)
-  if (nrow(useless) > 0) print(useless)
-}
-
-bestBins <- listBins %>%
-  arrange(desc(IV)) %>%
+bestBins <- bestBins %>%
   filter(!(variable %in% c(
     "loanID", "term", "int_rate", "creditMargin", "loan_status",
     "grade", "sub_grade", "grade_num", "sub_grade_num",
@@ -286,28 +327,51 @@ bestBins <- listBins %>%
     "principal_loss_pct", "creditMargin", "monthDefault",
     "isGoodLoan")))
 
-
-bestBins
-
-# saveRDS(bestBins, "datasets/bestBins100.rds")
+saveRDS(bestBins, "datasets/bestBins100.rds")
 
 ```
+
+
+The 10 best variables that will retain are in the following table. Interestingly, the square and cubic powers of the issue date are retained. 
+
+```{r 05-01-create-bestbins-10worst}
+bestBins %>% 
+  select(variable, IV) %>% 
+  mutate(IV = round(IV, digits = 5)) %>% 
+  arrange(desc(IV)) %>% 
+  slice(1:10)
+```
+
+And the 10 worst (but retained) variables are:
+
+```{r 05-01-create-bestbins-10worst}
+bestBins %>% 
+  select(variable, IV) %>% 
+  mutate(IV = round(IV, digits = 5)) %>% 
+  arrange(IV) %>% 
+  slice(1:10)
+```
+
+
+
+
 
 ### Create data table with only binary variables (transform every bin to a 0/1 value)
 
 For each variable, create new variables for each bin in the WoE table of that variable.
 
-```{r 05-01-create-factored-datasets}
+```{r 05-01-create-factored-datasets-loanID}
 # Variable will contain all the best characteristics. Every continuous variable is reformatted
 # into factors reflecting the appropriate bins
 
 allFactorsAsCharacteristics <- loansTraining[,"loanID"]
 allFactorsAsBins <- loansTraining[,"loanID"]
+```
 
 
-
+```{r 05-01-create-factored-datasets}
 for (index in 1:nrow(bestBins)) {
-#for (index in 1:3) {
+#for (index in 1:27) {
   name <- bestBins$variable[index][[1]]
   
   cat("--------------------",
@@ -335,8 +399,11 @@ for (index in 1:nrow(bestBins)) {
     cbind(bins)
   
 }
+```
 
-# saveRDS(allFactorsAsCharacteristics, "datasets/allCharacteristics100.rds") ; saveRDS(allFactorsAsBins, "datasets/allBins100.rds")
+
+```{r 05-01-create-factored-datasets-save}
+saveRDS(allFactorsAsCharacteristics, "datasets/allCharacteristics100.rds") ; saveRDS(allFactorsAsBins, "datasets/allBins100.rds")
 
 ```
 
@@ -362,21 +429,44 @@ loansBinning <- loans20 %>%
     home_ownership = as_factor(home_ownership),
     emp_length = as_factor(emp_length)
   )
+
+best10 <- bestBins %>% 
+  arrange(desc(IV)) %>% 
+  slice(1:10)
 ```
 
 #### dti
 
 ```{r}
-resultHome <- WoETableContinuous(
-  df = loansBinning,
-  x = "dti",
-  y = "isGoodLoan",
-  p = 0.05
-)
+plotBinWoE <- function(n = 1) {
+  vName <- best10[n,]$variable
+  
+  if (best10[n,]$type == "numeric") {
+    best10[n,]$WoE[[1]] %>%
+      arrange(WoE) %>%
+      ggplot(aes(Name, WoE)) +
+      geom_col(col = "blue", fill = "lightblue") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      ggtitle(vName)
+  } else {
+    best10[n,]$WoE[[1]] %>%
+      arrange(WoE) %>%
+      ggplot(aes(Name, WoE)) +
+      geom_col(col = "blue", fill = "lightblue") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      ggtitle(vName)
+    
+  }
+  
+}
 
-resultHome$table
-resultHome$IV
 ```
+
+```{r}
+plotBinWoE(10)
+```
+
+
 
 #### Home ownership
 
@@ -512,10 +602,4 @@ resultAmnt <- WoETable(
 
 resultAmnt
 resultAmnt$IV
-
-categoriseFromWoE(df = loansBinning, 
-                  varName = "loan_amnt", 
-                  woeTable = resultAmnt,
-                  verbose = TRUE)
-
 ```

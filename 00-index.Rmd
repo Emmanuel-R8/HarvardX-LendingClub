@@ -5,32 +5,29 @@ author: "Emmanuel Rialland - https://github.com/Emmanuel_R8"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 site: bookdown::bookdown_site
 output: 
+  html_document: 
+    
+    number_sections: true
+    df_print: paged
+    theme: united
   bookdown::pdf_book:
     toc: true
     toc_depth: 3
     number_sections: true
     keep_tex: true
     df_print: kable
-  html_document: 
-    number_sections: true
-    df_print: paged
-    theme: united
-    
 documentclass: report
 geometry: "a4paper,left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm"
 lot: yes
 lof: yes
-
 fontsize: 11pt
 mainfont: "Lato"
 monofont: "Hack"
 monofontoptions: "Scale=0.7"
-
 bibliography: [packages.bib, bibliography.bib]
 biblio-style: apalike
 link-citations: yes
 colorlinks: yes
-
 github-repo: Emmanuel_R8/HarvardX-LendingClub
 description: "HarvardX - PH125.9x Data Science Capstone"
 ---

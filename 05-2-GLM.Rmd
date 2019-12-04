@@ -11,9 +11,6 @@
 
 # Cleanup and reload
 
-rm(list = ls(all.names = TRUE))
-library(tidyverse)
-
 # Training results to speed up analysis
 # load("datasets/GLModelResults.rda")
 
@@ -114,7 +111,7 @@ summary(SGLM_C_train)
 # There are a number of NA estimates that need to be removed by removing indivual bins
 length( which(is.na(summary(SGLM_C_train)$coefficient$Estimate)) )
 
-# saveRDS(SGLM_C_train, "datasets/SGLM_C_train.rds")
+saveRDS(SGLM_C_train, "datasets/SGLM_C_train.rds")
 ```
 
 
@@ -139,14 +136,28 @@ gc(full = TRUE)
   cat(proc.time() - startTime, "\n")
 }
 
+saveRDS(SGLM_B_train, "datasets/SGLM_B_train.rds")
+
 # There are a number of NA estimates that need to be removed by removing indivual bins
-summary(SGLM_B_train)
-
-length(which(is.na(summary(SGLM_B_train)$coefficient$Estimate)))
-
-# saveRDS(SGLM_B_train, "datasets/SGLM_B_train.rds")
+```
 
 
+```{r 05-02-first-training-B-NA}
+speedglm:::summary.speedglm(SGLM_B_train)$coefficients %>% 
+  as.data.frame() %>% 
+  rownames_to_column(var = "binName") %>% 
+  filter(is.na(Estimate)) %>% 
+  slice(1:10)
+```
+
+```{r 05-02-first-training-B-best10}
+speedglm:::summary.speedglm(SGLM_B_train)$coefficients %>% 
+  as.data.frame() %>% 
+  rownames_to_column(var = "binName") %>% 
+  rename(p = "Pr(>|z|)", 
+         z = "z value") %>% 
+  arrange(desc(z)) %>% 
+  slice(1:10)
 ```
 
 
@@ -180,7 +191,7 @@ gc(full = TRUE)
 # Start the model training again
 {
   startTime <- proc.time()
-  doMC::registerDoMC(cores = 2) # Too many processes push over 32GB
+  doMC::registerDoMC(cores = 2) # Too many processes push over 32GB if more than 2
   
   loansData <- loanSampleBins %>%
     select(-one_of( c(duplicateNames, 
@@ -195,8 +206,19 @@ gc(full = TRUE)
   cat(proc.time() - startTime)
 }
 
-summary(SGLM_B_retrain)
-# saveRDS(SGLM_B_retrain, "datasets/SGLM_B_retrain.rds")
+saveRDS(SGLM_B_retrain, "datasets/SGLM_B_retrain.rds")
+```
+
+
+```{r 05-02-second-training-B-best10}
+
+speedglm:::summary.speedglm(SGLM_B_retrain)$coefficients %>% 
+  as.data.frame() %>% 
+  rownames_to_column(var = "binName") %>% 
+  rename(p = "Pr(>|z|)", 
+         z = "z value") %>% 
+  arrange(desc(z)) %>% 
+  slice(1:10)
 
 ```
 
@@ -250,9 +272,19 @@ gc(full = TRUE)
   cat(proc.time() - startTime)
 }
 
-summary(SGLM_B_reretrain)
+saveRDS(SGLM_B_reretrain, "datasets/SGLM_B_reretrain.rds")
+```
 
-# saveRDS(SGLM_B_reretrain, "datasets/SGLMreretrain.rds")
+
+```{r 05-02-third-training-B-best10}
+
+speedglm:::summary.speedglm(SGLM_B_reretrain)$coefficients %>% 
+  as.data.frame() %>% 
+  rownames_to_column(var = "binName") %>% 
+  rename(p = "Pr(>|z|)", 
+         z = "z value") %>% 
+  arrange(desc(z)) %>% 
+  slice(1:10)
 
 ```
 
@@ -275,5 +307,20 @@ NAsThirdTraining <- NAsThirdTraining$name
 ```
 
 
+```{r}
+
+speedglm:::summary.speedglm(SGLM_B_train)
+# AIC = 977037.2
+# Log likelihood = -488350.6
+
+speedglm:::summary.speedglm(SGLM_B_reretrain)
+# AIC = 982957
+# Log likelihood = -491370.5
+# 
+speedglm:::summary.speedglm(SGLM_B_reretrain)
+# AIC = 982957
+# log Likelihood = -491370.5
+
+```
 
 

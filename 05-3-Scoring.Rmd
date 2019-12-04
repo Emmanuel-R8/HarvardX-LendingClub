@@ -4,11 +4,6 @@
 ### Final list of variables
 
 ```{r 05-03-load-models}
-# Clean up
-rm(list = ls(all.names = TRUE))
-
-library(tidyverse)
-library(stringr)
 
 # Saved at the end of the modeling file
 SGLM_B_train <- readRDS("datasets/SGLM_B_train.rds")
@@ -17,7 +12,7 @@ SGLM_B_reretrain <- readRDS("datasets/SGLM_B_reretrain.rds")
 ```
 
 
-```{r 05-03-extract-coefficients}
+```{r 05-03-model-names}
 # Model to use
 GLModel <- SGLM_B_retrain
 
@@ -28,11 +23,17 @@ modelNames <-
   rename(variableName = "value") %>%
   select(variableName) %>%
   mutate(variableName = str_remove_all(variableName, "\`"))
+```
 
 
-# and their coefficients in the model
+```{r 05-03-extract-coefficients}
+# and their coefficients in the model (the summary function for speedglm objects is not exported and
+# bookdown seems to have a problem with that).
+
+sumSpeed <- speedglm:::summary.speedglm
+
 GLMCoefficients <- 
-  summary(GLModel)$coefficients %>%
+  sumSpeed(GLModel)$coefficients %>%
   as_tibble() %>%
   cbind(modelNames) %>%
   rename(
@@ -132,7 +133,6 @@ The intercept points have been allocated across all characteristics. Therefore t
 
 ```{r}
 GLMScores[1, "points"] <-  0
-
 ```
 
 
@@ -151,7 +151,7 @@ gc(full = TRUE)
 ```
 
 
-```{r 05-03-covert-to-matrix}
+```{r 05-03-convert-to-matrix}
 # Remove every variable that is not in the list of variables in the model then convert into a matrix
 allMatrix <-
   allFactorsAsBins[, !is.na(match(
@@ -159,14 +159,20 @@ allMatrix <-
     str_remove_all(GLMCoefficients$variableName, "\`")
   ))] %>%
   as.matrix()
+```
 
+
+```{r 05-03-matrix-add-1-col}
 # Add a column of 1s for the intercept
 allMatrix <-
   cbind(as.vector(rep.int(
     x = 1, times = dim(allMatrix)[1]
   )), allMatrix)
 dim(allMatrix)
+```
 
+
+```{r 05-03-matrix-cleanup}
 # Done with this dataset
 rm(allFactorsAsBins)
 gc(full = TRUE)
@@ -174,27 +180,24 @@ gc(full = TRUE)
 
 
 ```{r 05-03-logit-estimates}
-estimateVector <- GLMCoefficients$Estimate %>% as.matrix()
+CoefficientsVector <- GLMCoefficients$Estimate %>% as.matrix()
 
 # Score per variable
-estimateScorecard <- allMatrix %*% ( GLMScores$points %>% as.matrix() ) 
-
-
-dim(estimateVector)
-dim(estimateScore)
-
+TrainingScorecard <- allMatrix %*% ( GLMScores$points %>% as.matrix() ) 
+dim(allMatrix)
+dim(GLMScores$points)
 
 # CHECK: Any variable with NAs?
-# GLMCoefficients$modelName[which(is.na(estimateVector))]
-# estimateVector[is.na(estimateVector)] <- 0
-# dim(estimateVector)
+# GLMCoefficients$modelName[which(is.na(CoefficientsVector))]
+# CoefficientsVector[is.na(CoefficientsVector)] <- 0
+# dim(CoefficientsVector)
 
-estimateLogit <- allMatrix %*% estimateVector
-estimateLogit <-
-  enframe(estimateLogit[, 1]) %>%
+TrainingLogit <- allMatrix %*% CoefficientsVector
+TrainingLogit <-
+  enframe(TrainingLogit[, 1]) %>%
   mutate(oddsGood = exp(value),
          p = 1 / (1 + oddsGood)) %>% 
-  cbind(estimateScorecard)
+  cbind(TrainingScorecard)
 
 
 ```
@@ -203,21 +206,27 @@ estimateLogit <-
 ### Histogram of the scores
 
 
-```{r 05-03-training-hists}
+```{r 05-03-training-hists-value}
 loansTraining %>%
-  cbind(estimateLogit) %>%
+  cbind(TrainingLogit) %>%
   filter(between(value, -2, 5)) %>% 
   ggplot(aes(value, col = grade)) +
-  geom_density(adjust = 2) 
-  
+  geom_density(adjust = 2)
+```
+
+
+```{r 05-03-training-hists-p}
 loansTraining %>%
-  cbind(estimateLogit) %>%
+  cbind(TrainingLogit) %>%
   ggplot(aes(p, col = grade)) +
   geom_density(adjust = 2) +
   scale_x_log10()
-  
+```
+
+
+```{r 05-03-training-hists-odds}
 loansTraining %>%
-  cbind(estimateLogit) %>%
+  cbind(TrainingLogit) %>%
   filter(between(oddsGood, 0.1, 100)) %>% 
   ggplot(aes(oddsGood, col = grade)) +
   geom_density(adjust = 2) + 
@@ -229,8 +238,8 @@ The following histogram shows the density plot of the scorecards. Note the log-s
 
 ```{r 05-03-training-scores}
 loansTraining %>%
-  cbind(estimateLogit) %>%
-  ggplot(aes(estimateScorecard, col = grade)) +
+  cbind(TrainingLogit) %>%
+  ggplot(aes(TrainingScorecard, col = grade)) +
   geom_density(adjust = 2) +
   scale_x_log10() + 
   scale_y_sqrt()
@@ -261,7 +270,7 @@ dim(predictionCategories)
 ```
 
 
-```{r 05-03-test-matrix}
+```{r 05-03-test-matrix-select-variables}
 # Retain only the relevant scorecard categories
 predictionMatrix <-
   predictionCategories[, !is.na(match(
@@ -269,25 +278,29 @@ predictionMatrix <-
     str_remove_all(GLMCoefficients$variableName, "\`")
   ))] %>%
   as.matrix()
+```
 
+
+```{r 05-03-test-matrix-add-1-col}
 predictionMatrix <- cbind(as.vector(rep.int(x = 1, times = dim(predictionMatrix)[1])), predictionMatrix)
 dim(predictionMatrix)
+```
 
 
-predictionCoefficients <- predictionMatrix %*% estimateVector
-predictionCoefficients <-
-  tibble::enframe(predictionCoefficients[, 1]) %>%
+```{r 05-03-test-matrix}
+TestLogit <- predictionMatrix %*% CoefficientsVector
+TestLogit <-
+  tibble::enframe(TestLogit[, 1]) %>%
   mutate(
     p = 1 / (1 + exp(-value)),
-    oddsGood = if_else(is.infinite(p / (1 - p)), 1e10, p / (1 - p))
-  )
+    oddsGood = if_else(is.infinite(p / (1 - p)), 1e10, p / (1 - p)))
 
-predictionScorecard <- predictionMatrix %*% estimateScore
+predictionScorecard <- predictionMatrix %*% ( GLMScores$points %>% as.matrix() ) 
 ```
 
 ```{r 05-03-test-estimates}
 loansTest %>%
-  cbind(predictionCoefficients) %>%
+  cbind(TestLogit) %>%
   cbind(predictionScorecard) %>%
   mutate(scoreBand = floor(predictionScorecard / 50) * 50) %>%
   filter(predictionScorecard > 0) %>%
@@ -295,28 +308,37 @@ loansTest %>%
   summarise(Count = n()) %>%
   ggplot(aes(scoreBand, Count)) +
   geom_col(col = "blue")
+```
 
+
+```{r 05-03-test-estimates-median}
 median(predictionScorecard)
 ```
 
 Same downward dynamics as training set
 
 
-```{r 05-03-test-viz}
+```{r 05-03-test-viz-value}
 loansTest %>%
-  cbind(estimateLogit) %>%
+  cbind(TestLogit) %>%
   filter(between(value, -2, 5)) %>% 
   ggplot(aes(value, col = grade)) +
-  geom_density(adjust = 2) 
-  
+  geom_density(adjust = 2)
+```
+
+
+```{r 05-03-test-viz-p}
 loansTest %>%
-  cbind(estimateLogit) %>%
+  cbind(TestLogit) %>%
   ggplot(aes(p, col = grade)) +
   geom_density(adjust = 2) +
   scale_x_log10()
-  
+```
+
+
+```{r 05-03-test-viz-odds}
 loansTest %>%
-  cbind(estimateLogit) %>%
+  cbind(TestLogit) %>%
   filter(between(oddsGood, 0.1, 100)) %>% 
   ggplot(aes(oddsGood, col = grade)) +
   geom_density(adjust = 2) + 
@@ -333,8 +355,7 @@ loansTest %>%
 ## ROC Curve
 
 ```{r 05-03-test-ROC}
-
-ROCRPrediction <- ROCR::prediction(predictionCoefficients$value, loansTest$isGoodLoan)
+ROCRPrediction <- ROCR::prediction(TestLogit$value, loansTest$isGoodLoan)
 ROCRPerformance <- ROCR::performance(ROCRPrediction, "tpr", "fpr")
 
 ROCRPlot <-
@@ -343,20 +364,22 @@ ROCRPlot <-
 
 ROCRPlot %>% ggplot(aes(x, y)) +
   geom_point()
+```
 
+
+```{r 05-03-test-ROC2}
 stats::ks.test(x = ROCRPlot$x, y = ROCRPlot$y)
 ```
 
 ```{r}
 str(ROCRPerformance)
-ROCRPerformance@x.values
 ```
 
 
 ## Bin test set by prediction
 
 ```{r}
-probEstimates <- if_else(predictionCoefficients$value < 0, 0, predictionCoefficients$value)
+probEstimates <- if_else(TestLogit$value < 0, 0, TestLogit$value)
 
 summary(probEstimates / (1 + probEstimates))
 ```
