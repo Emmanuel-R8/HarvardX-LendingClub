@@ -1,4 +1,3 @@
-
 ## Logistic Regression
 
 ### Logistic regression using the `SpeedGLM` package
@@ -7,38 +6,56 @@
 > NOTE: `speedglm` has a `select()` function which would shadow `dplyr::select()`, so it is only used fully qualified to avoid any collision.
 
 
-```{r 05-02-cleanup-load-dataset}
-
+```{r 05-02-load-dataset,message=FALSE}
 # Cleanup and reload
 
-# Training results to speed up analysis
-# load("datasets/GLModelResults.rda")
-
-
-loansTraining <- readRDS("datasets/LoansTraining.rds")
+# Training set to speed up analysis
+if (!exists("loansTraining")) {
+  loansTraining <- readRDS("datasets/LoansTraining.rds")
+}
 
 # Take the allBins dataset (without `loanID`)
 # Add the desired response
 
-allFactorsAsCharacteristics <- readRDS("datasets/allCharacteristics100.rds")
-allFactorsAsBins <- readRDS("datasets/allBins100.rds")
+```
 
-loanSampleBins <- 
-  allFactorsAsBins %>% 
+
+```{r 05-02-cleanup-load-dataset,message=FALSE,echo=TRUE}
+if (!exists("allFactorsAsBins")) {
+  allFactorsAsBins <- readRDS("datasets/allBins100.rds")
+}
+
+loanSampleBins <-
+  allFactorsAsBins %>%
   select(-loanID) %>%
   cbind(loansTraining$isGoodLoan) %>%
   rename(isGoodLoan = "loansTraining$isGoodLoan") %>%
   mutate(isGoodLoan = if_else(isGoodLoan, 1, 0)) %>%
   as.data.frame()
 
-loanSampleCharacteristics <- 
-  allFactorsAsCharacteristics %>% 
+rm(allFactorsAsBins)
+
+
+
+
+if (!exists("allFactorsAsCharacteristics")) {
+  allFactorsAsCharacteristics <-
+    readRDS("datasets/allCharacteristics100.rds")
+}
+
+loanSampleCharacteristics <-
+  allFactorsAsCharacteristics %>%
   select(-loanID) %>%
   cbind(loansTraining$isGoodLoan) %>%
   rename(isGoodLoan = "loansTraining$isGoodLoan") %>%
   mutate(isGoodLoan = if_else(isGoodLoan, 1, 0)) %>%
   as.data.frame()
 
+rm(allFactorsAsCharacteristics)
+```
+
+
+```{r message=FALSE,echo=FALSE}
 rm(loansTraining)
 
 gc(full = TRUE)
@@ -47,10 +64,9 @@ ncol(loanSampleCharacteristics)
 ```
 
 
-
 ### Remove identical bins
 
-```{r 05-02-rm-useless-bins}
+```{r 05-02-rm-useless-bins,message=FALSE,echo=TRUE}
 
 namesCharacteristics <- names(loanSampleCharacteristics)
 namesBins <- names(loanSampleBins)
@@ -85,9 +101,12 @@ We use `speedglm` being quick. Note that alternatives were also tried: `glm` cra
 
 #### GLM on characteristics
 
-```{r 05-02-first-training-C}
+```{r echo=FALSE,message=FALSE}
 gc(full = TRUE)
+```
 
+
+```{r 05-02-first-training-C,echo=TRUE,message=FALSE}
 # About 700 sec wall-time to complete training dataset
 # The dataset is the sample less duplicate, less zero-ed columns
 {
@@ -106,7 +125,7 @@ gc(full = TRUE)
   cat(proc.time() - startTime, "\n")
 }
 
-summary(SGLM_C_train)
+#summary(SGLM_C_train)
 
 # There are a number of NA estimates that need to be removed by removing indivual bins
 length( which(is.na(summary(SGLM_C_train)$coefficient$Estimate)) )
@@ -117,9 +136,12 @@ saveRDS(SGLM_C_train, "datasets/SGLM_C_train.rds")
 
 #### GLM on bins
 
-```{r 05-02-first-training-B}
+```{r}
 gc(full = TRUE)
+```
 
+
+```{r 05-02-first-training-B,echo=TRUE,message=FALSE}
 # About 700 sec wall-time to complete training dataset
 # The dataset is the sample less duplicate, less zero-ed columns
 {
@@ -142,7 +164,7 @@ saveRDS(SGLM_B_train, "datasets/SGLM_B_train.rds")
 ```
 
 
-```{r 05-02-first-training-B-NA}
+```{r 05-02-first-training-B-NA,echo=TRUE,message=FALSE}
 speedglm:::summary.speedglm(SGLM_B_train)$coefficients %>% 
   as.data.frame() %>% 
   rownames_to_column(var = "binName") %>% 
@@ -150,7 +172,7 @@ speedglm:::summary.speedglm(SGLM_B_train)$coefficients %>%
   slice(1:10)
 ```
 
-```{r 05-02-first-training-B-best10}
+```{r 05-02-first-training-B-best10,echo=TRUE,message=FALSE}
 speedglm:::summary.speedglm(SGLM_B_train)$coefficients %>% 
   as.data.frame() %>% 
   rownames_to_column(var = "binName") %>% 
@@ -161,7 +183,7 @@ speedglm:::summary.speedglm(SGLM_B_train)$coefficients %>%
 ```
 
 
-```{r  05-02-first-training-B-vars}
+```{r  05-02-first-training-B-vars,echo=TRUE,message=FALSE}
 # Does the model throw NAs? They are produced not only for identical variables, but also co-linear
 # combinations. Let us select those variables:
 
@@ -185,9 +207,12 @@ NAsFirstTraining <- NAsFirstTraining$name
 
 ### Second training
 
-```{r 05-02-second-training-B}
+```{r}
 gc(full = TRUE)
+```
 
+
+```{r 05-02-second-training-B,echo=TRUE,message=FALSE}
 # Start the model training again
 {
   startTime <- proc.time()
@@ -210,7 +235,7 @@ saveRDS(SGLM_B_retrain, "datasets/SGLM_B_retrain.rds")
 ```
 
 
-```{r 05-02-second-training-B-best10}
+```{r 05-02-second-training-B-best10,echo=TRUE,message=FALSE}
 
 speedglm:::summary.speedglm(SGLM_B_retrain)$coefficients %>% 
   as.data.frame() %>% 
@@ -223,7 +248,7 @@ speedglm:::summary.speedglm(SGLM_B_retrain)$coefficients %>%
 ```
 
 
-```{r 05-02-second-training-B-vars}
+```{r 05-02-second-training-B-vars,echo=TRUE,message=FALSE}
 # Just in case, new NAs popped up. Then select variables whose significance value is under 2 sigmas.
 
 NAsSecondTraining <-
@@ -247,9 +272,12 @@ NAsSecondTraining <- NAsSecondTraining$name
 ### Third training
 
 
-```{r 05-02-third-training-B}
+```{r}
 gc(full = TRUE)
+```
 
+
+```{r 05-02-third-training-B,echo=TRUE,message=FALSE}
 # Start the model training again. About 350 sec.
 {
   
@@ -276,7 +304,7 @@ saveRDS(SGLM_B_reretrain, "datasets/SGLM_B_reretrain.rds")
 ```
 
 
-```{r 05-02-third-training-B-best10}
+```{r 05-02-third-training-B-best10,echo=TRUE,message=FALSE}
 
 speedglm:::summary.speedglm(SGLM_B_reretrain)$coefficients %>% 
   as.data.frame() %>% 
@@ -289,7 +317,7 @@ speedglm:::summary.speedglm(SGLM_B_reretrain)$coefficients %>%
 ```
 
 
-```{r 05-02-third-training-B-vars}
+```{r 05-02-third-training-B-vars,echo=TRUE,message=FALSE}
 NAsThirdTraining <-
   tibble(
     name     = rownames(summary(SGLM_B_reretrain)$coefficient),
@@ -307,20 +335,22 @@ NAsThirdTraining <- NAsThirdTraining$name
 ```
 
 
-```{r}
+  speedglm:::summary.speedglm(SGLM_B_train)
+  # AIC = 977037.2
+  # Log likelihood = -488350.6
 
-speedglm:::summary.speedglm(SGLM_B_train)
-# AIC = 977037.2
-# Log likelihood = -488350.6
+  speedglm:::summary.speedglm(SGLM_B_reretrain)
+  # AIC = 982957
+  # Log likelihood = -491370.5
+ 
+  speedglm:::summary.speedglm(SGLM_B_reretrain)
+  # AIC = 982957
+  # log Likelihood = -491370.5
 
-speedglm:::summary.speedglm(SGLM_B_reretrain)
-# AIC = 982957
-# Log likelihood = -491370.5
-# 
-speedglm:::summary.speedglm(SGLM_B_reretrain)
-# AIC = 982957
-# log Likelihood = -491370.5
+
+
+```{r echo=FALSE,message=FALSE}
+rm(loansData)
 
 ```
-
 

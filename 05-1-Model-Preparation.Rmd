@@ -13,7 +13,6 @@ knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE)
 
-
 ```
 
 
@@ -26,10 +25,6 @@ At the outset, the dataset presents a number of challenges:
 + The possible number of predictors is large (partially due to one-hot encoding of categorical values).
 
 + As shown in the previous section, credit margins have changed over time. This is clearly related to the wider US economic environment. Financial hardship is a key driver for some of the loans. Availability of disposable income is important to assess the ability to repay. Therefore, the cost of living, which varies from state to state, seems relevant. 
-
-
-[TODO: Bias/Complexity trade-off]
-[TODO: AoC? or AuC?]
 
 
 ## Introduction
@@ -108,7 +103,7 @@ modelVarsOut <- c("grade_num", "sub_grade_num",
 ```
 
 
-```{r 05-01-loan-predictors}
+```{r 05-01-loan-predictors,echo=TRUE}
 ## ###############################################################################################
 ##
 ## Prepare a dataset with ONLY the predictors NOT removing NA's
@@ -168,7 +163,7 @@ sample20 <- sample(1:nSamplesTraining, floor(nSamplesTraining * 0.20), replace =
 loans20 <- loansTraining %>% slice(sample20)
 ```
 
-```{r 05-01-cleanup}
+```{r 05-01-cleanup,echo=FALSE,message=TRUE}
 # Not used later on
 rm(loansWorkingSet, loansPredictors, LoansNPV, LoansIRR, LoansMargin, RATES, RATES3Y, RATES5Y)
 gc(full = TRUE)
@@ -177,8 +172,7 @@ gc(full = TRUE)
 
 ## Binning and Weight of Evidence
 
-This subsection owes a lot influence to the `smbinning` package source code from which we reimplemented some aspects using the `tidyverse` __style__  (the original source code uses SQL statements to access dataframes), and the `Information` package vignette ^[ [](https://cran.r-project.org/web/packages/Information/vignettes/Information-vignette.html)].
-
+This subsection owes a debt to the source code of the `smbinning` package from which we reimplemented some aspects using the `tidyverse` _style_  (the original source code uses SQL statements to access dataframes), and the documentation vignette of the `Information` package  ^[https://cran.r-project.org/web/packages/Information/vignettes/Information-vignette.html]. Our code is provided and imported as a package located on github ^[https://github.com/Emmanuel-R8/SMBinning].
 
 To identify the various bins (and number and location)
 
@@ -193,8 +187,7 @@ WOE and IV play two distinct roles when analyzing data:
 
 
 
-```{r 05-01-reinstall-binner}
-
+```{r 05-01-reinstall-binner,echo=FALSE,message=FALSE}
 # Ensure that `binner` is here and available
 if ("package:binner" %in% search()) { 
   detach("package:binner", unload = TRUE, force = TRUE) 
@@ -206,13 +199,16 @@ if (!("binner" %in% installed.packages()[,1])) {
                           quiet = TRUE)
   # devtools::install_github("Emmanuel-R8/SMBinning")
 }
+```
 
+
+```{r 05-01-load-binner,echo=TRUE}
 library(binner)
 ```
 
 ### Loop through all variables
 
-```{r 05-01-create-list-bins}
+```{r 05-01-create-list-bins,echo=TRUE,message=FALSE}
 loansBinning <- loansTraining %>%
   mutate(
     home_ownership = as_factor(home_ownership),
@@ -233,7 +229,7 @@ listBins <-
 ```
 
 
-```{r 05-01-create-all-bins,message=FALSE}
+```{r 05-01-create-all-bins,message=FALSE,echo=TRUE}
 # About 500 sec wall-time
 startTime <- proc.time()
 for (n in informationValues$variable) {
@@ -296,29 +292,25 @@ saveRDS(listBins, "datasets/listBins100.rds")
 
 ### Select relevant variables
 
-It is considered that information value below 2% is useless. 
-
-```{r}
-bestBins <- 
-  listBins %>% 
-  filter(IV >= 0.02)
-
-```
+It is considered that information value below 2% is useless. The 15 best variables (in terms of Information Value) are:
 
 
-```{r 05-01-create-bestbins-10best}
+```{r 05-01-create-bestbins-10best,echo=TRUE}
+
+bestBins <- listBins %>% filter(IV >= 0.02)
+
 bestBins %>% 
   select(variable, IV) %>% 
   mutate(IV = round(IV, digits = 5)) %>% 
   arrange(desc(IV)) %>% 
-  slice(1:10)
+  slice(1:15)
 ```
 
 
-However, we should ignore the variables that would not be available at the time the credit scoring is performed. 
+However, we notice that this list includes variables that would not be available at the time the credit scoring is performed. 
 
 
-```{r 05-01-create-bestbins}
+```{r 05-01-create-bestbins,echo=TRUE}
 bestBins <- bestBins %>%
   filter(!(variable %in% c(
     "loanID", "term", "int_rate", "creditMargin", "loan_status",
@@ -332,24 +324,24 @@ saveRDS(bestBins, "datasets/bestBins100.rds")
 ```
 
 
-The 10 best variables that will retain are in the following table. Interestingly, the square and cubic powers of the issue date are retained. 
+The 15 best variables that will retain are in the following table. Interestingly, the square and cubic powers of the issue date are retained. 
 
-```{r 05-01-create-bestbins-10worst}
+```{r 05-01-create-bestbins-10bestavailable,echo=TRUE}
 bestBins %>% 
   select(variable, IV) %>% 
   mutate(IV = round(IV, digits = 5)) %>% 
   arrange(desc(IV)) %>% 
-  slice(1:10)
+  slice(1:15)
 ```
 
 And the 10 worst (but retained) variables are:
 
-```{r 05-01-create-bestbins-10worst}
+```{r 05-01-create-bestbins-10worst,echo=TRUE}
 bestBins %>% 
   select(variable, IV) %>% 
   mutate(IV = round(IV, digits = 5)) %>% 
   arrange(IV) %>% 
-  slice(1:10)
+  slice(1:15)
 ```
 
 
@@ -358,9 +350,9 @@ bestBins %>%
 
 ### Create data table with only binary variables (transform every bin to a 0/1 value)
 
-For each variable, create new variables for each bin in the WoE table of that variable.
+For each variable, create new variables for each bin in the WoE table of that variable. Strictly speaking, this is not necessary for the generalised model algorithms. They are able to model using categories containing the factors. However, as we will see, the model will generate a number of NAs for variable (factors) which are co-linear. (This is the case for any linear model.) This will require removing those individual factors, which we found easier to do when each factor is given an individual variable (column).
 
-```{r 05-01-create-factored-datasets-loanID}
+```{r 05-01-create-factored-datasets-loanID,echo=TRUE}
 # Variable will contain all the best characteristics. Every continuous variable is reformatted
 # into factors reflecting the appropriate bins
 
@@ -369,7 +361,7 @@ allFactorsAsBins <- loansTraining[,"loanID"]
 ```
 
 
-```{r 05-01-create-factored-datasets}
+```{r 05-01-create-factored-datasets,message=FALSE,echo=TRUE}
 for (index in 1:nrow(bestBins)) {
 #for (index in 1:27) {
   name <- bestBins$variable[index][[1]]
@@ -403,7 +395,8 @@ for (index in 1:nrow(bestBins)) {
 
 
 ```{r 05-01-create-factored-datasets-save}
-saveRDS(allFactorsAsCharacteristics, "datasets/allCharacteristics100.rds") ; saveRDS(allFactorsAsBins, "datasets/allBins100.rds")
+saveRDS(allFactorsAsCharacteristics, "datasets/allCharacteristics100.rds")
+saveRDS(allFactorsAsBins, "datasets/allBins100.rds")
 
 ```
 
@@ -412,32 +405,27 @@ saveRDS(allFactorsAsCharacteristics, "datasets/allCharacteristics100.rds") ; sav
 ### Comparison of individual characteristics
 
 >
-> [TODO]
-> Present data by order of IV
-> Sort WoE buildup for key IV
-
-
 + re-train secures the lowest Akaike criterion and will be chosen.
 
 + On this test, the best variables are: SORT BY IV. Then WoE for the first few ones.
 
 
 
-```{r}
+```{r echo=TRUE}
 loansBinning <- loans20 %>%
   mutate(
     home_ownership = as_factor(home_ownership),
     emp_length = as_factor(emp_length)
   )
 
-best10 <- bestBins %>% 
-  arrange(desc(IV)) %>% 
-  slice(1:10)
 ```
 
-#### dti
+The following plots the 10 top variables weight of evidence plots. They show for those variables the weght of evidence of each individual factor. A positive WoE shows that the factor is positive to explain a positive outcome (that is that a loan is good).
 
-```{r}
+```{r echo=TRUE}
+
+best10 <- bestBins %>% arrange(desc(IV)) %>% slice(1:10)
+
 plotBinWoE <- function(n = 1) {
   vName <- best10[n,]$variable
   
@@ -462,144 +450,27 @@ plotBinWoE <- function(n = 1) {
 
 ```
 
+
 ```{r}
-plotBinWoE(10)
+
+listPlots <- lapply(1:10, function(n) { plotBinWoE(n) })
+
+listPlots[[1]]
+listPlots[[2]]
+listPlots[[3]]
+listPlots[[4]]
+listPlots[[5]]
+listPlots[[6]]
+listPlots[[7]]
+listPlots[[8]]
+listPlots[[9]]
+listPlots[[10]]
+
+
 ```
 
 
-
-#### Home ownership
-
-```{r}
-resultHome <- WoETable(
-  df = loansBinning,
-  x = "home_ownership",
-  y = "isGoodLoan",
-  maxCategories = 20
-)
-
-resultHome
-resultHome$IV
+```{r echo=FALSE,message=FALSE}
+rm(loansBinning, loans01, loans20)
 ```
 
-#### Verification Status
-
-```{r}
-resultVerif <- WoETable(
-  df = loansBinning,
-  x = "verification_status",
-  y = "isGoodLoan",
-  maxCategories = 20
-)
-
-resultVerif
-resultVerif$IV
-```
-
-
-
-#### Purpose
-
-```{r}
-resultHome <- WoETable(
-  df = loansBinning,
-  x = "purpose",
-  y = "isGoodLoan",
-  maxCategories = 20
-)
-
-resultHome
-resultHome$IV
-```
-
-
-#### Sub grade
-
-```{r}
-resultSubgrade <- WoETable(
-  df = loansBinning,
-  x = "sub_grade",
-  y = "isGoodLoan",
-  maxCategories = 50
-)
-
-resultSubgrade
-resultSubgrade$IV
-```
-
-
-
-#### Employment years
-
-```{r}
-resultEmp <- WoETable(
-  df = loansBinning,
-  x = "emp_length",
-  y = "isGoodLoan",
-  maxCategories = 20
-)
-
-resultEmp
-resultEmp$IV
-```
-
-
-
-#### Bank card utilisation
-
-```{r}
-resultBC <- WoETable(
-  df = loansBinning,
-  x = "bc_util",
-  y = "isGoodLoan",
-  p = 0.05
-)
-
-resultBC
-resultBC$IV
-```
-
-#### State
-
-```{r}
-resultState <- WoETable(
-  df = loansBinning,
-  x = "addr_state",
-  y = "isGoodLoan",
-  maxCategories = 100
-)
-
-resultState
-resultState$IV
-```
-
-
-#### Annual income
-
-```{r}
-which(names(loansBinning) == "annual_inc_joint")
-
-resultInc <- WoETable(
-  df = loansBinning,
-  x = "annual_inc_joint",
-  y = "isGoodLoan",
-  p = 0.05
-)
-
-resultHome
-resultHome$iv
-```
-
-#### Loan amount
-
-```{r}
-resultAmnt <- WoETable(
-  df = loansBinning,
-  x = "loan_amnt",
-  y = "isGoodLoan",
-  p = 0.05
-)
-
-resultAmnt
-resultAmnt$IV
-```

@@ -1,3 +1,17 @@
+# TODO {-}
+
+## Dataset
+
+[TODO: DTI, amount... by grade]
+
+## Model preparation
+
+
+[TODO: Bias/Complexity trade-off]
+[TODO: AoC? or AuC?]
+
+Correlation matrix?
+
 # Introduction {-}
 
 Lending Club (_LC_) is an American company listed on the New York stock exchange that provides a platform for peer-to-peer lending. Unlike banks, it does not take deposits and invest them. It is purely a matching system. Each loan is split into $25 that multiple investors can invest in. LC is remunerated by fees received from both sides. LC states that they have intermediated more than $50bln since they started operations. Further description of the company is easily available online numerous sources.

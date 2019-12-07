@@ -36,7 +36,7 @@ We here show the code used to prepare the data. It was automatically formatted b
 
 ### LendinClub dataset
 
-```{r data_preparation,eval=FALSE,echo=TRUE}
+```{r 08-data_preparation,eval=FALSE,echo=TRUE}
 local({
   #
   # STEP 1: Download the dataset
@@ -340,7 +340,7 @@ local({
 
 The R package `zipcode` was installed.
 
-```{r zip-package,eval=FALSE,echo=TRUE}
+```{r 08-zip-package,eval=FALSE,echo=TRUE}
 #
 # ZIPCodes dataset.
 #
@@ -357,7 +357,7 @@ saveRDS(zips, "datasets/zips.rds")
 
 A csv file containing zip codes, FIPS codes and population information was downloaded from the _Simple Maps_ ^[https://simplemaps.com/data/us-zips] website. 
 
-```{r simplemaps,eval=FALSE,echo=TRUE}
+```{r 08-simplemaps,eval=FALSE,echo=TRUE}
 local({
   kaggleCodes <- read.csv("datasets/csv/ZIP-COUNTY-FIPS_2017-06.csv")
   
@@ -392,7 +392,7 @@ Download sources are:
 + Post-LIBOR 5-y swap https://fred.stlouisfed.org/series/ICERATES1100USD5Y
 
 
-```{r market-rates,eval=FALSE,echo=TRUE}
+```{r 08-market-rates,eval=FALSE,echo=TRUE}
 local({
   LIBOR3Y <- read.csv("datasets/csv/DSWP3.csv") %>%
     as_tibble() %>%
@@ -468,7 +468,7 @@ https://geofred.stlouisfed.org/map/?th=rdpu&cc=5&rc=false&im=fractile&sb&lng=-90
 
 
 
-```{r macro-data,eval=FALSE,echo=TRUE}
+```{r 08-macro-data,eval=FALSE,echo=TRUE}
 local({
   ###################################################################################################
   ##
@@ -587,7 +587,7 @@ local({
 This table presents the list of variables provided in the original dataset. The descriptions come from a spreadsheet attached with the dataset and, unfortunately, are not extremely precise and subject to interpretation. We added comments and/or particular interpretations in _CAPITAL LETTERS_.
 
 
-```{r variable-description,cache=TRUE}
+```{r 08-variable-description,cache=TRUE}
 LC_variable %>%
   select(variable_name, description) %>%
   
@@ -618,7 +618,7 @@ The following shows two versions of the same code. The R version is provided bec
 ```
 
 
-```{r R-IRR,eval=FALSE,echo=TRUE}
+```{r 08-R-IRR,eval=FALSE,echo=TRUE}
 ###################################################################################################
 #
 # Given some numerical parameters describing a loan in the dataset, returns its Internal Rate
@@ -769,7 +769,7 @@ loanNumberIRR <- function(loanNumber) {
 ```
 
 
-```{r IRR-calculation,eval=FALSE,echo=TRUE}
+```{r 08-IRR-calculation,eval=FALSE,echo=TRUE}
 # 
 # Calculate all the IRRs and month of default for all the loans. 
 # WARNING: This takes around a full day to run!!!!
@@ -804,10 +804,10 @@ local({
 
 #### Internal Rate of Return
 
-```{julia julia-IRR,eval=FALSE,echo=TRUE,child="Scripts/JuliaIRR.jl"}
+```{julia 08-julia-IRR,eval=FALSE,echo=TRUE,child="Scripts/JuliaIRR.jl"}
 ```
 
-
+<!--
 ```{julia julia-IRR,eval=FALSE,echo=TRUE}
 ####################################################################################################
 ##
@@ -1321,7 +1321,7 @@ creditMargin_Result[1:10,:]
 CSV.write("datasets/CreditMargins.csv", creditMargin_Result)
 
 ```
-
+-->
 
 ### Maxima derivation of the cost function
 
@@ -1366,7 +1366,7 @@ diff( PDF1(x, Q), Q) ;
 
 ## System version
 
-```{r system_version,eval=TRUE,eval=TRUE,cache=FALSE}
+```{r 08-system_version,eval=TRUE,eval=TRUE,cache=FALSE}
 Sys.info()
 
 ```

@@ -3,7 +3,9 @@
 
 ### Final list of variables
 
-```{r 05-03-load-models}
+```{r 05-03-load-models,echo=FALSE,message=FALSE}
+
+rm(loansTraining, allFactorsAsCharacteristics, allFactorsAsBins, loanSampleBins, loanSampleCharacteristics)
 
 # Saved at the end of the modeling file
 SGLM_B_train <- readRDS("datasets/SGLM_B_train.rds")
