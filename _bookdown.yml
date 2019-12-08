@@ -8,7 +8,9 @@ delete_merged_file: true
 rmd_files: [
   "00-index.Rmd",
   "01-startup.Rmd",
+
   "02-intro.Rmd",
+
   "03-responses.Rmd",
   "04-dataset.Rmd",
 
@@ -17,6 +19,8 @@ rmd_files: [
   "05-3-Scoring.Rmd",
 
   "07-conclusion.Rmd",
+  "07-2-postmortem.Rmd",
+
   "08-appendix.Rmd",
   "09-references.Rmd"
 ]

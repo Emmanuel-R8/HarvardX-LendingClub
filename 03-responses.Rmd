@@ -39,15 +39,13 @@ Note that the dataset is distorted by this additional survival effect: the appli
 
 For the purpose of this report, we will simplify things enormously: we will only consider the first two components of the interest rate. The risk-free rate and the credit margin that would cover the cost of default/losses of individual borrowers.
 
-The modeling exercise will focus on trying to approximate _on average_ the credit margin given the information provided by the borrower.
-
 With respect to a given loan and its cash flow, two calculations are important here: the Net Present Value (_NPV_) and the Internal Rate of Return (_IRR_). If we remember that an FI is indifferent to holding a principal $P$ today or receiving it with an annual interest a year later (i.e. $P \times (1 + r)$ where $r$ is the annual rate of interest), we can say that any amount $CF_1$ received in a year is equivalent to $CF_0 = \frac{CF_1}{1 + r}$ today. More generally, a steam of future cash receipts is worth:
 
 $$NPV(r) = \sum_{Year \space i = 1}^{Year = n}\frac{CF_i}{(1 + r)^i}$$
 
 The amount $NPV(r)$ is called the _Net Present Value_ of the cash flow discounted at the rate $r$. Given that the LendingClub repayments are monthly, the formula becomes:
 
-$$NPV(r) = \sum_{Month \space i = 1}^{Month = 12 \times n}\frac{CF_i}{(1 + \frac{r}{12})^i}$$
+$$NPV(r) = \sum_{Month_i = 1}^{Month_i = 12 \times n}\frac{CF_i}{(1 + \frac{r}{12})^i}$$
 
 If we now have a day 1 cash flow $CF_0$, we can calculate:
 
@@ -73,7 +71,7 @@ From that information, we recreated a cash flow for each loan. The R code is pre
 
 Similarly, we calculate the credit margin required by each loan noting that:
 
-$$ \text{Risk-free} + \text{Credit Margin} = IRR(loan)$$
+$$\text{Risk-free} + \text{Credit Margin} = IRR(loan)$$
 
 ### Credit Margins
 

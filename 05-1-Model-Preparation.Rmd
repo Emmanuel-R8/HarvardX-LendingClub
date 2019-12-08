@@ -22,35 +22,20 @@ At the outset, the dataset presents a number of challenges:
 
 + The number of observations is very large. 
 
-+ The possible number of predictors is large (partially due to one-hot encoding of categorical values).
++ The number of predictors is potential large, in particular if we perform one-hot encoding of categorical values.
 
-+ As shown in the previous section, credit margins have changed over time. This is clearly related to the wider US economic environment. Financial hardship is a key driver for some of the loans. Availability of disposable income is important to assess the ability to repay. Therefore, the cost of living, which varies from state to state, seems relevant. 
++ The dataset has no context or reference point to interpret dollar amounts. Everybody intuitively understands that owing $10 or $1,000,000 are very different (amounts matter). Owing $1,000 when living in New York is different from owing $1,000 if living on $2 per day in a developing country (surrounding economic environment matter). That intuition is shared economic knowledge, but that intuition is nowhere represented in the dataset. As readers, we automatically attribute that implicit knowledge to the data we read in the dataset. However, any model based on that data will never reflect that implicit knowledge if we do not supplement with external data. As shown in the previous section, credit margins have changed over time. This is clearly related to the wider US economic environment. Financial hardship is a key driver for some of the loans. Availability of disposable income is important to assess the ability to repay. Therefore, the cost of living, which varies from state to state, seems relevant. As noted in the post-mortem section, such information will not be used.
 
 
 ## Introduction
 
-### Split
 
-The dataset was randomly split into training and validation sets (80/20 ratio).
-
-We initiated the exploration of potential models with Principal Component Analysis, Linear Regression, Extreme Boosting and Random Forest. No model could be trained on the full set. We therefore came to limit the training set on a random sample of 0.1% (1 thousandth) of the initial full set.
-
-Any model will require training in batch (e.g. stochastic gradient descent) or online. Our untested intuition is that online methods are not adapted to an unbalanced dataset: the number of defaults/write-offs is fairly low for high quality ratings. However, the dataset is evidently a time series which points to online training. We will not explore that line of investigation, although exploring that tension would be an interesting subject.
-
-### The modeling task
-
-Two step process:
-- Given dataset (+/- rating?) find a score between -5 and +5
-- Given a score between -5 and +5 given the right parameters for the modes
-- Given a density curve extrapolate the required margin
-
-- Make money or not?
-
+We split the dataset randomly into training and validation sets (80/20 ratio).
 
 
 ## Logistic Regression
 
-__Logistic models__ (also called __logit model__) are used to model binary events. Examples would be passing or failing an exam,  a newborn being a boy or a girl, a voter choosing a particular political party, or -- relevant to us -- a borrower defaulting or not on a loan. If the binary variable is modeled as a 0/1 outcome, the model will yield a value between 0 and 1 which can be used as a probabilty. 
+_Logistic models_ (also called _logit model_) are used to model binary events. Examples would be passing or failing an exam,  a newborn being a boy or a girl, a voter choosing a particular political party, or -- relevant to us -- a borrower defaulting or not on a loan. If the binary variable is modeled as a 0/1 outcome, the model will yield a value between 0 and 1 which can be used as a probabilty. 
 
 We are interested in using a number of variables (being continuous and/or categorical) to model the binary response. A natural model is a linear combination of the variables. Since the predicted value would be continuous and not be bounded by 0/1, the outcome is transformed. A commonly used transformation of the logodds (logarithm of the odds given a particular probability) $\log \left( \frac{p}{1 - p} \right)$. This expression has a few advantages: it converts any value (between $- \infty$ and $+\infty$ produced by the linear regression), and it is symmetrical around $x = 0$ and $y = 1/2$. That is, using the odds instead of the probability avoids infinity; it behaves identically when p approaches 0 or 1 (this would not be the case using p). The reciprocal of the logodds is $p = \frac{1}{1 - e^{-x}}$. 
 
@@ -60,37 +45,50 @@ $$p =  \frac{1}{1 - e^{-\sum_i{\alpha_i X_i}}}$$
 
 The commonly used method to evaluate the creditworthiness of a borrower is to create scorecards whereby particular characteristics are segmented into intervals and attributed discrete scores. In plain English, a continuous variable (say the age of the applicant) is segmented into intervals (e.g. 0-18 year-olds, 18-26 year-olds,...), and then given a score. Those different segments become categorical variables. The task of the model is to:
  
- + identify the best way to segment a continuous variable to maximise the information value of the different segments (called bins): intuitively empty or quasi-empty  bins (either no or few applicants in the bin) are not informative; bins for which the response is completely random are not predictive, whereas a bin where the response always has the same response is informative (i.e. anybody with income of 0 and 10 dolars per year will default, anybody with a salary of $1 million per month will repay).
+ + identify the best way to segment a continuous variable to maximise the information value of the different segments (called bins). Intuitively, empty or quasi-empty  bins (either no or few applicants in the bin) are not very informative; bins for which the response is completely random are not informative, whereas a bin where the response always has the same response is informative (i.e. anybody with income of 0 and 10 dolars per year will default, anybody with a salary of $1 million per month will repay).
  
  + use a generalised linear model using the new categorical variables; 
  
  + transforms the linear coefficients estimated for each category into numerical scores.
 
 
-
-
-> WARNING: To run this model, you will need at least 32GB of memory (real plus virtual/swap space) 
+> WARNING: To run this model, you will need at least 32GB of memory (real plus virtual/swap space) and a lot of time!
 
 ### Data preparation
 
->
-> WARNING: Execute `CleanLoad.Rmd` first
->
+
+The initial preparation of the dataset takes place in the `CleanLoan.Rmd` file where we bind:
+
++ the raw LendingClub dataset (see @sec:lendingclub-dataset for how it was prepared);
+
++ from that raw set, only retain the variables that we selected to be used in the model (see column "Used in model?" in subsection \ref@(sec:list-model-variables));
+
++ the NPV, IRR and credit margins calculated; and,
+
++ the percentage of principal lost.
+
+Some variables (such as relating to financial outcomes) are used for visualisations, not predictions.
 
 
 ```{r 05-01-m1-clean-load,echo=FALSE,child="CleanLoad.Rmd"}
+#########################################################################################
+## 
+## WARNING - RELOAD CleanLoad.Rmd
+## 
+#########################################################################################
 ```
-```{r}
-# AFTER EXECUTION OF `CleanLoad.Rmd`
 
+```{r}
 # Variables not used
 rm(lending_club, loans)
 ```
 
-
-
-```{r 05-01-vars-inout}
-# select the variables that might be used to create the training+test set 
+\newline
+```{r 05-01-vars-inout,echo=TRUE}
+#########################################################################################
+##
+## select the variables that might be used to create the training+test set
+## 
 modelVarsIn <- c(LC_variable[LC_variable$inModel == TRUE, "variable_name"])$variable_name
 modelVarsIn <- c(modelVarsIn, 
                  "grade_num", "sub_grade_num", 
@@ -101,10 +99,15 @@ modelVarsOut <- c("grade_num", "sub_grade_num",
                   "principal_loss_pct", "creditMargin", "monthDefault", 
                   "zip_code")
 ```
+\newline
 
 
+We prepare a dataset with ONLY the predictors NOT removing NA's.
+
+
+\newline
 ```{r 05-01-loan-predictors,echo=TRUE}
-## ###############################################################################################
+## ######################################################################################
 ##
 ## Prepare a dataset with ONLY the predictors NOT removing NA's
 ## 
@@ -134,10 +137,14 @@ loansPredictors <-
   mutate(isGoodLoan = (principal_loss_pct < 0.001)) %>%
 
   select(-tidyselect::one_of(modelVarsOut))
+```
+\newline
 
+We split the dataset into a training (80%) and test set (20%). 
 
-
-## ###############################################################################################
+\newline
+```{r echo=TRUE}
+## ######################################################################################
 ##
 ## Create training / test sets 80%/20%
 ##
@@ -146,24 +153,35 @@ set.seed(42)
 
 nSamples <- nrow(loansPredictors)
 
-sampleTraining <- sample(1:nSamples, floor(nSamples * proportionTraining), replace = FALSE)
+sampleTraining <- sample(1:nSamples, floor(nSamples * proportionTraining), 
+                         replace = FALSE)
 loansTraining <- loansPredictors %>% slice(sampleTraining)
 loansTest <- loansPredictors %>% slice(-sampleTraining)
 
 # Subsets of the training set
 set.seed(42)
 nSamplesTraining <- nrow(loansTraining)
+```
+\newline
 
+We also create subsamples of the training set (1% and 20% thereof) for when quick calculation need making.
+
+\newline
+```{r echo=TRUE}
 # 1%
-sample01 <- sample(1:nSamplesTraining, floor(nSamplesTraining * 0.01), replace = FALSE)
+sample01 <- sample(1:nSamplesTraining, floor(nSamplesTraining * 0.01), 
+                   replace = FALSE)
 loans01 <- loansTraining %>% slice(sample01)
 
 # 20%
-sample20 <- sample(1:nSamplesTraining, floor(nSamplesTraining * 0.20), replace = FALSE)
+sample20 <- sample(1:nSamplesTraining, floor(nSamplesTraining * 0.20), 
+                   replace = FALSE)
 loans20 <- loansTraining %>% slice(sample20)
 ```
+\newline
 
-```{r 05-01-cleanup,echo=FALSE,message=TRUE}
+
+```{r 05-01-cleanup,echo=FALSE,message=FALSE}
 # Not used later on
 rm(loansWorkingSet, loansPredictors, LoansNPV, LoansIRR, LoansMargin, RATES, RATES3Y, RATES5Y)
 gc(full = TRUE)
@@ -174,19 +192,95 @@ gc(full = TRUE)
 
 This subsection owes a debt to the source code of the `smbinning` package from which we reimplemented some aspects using the `tidyverse` _style_  (the original source code uses SQL statements to access dataframes), and the documentation vignette of the `Information` package  ^[https://cran.r-project.org/web/packages/Information/vignettes/Information-vignette.html]. Our code is provided and imported as a package located on github ^[https://github.com/Emmanuel-R8/SMBinning].
 
-To identify the various bins (and number and location)
+
+### Background
+
+Binning, Weight of Evidence (_WoE_) and Information Value (_IV_) has been widely used since the 1950's to convert continuous values to factors in a way that attempts to maximise the information content of the factors. This is achieved by adjusting the number and location of cut-off points to optimally partition the range of the continuous value.
+
+After coninuous variables are binned, all variables are categorical. Therefore WoE and IV measures then can apply to both types of variables. They have some very important features:
+
+WOE and IV enable one to:
+
+  + Consider each variable’s independent contribution to the outcome;
+  
+  + The WoE is a factor-related measure which assesses the relevance of each factor for a given variable;
+  
+  + The IV is a variable-related measure which enables ranking variables between each other;
+  
+  + The theoretical background to the measure lies in information theory. It cannot be over-emphasized that the measures __do not__ use the values of the factors: it is measure only calculated using the binary GOOD/BAD values (see definitions below);
+
+  + Any NA values can be given their own factor: NAs are easily handle without filling values considerations. Given the previous point: the fact that NAs are present has no impact on the measures calculations! Sparse, incomplete or badly filled dataset are easily handled!
+  
+  + The calculation of is simple and quick (size of the dataset is not an issue in our case);
+
+  + The interpretation and Visualisation of those measures is easy and intuitive;
 
 
-Let’s say that we have a binary dependent variable Y and a set of predictive variables X1,,Xp. As mentioned above, Y can capture a wide range of outcomes, such as defaulting on a loan, clicking on an ad, or terminating a subscription.
+### WOE and IV definitions
 
-WOE and IV play two distinct roles when analyzing data:
+(This subsections is essentially an extract for the Information R package vignette).
 
-    WOE describes the relationship between a predictive variable and a binary target variable.
-    IV measures the strength of that relationship.
+Let’s say that we have a binary dependent variable $Y$ and a set of predictive variable $X$ taking a discrete set of values $x_1$ to $x_p$ (the factors). $Y$ captures the loan defaults. Basically, the $X_i$ represent one-hot encoding of the variable $X$.
+
+In this situation, Naive Bayes can be formulated in a logarithmic form as:
+
+$$\log \frac{P(Y=1| x_1, \ldots, x_p)}{P(Y=0 | x_1, \ldots, x_p)} = \log \frac{P(Y=1)}{P(Y=0)} + \sum_{j=1}^p \log \frac{f(x_j | Y=1)}{f(x_j | Y=0)}$$
+
+The naive Bayes model essentially says that the conditional log odds is equal to the sum of the individual factors (which will be the WoE). The word “naive” comes from the fact that this model relies on the assumption that all predictors are conditionally independent given Y, which is a highly optimistic (i.e. unrealistic) assumption.
 
 
+#### Weight of Evidence
+
+In an information theory context, this can be remormulated in terms with $P(Y=1 | X = x_j)$ replaced by $GOOD_j$ being the proportion of good loans when only looking at bin j (how many good loans in that bin divided by the total number of loans in that bin), and similarly $P(Y=0 | X = x_j)$ replaced by $BAD_j$. We also define $GOOD$ as the proportion of good loans for the _entire variable_ $X$
+
+$$\log \frac{GOOD_j}{BAD_j} = \underbrace{\log \frac{GOOD}{BAD}}_{\text{sample log-odds}} + \underbrace{\log \frac{f(x_j | GOOD)}{f(x_j | BAD)}}_{\text{WOE}}$$
 
 
+This relationship says that the conditional logit of $GOOD_j$ (odds of a good loan in a bin $j$), given $x_j$, can be written as the overall log-odds (total odds, i.e., the _intercept_) plus the log-density ratio – also known as the _Weight of Evidence_.
+
+Note that the WoE and the conditional log odds of $Y=1$ are perfectly correlated since the _ntercept_ is constant. Hence, the greater the value of WoE, the higher the chance of observing $Y=1$. In fact, when WoE is positive the chance of of observing $Y=1$ is above average (for the sample), and vice versa when WoE is negative. When WoE equals 0 the odds are simply equal to the sample average.
+
+#### Ties to Naive Bayes and Logistic Regression
+
+Notice that the left-hand-side of the equation above – i.e., the conditional log odds of the variable – is exactly what we are trying to predict in a logistic regression model. Hence, when building a logistic regression model – which is perhaps the most widely used technique for building binary classifiers – we are actually trying to estimate the weight of evidence.
+
+In our credit scoring situation, a “semi-naive” version of this model is quite popular. The idea is to transform the data into WOE vectors and then use logistic regression to fit the model
+
+$$\log \frac{GOOD_j}{BAD_j} = \log \frac{GOOD}{BAD} + \sum_{j=1}^p \beta_j \log \frac{f(x_j | Y=1)}{f(x_j | Y=0)}$$
+
+thus partly relaxing the assumption that all predictors in the model are independent. It should be noted that the underlying WoE vectors are still estimated univariately and that the coefficients merely function as scalars. For a more general model, GAM is a great choice.
+
+
+As mentioned above, this relationship _does not_ depend on the actual values of the bins; only the number of good and bad loans is used. If a bin represents NAs, the NAs have no impact on the calculation.
+
+#### The Information Value
+
+We can leverage WoE to measure the predictive strength of $X$ – i.e., how well it helps us separate cases when $Y=1$ from cases when $Y=0$. This is done through the information value (IV) which is defined like this for continuous variables:
+
+$\text{IV}_j = \int \log \frac{f(X_j | Y=1)}{f(X_j | Y=0)} \, (f(X_j | Y=1) - f(X_j | Y=0)) \, dx$
+
+Note that the IV is essentially a weighted “sum” of all the individual WoE values where the weights incorporate the absolute difference between the numerator and the denominator (WoE captures the relative difference). Generally, if $\text{IV} < 0.05$ the variable has very little predictive power and will not add any meaningful predictive power to your model.
+
+#### Estimating WOE
+
+In summary, now considering $k$ variables, the most common approach to estimating the conditional densities needed to calculate WoE is to bin a variable $X_k$ into individual bins $x_{k,j}$ and then use a histogram-type estimate.
+
+$$\text{WoE}_{k,j} = \log \frac{GOOD_{k,j}}{BAD_{k,j}}$$
+
+and the IV for variable $X_k$ can be calculated as
+
+$$\text{IV}_k =  \sum_{j} (GOOD_{k,j} - BAD_{k,j}) \times \text{WOE}_{k,j}$$
+
+
+### Modeling
+
+We took insipration of the `smbinning` R package to optimally partition continuous variables into factors/bins. We however could not directly use this package as it does not interact with the tidyverse functions and uses SQL statements to access the content of dataframes. This solution enables to easily access SQL databases. But we note the the tiyverse takes the opposite approach of converting R statements into SQL statements.
+
+We decided to implement a few functions that we will require (not the entire `smbinning` package) as a new package called `binner` separately available on GitHub.
+
+Let's install that package:
+
+\newline
 ```{r 05-01-reinstall-binner,echo=FALSE,message=FALSE}
 # Ensure that `binner` is here and available
 if ("package:binner" %in% search()) { 
@@ -200,48 +294,64 @@ if (!("binner" %in% installed.packages()[,1])) {
   # devtools::install_github("Emmanuel-R8/SMBinning")
 }
 ```
+\newline
 
+and attach it to the environment.
 
+\newline
 ```{r 05-01-load-binner,echo=TRUE}
 library(binner)
 ```
+\newline
 
 ### Loop through all variables
 
-```{r 05-01-create-list-bins,echo=TRUE,message=FALSE}
+Before creating the bins, we create a new dataframe and transform some string values to factors.
+
+\newline
+```{r echo=TRUE,message=FALSE}
 loansBinning <- loansTraining %>%
   mutate(
     home_ownership = as_factor(home_ownership),
     emp_length = as_factor(emp_length),
     grade = as_factor(grade)
   )
+```
+\newline
 
-informationValues <- tibble(variable = names(loansBinning), IV = -1.0)
+For each variable we will create a new entry in a new tibble.
 
+\newline
+```{r 05-01-create-list-bins,echo=TRUE,message=FALSE}
+#########################################################################################
+##
+## New tibble to store the list of bins + Weight of Evidences factors
+##
 listBins <-
   tibble(
-    variable = "",
+    variable = names(loansBinning),
     type = "",
     IV = 0.0,
-    WoE = list(),
-    .rows = 0
+    WoE = list()
   )
 ```
+\newline
 
+We then loop through each variable to create factors (for continuous variables) and calculate a table with the Weights of Evidence. We then calculate the Information Value.
 
+\newline
 ```{r 05-01-create-all-bins,message=FALSE,echo=TRUE}
 # About 500 sec wall-time
 startTime <- proc.time()
-for (n in informationValues$variable) {
-  cat("Variable: ", n)
+
+for (n in names(loansBinning)) {
 
   # We don't test the response with itself
-  if (n %in% c("isGoodLoan")) {
-    cat("\n")
-
-  } else {
+  if (n != "isGoodLoan") {
+    
+    # For categorical variable
     if (class(loansBinning[[1, n]]) == "factor") {
-      cat(" is a factor, ")
+      # cat(" is a factor, ")
       result <- WoETableCategorical(
         df = loansBinning,
         x = n,
@@ -249,7 +359,7 @@ for (n in informationValues$variable) {
         maxCategories = 100)
 
     } else {
-      cat(" is numeric, ")
+    # For continuous variable
       result <- WoETableContinuous(df = loansBinning,
                                    x = n,
                                    y = "isGoodLoan",
@@ -258,7 +368,7 @@ for (n in informationValues$variable) {
 
     tryCatch({
       if (is.na(result)) {
-        cat("Variable skipped.\n")
+        # In case no WoE table is create (of not enough bins)
         add_row(
           listBins,
           variable = n,
@@ -266,7 +376,6 @@ for (n in informationValues$variable) {
           IV = NA
         )
       } else {
-        cat("     IV : ", result$IV, "\n")
 
         listBins <- listBins %>%
           add_row(
@@ -276,14 +385,18 @@ for (n in informationValues$variable) {
             WoE = list(result$table)
           )
         
-        informationValues[n] <- result$IV
-        
         }
     },
     finally = {})
   }
 }
 proc.time() - startTime
+```
+\newline
+
+
+```{r message=FALSE,echo=FALSE}
+# SAVE TO SPEED UP ITERATIVE EXPLORATION
 
 saveRDS(informationValues, "datasets/informationValues100.rds")
 saveRDS(listBins, "datasets/listBins100.rds")
@@ -292,16 +405,50 @@ saveRDS(listBins, "datasets/listBins100.rds")
 
 ### Select relevant variables
 
-It is considered that information value below 2% is useless. The 15 best variables (in terms of Information Value) are:
+Table \@ref(tab:05-1-information-value-table) guidelines are recommended to the relevance of variables given their Information Value [@bokhari2019credit].
+
+\newline
+```{r 05-1-information-value-table}
+tibble(
+  "Information Value Band" = c("IV < 2%",
+                               "2% < IV < 10%",
+                               "10% < IV < 30%",
+                               "30% < IV < 50%",
+                               "50% < IV"),
+  "Indicative Relevance" = c(
+    "useless",
+    "weak",
+    "medium",
+    "strong",
+    "warning: something is probably wrong!"
+  )
+) %>%
+  kable(
+    "latex",
+    caption = "Variable relevance by Information Value",
+    booktabs = T,
+    # longtable = T,
+    col.names = c("Information Value", "Relevance")
+  ) %>%
+  kable_styling(latex_options = c("repeat_header")) %>%
+  column_spec(1, width = "6cm") %>%
+  column_spec(2, width = "6cm")
+
+```
+\newline
 
 
-```{r 05-01-create-bestbins-10best,echo=TRUE}
 
+
+The 15 best variables (in terms of Information Value in excess of 2%) are in Table \@ref(tab:05-01-create-bestbins-10best):
+
+
+```{r 05-01-create-bestbins-10best,echo=TRUE,fig.cap="15 top variables by IV"}
 bestBins <- listBins %>% filter(IV >= 0.02)
 
 bestBins %>% 
   select(variable, IV) %>% 
-  mutate(IV = round(IV, digits = 5)) %>% 
+  mutate(IV = round(100 * IV, digits = 2)) %>% 
   arrange(desc(IV)) %>% 
   slice(1:15)
 ```
@@ -318,7 +465,10 @@ bestBins <- bestBins %>%
     "emp_length", "home_ownership", "monthDefault",
     "principal_loss_pct", "creditMargin", "monthDefault",
     "isGoodLoan")))
+```
 
+
+```{r echo=FALSE}
 saveRDS(bestBins, "datasets/bestBins100.rds")
 
 ```

@@ -1,6 +1,11 @@
 # Appendix {-}
 
-## List of assumptions / limitations regarding the dataset {#list-assumptions}
+```{r message=FALSE,echo=FALSE}
+library(tidyverse)
+```
+
+
+## List of assumptions / limitations regarding the dataset {#sec:list-assumptions}
 
 As mentioned during this report, we had to make numerous assumptions given the lack of clarity of the variable descriptions. 
 
@@ -34,7 +39,7 @@ We used different sources of information:
 We here show the code used to prepare the data. It was automatically formatted by _RStudio_.
 
 
-### LendinClub dataset
+### LendinClub dataset {#sec:lendingclub-dataset}
 
 ```{r 08-data_preparation,eval=FALSE,echo=TRUE}
 local({
@@ -453,143 +458,17 @@ local({
 })
 ```
 
-### Macro-economical data
-
-Macro-economical datasets were sourced from the same website as Microsoft Excel files. They were converted as-is to tab-separated csv files with LibreOffice. 
-
-+ Median income per household:
-https://geofred.stlouisfed.org/map/?th=pubugn&cc=5&rc=false&im=fractile&sb&lng=-112.41&lat=44.31&zm=4&sl&sv&am=Average&at=Not%20Seasonally%20Adjusted,%20Annual,%20Dollars&sti=2022&fq=Annual&rt=county&un=lin&dt=2017-01-01
-
-+ Per capita personal income: 
-https://geofred.stlouisfed.org/map/?th=pubugn&cc=5&rc=false&im=fractile&sb&lng=-112.41&lat=44.31&zm=4&sl&sv&am=Average&at=Not%20Seasonally%20Adjusted,%20Annual,%20Dollars&sti=882&fq=Annual&rt=county&un=lin&dt=2017-01-01
-
-+ Unemployment:
-https://geofred.stlouisfed.org/map/?th=rdpu&cc=5&rc=false&im=fractile&sb&lng=-90&lat=40&zm=4&sl&sv&am=Average&at=Not%20Seasonally%20Adjusted,%20Monthly,%20Percent&sti=1224&fq=Monthly&rt=county&un=lin&dt=2019-08-01
 
 
-
-```{r 08-macro-data,eval=FALSE,echo=TRUE}
-local({
-  ###################################################################################################
-  ##
-  ## Median income per household by FIPS from 2002 to 2017
-  ##
-  # Prepare median income
-  medianIncome <-
-    # Load the dataset after dropping the first line
-    read.csv(
-      "datasets/csv/GeoFRED_Estimate_of_Median_Household_Income_by_County_Dollars.csv",
-      sep = "\t",
-      skip = 1,
-      stringsAsFactors = FALSE
-    ) %>%
-    
-    # Drops columnsn containing a unique identifier and the FIPS name
-    select(-"Series.ID", -"Region.Name") %>%
-    
-    # Rename the relevant column to 'FIPS'
-    rename(FIPS = "Region.Code") %>%
-    
-    # Order by FIPS
-    arrange(FIPS) %>% 
-    
-    # Convert to a 'long' table, i.e. one column for FIPS, one for date, one for income
-    pivot_longer(cols = starts_with("X"), 
-                 names_to = "Date", 
-                 values_to = "medianIncome") %>% 
-    
-    # Create actual dates
-    mutate(Date = str_replace(Date, "[X]", ""),
-           Date = ymd(str_c(Date, "-12-31")))
-  
-  saveRDS(medianIncome, "datasets/medianincome.rds")
-
-  
-  
-  ###################################################################################################
-  ##
-  ## Per capita income by FIPS from 2002 to 2017
-  ##
-  personalIncome <-
-    # Load the dataset after dropping the first line
-    read.csv(
-      "datasets/csv/GeoFRED_Per_Capita_Personal_Income_by_County_Dollars.csv",
-      sep = "\t",
-      skip = 1,
-      stringsAsFactors = FALSE
-    ) %>%
-    
-    # Drops columnsn containing a unique identifier and the FIPS name
-    select(-"Series.ID", -"Region.Name") %>%
-    
-    # Rename the relevant column to 'FIPS'
-    rename(FIPS = "Region.Code") %>%
-    
-    # Order by FIPS
-    arrange(FIPS) %>% 
-    
-    # Convert to a 'long' table, i.e. one column for FIPS, one for date, one for income
-    pivot_longer(cols = starts_with("X"), 
-                 names_to = "Date", 
-                 values_to = "personalIncome") %>% 
-    
-    # Create actual dates
-    mutate(Date = str_replace(Date, "[X]", ""),
-           Date = ymd(str_c(Date, "-12-31")))
-  
-  saveRDS(personalIncome, "datasets/personalincome.rds")
-  
-  
-  ###################################################################################################
-  ##
-  ## Unemplyment rate monthly by FIPS from January 2000 to August 2019
-  ##
-  unemploymentRate <-
-    # Load the dataset after dropping the first line
-    read.csv(
-      "datasets/csv/GeoFRED_Unemployment_Rate_by_County_Percent.csv",
-      sep = "\t",
-      skip = 1,
-      stringsAsFactors = FALSE
-    ) %>%
-    
-    # Drops columnsn containing a unique identifier and the FIPS name
-    select(-"Series.ID", -"Region.Name") %>%
-    
-    # Rename the relevant column to 'FIPS'
-    rename(FIPS = "Region.Code") %>%
-    
-    # Order by FIPS
-    arrange(FIPS) %>% 
-    
-    mutate_all(as.double) %>% 
-  
-    # Convert to a 'long' table, i.e. one column for FIPS, one for date, one for income
-    pivot_longer(cols = starts_with("X"), 
-                 names_to = "Date", 
-                 values_to = "unemploymentRate", 
-                 values_ptypes = c("unemploymentRate", numeric)) %>% 
-    
-    # Converts the content of the Year column to an actual date
-    mutate(
-      Date = str_replace(Date, "[X]", ""),
-      Date = str_replace(Date, "[.]", "-"),
-      Date = ymd(str_c(Date, "-1"))
-    )
-  
-  saveRDS(unemploymentRate, "datasets/unemployment.rds")
-})
-```
-
-
-## List of variables 
+## List of variables {#sec:list-model-variables}
 
 This table presents the list of variables provided in the original dataset. The descriptions come from a spreadsheet attached with the dataset and, unfortunately, are not extremely precise and subject to interpretation. We added comments and/or particular interpretations in _CAPITAL LETTERS_.
 
 
 ```{r 08-variable-description,cache=TRUE}
 LC_variable %>%
-  select(variable_name, description) %>%
+  select(variable_name, inModel, description) %>%
+  mutate(inModel = if_else(inModel, "YES", "NO")) %>% 
   
   # Format the table.
   kable(
@@ -597,14 +476,14 @@ LC_variable %>%
     caption = "Description of the dataset variables as provided in the dataset downloaded from Kaggle",
     booktabs = T,
     longtable = T,
-    col.names = c("Variable Name", "Description")
+    col.names = c("Variable Name", "Used in model?", "Description")
   ) %>%
   kable_styling(full_width = F,
                 latex_options = c("repeat_header")) %>%
-  column_spec(1, width = "7cm") %>%
-  column_spec(2, width = "7cm")
-
-
+  column_spec(1, width = "4cm") %>%
+  column_spec(2, width = "3cm") %>%
+  column_spec(3, width = "7cm")
+s
 ```
 
 
@@ -1327,20 +1206,20 @@ CSV.write("datasets/CreditMargins.csv", creditMargin_Result)
 
 ```
 PDF1(x, Q) := alpha1( Q) * sqrt( 1 / ( 2 * pi)) * 
-              exp( - 1 / 2*(( log( -( x - m1( Q)) / m1( Q)) + sigma1( Q) ^ 2) / sigma1( Q)) ^ 2) / 
-              ( -( x - m1(Q)) * sigma1( Q)) ;
+              exp( - 1 / 2*(( log( -( x - m1( Q)) / m1( Q)) + sigma1( Q) ^ 2) / 
+              sigma1( Q)) ^ 2) / ( -( x - m1(Q)) * sigma1( Q)) ;
 
 PDF2(x, Q) := alpha2( Q) * sqrt( 1 / ( 2 * pi)) * 
-              exp( - 1 / 2*(( log( -( x - m2( Q)) / m2( Q)) + sigma2( Q) ^ 2) / sigma2( Q)) ^ 2) / 
-              ( -( x - m2( Q)) * sigma2( Q)) ;
+              exp( - 1 / 2*(( log( -( x - m2( Q)) / m2( Q)) + sigma2( Q) ^ 2) / 
+              sigma2( Q)) ^ 2) / ( -( x - m2( Q)) * sigma2( Q)) ;
 
 PDF3(x, Q) := alpha3( Q) * sqrt( 1 / ( 2 (* pi)) * 
-              exp( - 1 / 2*(( log( -( x - m3( Q)) / m3( Q)) + sigma3( Q) ^ 2) / sigma3( Q)) ^ 2) / 
-              ( -( x - m3( Q)) * sigma3( Q)) ;
+              exp( - 1 / 2*(( log( -( x - m3( Q)) / m3( Q)) + sigma3( Q) ^ 2) / 
+              sigma3( Q)) ^ 2) / ( -( x - m3( Q)) * sigma3( Q)) ;
 
 PDF4(x, Q) := alpha4( Q) * sqrt( 1 / ( 2 * pi)) * 
-              exp( - 1 / 2*(( log( ( x - m4( Q)) / m4( Q)) + sigma4( Q) ^ 2) / sigma4( Q)) ^ 2) / ( 
-              ( x - m4( Q)) * sigma4( Q)) ;
+              exp( - 1 / 2*(( log( ( x - m4( Q)) / m4( Q)) + sigma4( Q) ^ 2) / 
+              sigma4( Q)) ^ 2) / ( ( x - m4( Q)) * sigma4( Q)) ;
 
 
 alpha1(Q) := am1* Q + an1 ;

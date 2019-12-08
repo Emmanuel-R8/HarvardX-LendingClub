@@ -5,15 +5,16 @@
 ```
 
 
-The data is sourced as a _SQLite_ database that downloaded from [@KaggleLC] and imported as a `tibble dataframe` with the `RSQLite` package. The variables were reformatted according to their respective types. 
+The data is sourced as a _SQLite_ database that downloaded from [@KaggleLC] and imported as a `tibble dataframe` with the `RSQLite` package. The variables were reformatted according to their respective types.The full list of variable is given in appendix (see Table \@ref(tab:08-variable-description)). This dataset will be reduced as we focused on the core intent of modeling the probability of default.
 
-[We also sourced US zip and FIPS codes, and macroeconomical data for possible geographical statistics. The source code for the data import and reformatting is given in appendix.]
+Note that the dataset was anonymised (all identifying ID numbers are deleted) and we therefore removed the corresponding empty columns from the dataset. Since the identification `ID`s have been removed to anonymise the dataset, we cannot see if a borrower borrowed several times.
+
 
 ## Preamble
 
-The LendingClub dataset, although rich, is difficult to interpret. The only explanation of what the variables mean comes from a spreadsheet attached to the dataset. The explanations are not precise and/or subject to conflicting interpretation. Despite serching the LendingClub website, no further original information was found. We collected a number of reasonable assumptions in Appendix (see (List of Assumptions)[list-assumptions]). 
+The LendingClub dataset, although rich, is difficult to interpret. The only explanation of what the variables mean comes from a spreadsheet attached to the dataset. The explanations are not precise and/or subject to conflicting interpretation. Despite serching the LendingClub website, no further original information was found. We collected a number of reasonable assumptions in Appendix (see @sec:list-assumptions in Appendix). 
 
-The dataset has been used a number of times in the past by various people. One paper [@kim2019ensemble] mentions they used a dataset that included 110 variables, which is less than ours with 145 variables. The dataset has changed over time in ways we do not know. For example, have loans been excluded because the full 145 veriables were not available?
+The dataset has been used a number of times in the past by various people. One paper [@kim2019ensemble] mentions they used a dataset that included 110 variables, which is less than ours with 145 variables. It is therefore clear that the dataset has changed over time in ways we do not know. For example, have loans been excluded because the full 145 veriables were not available?
 
 ## General presentation
 
@@ -140,7 +141,7 @@ $$
 \rightarrow  \text{Late 31 to 120 days} \rightarrow  \text{Default} \rightarrow  \text{Charged Off}
 $$
 
-Note that _Default_ precedes and is distinct from _Charged Off_ ^[See LendingClub FAQ at [](https://help.lendingclub.com/hc/en-us/articles/215488038) and help page [](https://help.lendingclub.com/hc/en-us/articles/216127897-What-happens-when-a-loan-is-charged-off-)]. A couple of things could happen to a loan in default: 
+Note that _Default_ precedes and is distinct from _Charged Off_ ^[ See LendingClub FAQ at  [https://help.lendingclub.com/hc/en-us/articles/215488038] and help page [https://help.lendingclub.com/hc/en-us/articles/216127897-What-happens-when-a-loan-is-charged-off-] ]. A couple of things could happen to a loan in default: 
 
 + LC and the borrower restructure the loan with a new repayment schedule, where the borrower may repay a lesser amount over a longer period; or,
 
@@ -148,11 +149,7 @@ Note that _Default_ precedes and is distinct from _Charged Off_ ^[See LendingClu
 
 The dataset also describes situations where a borrower negotiated a restructuring of the repayment schedule in case of unexpected hardship (e.g. disaster, sudden unemployment). 
 
-Note that this progression of distinguishing default (event in time) from actual financial loss mirrors what banks and rating agencies do. The former is called the _Probability of Default_ (PD), the latter _Loss Given Default_ (LGD). Ratings change over time (in a process resembling Markov Chains). LGD show some correlations with ratings. The dataset, although detailed, does not include the full life of each loan to conduct this sort of analysis (change of loan quality over time). This is an important reason why we decided to focus on the loan approval and expected return.
-
-> CHANGE: Debt-Settlement companies ^[https://help.lendingclub.com/hc/en-us/articles/115011819087-Debt-settlement-companies] that explains that debt settlement companies can step in, buy the debt and pay to LC.
-
-> CHANGE: What is the difference between a loan that is in “default” and a loan that has been “charged off”? ^[https://help.lendingclub.com/hc/en-us/articles/216127747]
+Note that this progression of distinguishing default (event in time) from actual financial loss mirrors what banks and rating agencies do. The former is called the _Probability of Default_ (PD), the latter _Loss Given Default_ (LGD). Ratings change over time (in a process resembling Markov Chains transitions). LGD show some correlations with ratings. The dataset, although detailed, does not include the full life of each loan to conduct this sort of analysis (change of loan quality over time). This is an important reason why we decided to focus on the loan approval and expected return.
 
 
 
@@ -168,7 +165,7 @@ Before a loan is approved, the borrower undergoes a review process that assess h
 
 + the amount sought, its tenor and the purpose of the loan; and,
 
-+ what seems to be previous credit history (number of previous deliquencies). The dataset is very confusing in that regard: it is clear that such information relates to before the loan is approved in the case of the joint applicant. In the case of the principal borrower however, the variable descriptions could be read as pre-approval information, or information gathered during the life of the loan. We have assumed that the information related to the principal borrower is also pre-approval. We also used _Sales Supplements_ from the LC website^[See https://www.lendingclub.com/legal/prospectus] that describe some of the information provided to investors. LendingClub also provides a summary description of its approval process in its regulatory filings with the Securities Exchange Commission [@LC201908S3]. 
++ what seems to be previous credit history (number of previous deliquencies). The dataset is very confusing in that regard: in the case of the __joint__ applicant, it is clear that such information relates to before the loan is approved . In the case of the __principal borrower__ however, the variable descriptions could be read as being pre-approval information, or post-approval gathered during the life of the loan. We have assumed that the information related to the principal borrower is also pre-approval. We also used _Sales Supplements_ from the LC website^[See https://www.lendingclub.com/legal/prospectus] that describe some of the information provided to investors. LendingClub also provides a summary description of its approval process in its regulatory filings with the Securities Exchange Commission [@LC201908S3]. 
 
 
 
@@ -210,7 +207,7 @@ We notice long periods where certain margins remain very stable which indicate t
 
 The graphs show considerations that are relevant to the modeling": 
 
-+ The margins clearly change over time. Predictions will require to account for time [probably in a non-linear fashion].
++ The margins clearly change over time. To the extent that they reflect a change in probability of default, the predictions will require to account for time (probably in a non-linear fashion).^[Note that we will add the second and third power of time to create this non-linearity. This will be the only feature engineering that will be performed on the dataset.]
 
 + For a given rating, it widens and narrows over time. The changes happen in multiples that depends on the ratings: 
     
@@ -218,11 +215,9 @@ The graphs show considerations that are relevant to the modeling":
     
     - Although the range of change is wide, those changes do not happen very often, especially in the later years.
     
-    - By comparison, for low quality / high margin loans, the range of change is smaller, but more frequent and volatile. 
+    - By comparison, for low quality / high margin loans, the range of change is proportionally smaller, but more frequent and volatile. 
     
 + In other words, the relation between loan quality (its rating) and its pricing (the credit margin) will significantly non-linear. 
-
-
 
 
 
@@ -285,9 +280,7 @@ grid.arrange(CM36, CM60, nrow = 1)
 
 ### Dataset
 
-Because we are interested decisions made prior to invest, we will limit the predictors to be used to those that are realistically available prior to funding. We eliminated  
-
-
+Because we are interested decisions made prior to invest, we will limit the predictors to those that are realistically available prior to funding. 
 
 
 ### Interest rates
@@ -378,7 +371,7 @@ grid.arrange(margin36, margin60, nrow = 1)
 
 ### Purpose
 
-When applying, a potential borrower must state the purpose of the loan. As shown in table \@ref(tab:04-loans-per-purpose), the main purpose is the consolidation of existing debts.
+When applying, a potential borrower must state the purpose of the loan. As shown in table \@ref(tab:04-loans-per-purpose), by far the main purpose is the consolidation of existing debts.
 
 ```{r 04-loans-per-purpose}
 local({
@@ -492,22 +485,12 @@ Figure \@ref(fig:04-loss-distribution-subrating) shows that for a given grade, t
 
 Setting aside the loans rated "A" or "B", the distributions seem log-normal. Unsurprisingly, the worse the rating the larger the principal loss.
 
-```{r 04-loss-distribution-subrating,fig.cap="Distribution of NPV (\\%) depending on rating \n(y-axis square-root scaling)"}
+```{r 04-loss-distribution-subrating,fig.cap="Distribution of the Principal Loss (\\%) depending on rating \n(y-axis square-root scaling)"}
 
 Set <- loansWorkingSet %>% 
   select(grade, funded_amnt, total_rec_prncp) %>%
   filter(total_rec_prncp < funded_amnt - 1) %>% 
   mutate(PrincipalLoss = (funded_amnt - total_rec_prncp)/funded_amnt)
-
-setGood <-  Set %>%
-  filter(grade %in% c("A", "B")) 
-
-setMid <-  Set %>%
-  filter(grade %in% c("C", "D")) %>% 
-  sample_n(100000)  
-
-setLow <-  Set %>%
-  filter(grade %in% c("E", "F", "G")) 
 
 adjustSpread <- 0.6
 rangeMin <- 0.0
@@ -517,8 +500,7 @@ Set %>% ggplot(aes(PrincipalLoss, col = grade)) +
   geom_density(adjust = adjustSpread) +
   scale_x_continuous(limits = c(rangeMin, rangeMax)) +
   #scale_y_sqrt() + 
-  xlab("")
-
+  xlab("Loss as proportion of princial amount")
 ```
 
 
@@ -688,20 +670,12 @@ NPVset %>%
 The overall trend is what we should expect. What is surprising is the existence of (1) very clearly defined modes which (2) are common to all types of borrowers. They roughly look log-normal, apart from the mode around 41% which look Gaussian.
 
 
-## Variables
-
-We here present other aspects of the dataset. The full list of variable is given in appendix (see Table \@ref(tab:08-variable-description)). This dataset will be reduced as we focused on our core question: _Are LC's loans priced appropriately?_.
-
-### Identification
-
-The dataset is anonymised (all identifying ID numbers are deleted) and we therefore removed those columns from the dataset. Since the identification `ID`s have been removed to anonymise the dataset, we cannot see if a borrower borrowed several times.
-
 
 ## Loan decision 
 
-As indicated in the introduction, our focus is on loans that have gone through their entire life cycle to consider their respective pricing, risk and profitability. To that effect, we will remove all loans which are still current (either performing or not), and we will only retain loans which currently available (rated `A1` to `D5`). Another reason for limiting ourselves to this subset is that the previous subsection graphing NPVs strongly suggests that the lowest quality loans were very underpriced yielding average losses. From here on, everything will be based on this reduced dataset. 
+As indicated in the introduction, our focus is on loans that have gone through their entire life cycle to consider their respective pricing, risk and profitability. To that effect, we will remove all loans which are still current (either performing or not), and we will only retain loans which currently available (rated `A1` to `D5`). From here on, everything will be based on this reduced dataset. 
 
-In this reduced dataset, we focus on loans that have matured or been terminated. It contains  `r nrow(loans)` samples. Most of the loans (ca.80%) have been repaid in full. See Table \@ref(tab:04-matured-loans).
+In this reduced dataset, we focus on loans that have matured or been terminated. It contains  `r nrow(loans)` samples. Most of the loans (ca.80%) have been repaid in full (in other words __1 in 5 loans defaulted__). See Table \@ref(tab:04-matured-loans).
 
 
 ```{r 04-matured-loans}
@@ -763,16 +737,4 @@ loanBySubgrade2 <-
 
 grid.arrange(loanBySubgrade1, loanBySubgrade2, ncol = 1)
 ```
-
- 
-
-## Payment-related information
-
-> As mentioned previously, the descriptions of the dataset variables is at times incomplete or confusing. For the purpose of determining the cash flow of each individual loans, we have attempted to reconstruct the variables.
->
-> We have verfied that:
->
-> + installments are calculated as per the formula shown above, rounded to the next cent.
-> 
-> + total_pymnt = total_rec_prncp + total_rec_int + total_rec_late_fee + recoveries
 

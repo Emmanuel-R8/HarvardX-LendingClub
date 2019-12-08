@@ -3,10 +3,20 @@
 
 ### Final list of variables
 
-```{r 05-03-load-models,echo=FALSE,message=FALSE}
-
+```{r echo=FALSE,message=FALSE}
+library(tidyverse)
 rm(loansTraining, allFactorsAsCharacteristics, allFactorsAsBins, loanSampleBins, loanSampleCharacteristics)
+knitr::opts_chunk$set(
+  # Chunks
+  eval = TRUE,
+  cache = TRUE,
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE)
+```
 
+
+```{r 05-03-load-models,echo=FALSE,message=FALSE}
 # Saved at the end of the modeling file
 SGLM_B_train <- readRDS("datasets/SGLM_B_train.rds")
 SGLM_B_retrain <- readRDS("datasets/SGLM_B_retrain.rds")
@@ -58,7 +68,7 @@ Scoring expresses the coefficients that were estimated during the logistic regre
 
 + an _anchoring_ score reflecting a particular odd.
 
-For our purpose, we will choose ($Score_{anchor}$) 5,000 points being equivalent to 1 in a 20 to default ($Odds_{anchor}$), i.e. 5,000 points <=> $Odds_{Anchor} = \frac{1 / 20}{1 - 1/20}$. We will also choose 100 to reflect _times 2_ change in odds ($DoubleOdds$). Those choices are completely arbitrary. Basically, the score is a linear representation of the odds. The score is defined by a point (the anchor) and the slope of the line going through that point.
+For our purpose, we will choose 5,000 points ($\text{Score}_{anchor}$) being equivalent to 1 in a 20 to default ($\text{Odds}_{anchor}$), i.e. $\text{Score}_{anchor}$ 5,000 points <=> $\text{Odds}_{Anchor} = \frac{1 / 20}{1 - 1/20}$. We will also choose 100 to reflect _times 2_ change in odds ($DoubleOdds$). Those choices are completely arbitrary. Basically, the score is a linear representation of the odds. The score is defined by a point (the anchor) and the slope of the line going through that point.
 
 Those values will reflect the total estimated score for a borrower (i.e. loan sample). The number of characteristics (information points gathered in a credit application), or number of bins, have to be irrelevant in calculating this score. In other words, if LendingClub were to gather 5 more information points, the score should, __mutatis mutandis__, be unchanged. (However, we would hope that the quality of the estimated score would improve.)
 
@@ -138,17 +148,19 @@ GLMScores[1, "points"] <-  0
 ```
 
 
-
-
-Using the model is a simple matrix multiplication: $\text{Loan matrix} \times \text{Scorecard weights}$
+The `speedglm` package does not have a `predict` function once models have been trained. However, using the model is a simple matrix multiplication: $\text{Loan matrix} \times \text{Scorecard weights}$
 
 ## Training set
 
-```{r 05-03-load-factored-datasets}
+```{r 05-03-load-factored-datasets,echo=FALSE,message=FALSE}
 # Reload the right datasets
 allFactorsAsBins <- readRDS("datasets/allBins100.rds")
 loansTraining <- readRDS("datasets/LoansTraining.rds")
 loansTest <- readRDS("datasets/LoansTest.rds")
+```
+
+
+```{r message=FALSE,echo=FALSE,cache=FALSE}
 gc(full = TRUE)
 ```
 
@@ -173,8 +185,7 @@ allMatrix <-
 dim(allMatrix)
 ```
 
-
-```{r 05-03-matrix-cleanup}
+```{r message=FALSE,echo=FALSE}
 # Done with this dataset
 rm(allFactorsAsBins)
 gc(full = TRUE)
@@ -205,48 +216,48 @@ TrainingLogit <-
 ```
 
 
-### Histogram of the scores
+### Densities of the training results
+
+We plot the results of the training model and group the results by rating ("A" to "G") in Figure \@ref(fig:05-03-training-hists-value).
 
 
-```{r 05-03-training-hists-value}
-loansTraining %>%
-  cbind(TrainingLogit) %>%
-  filter(between(value, -2, 5)) %>% 
-  ggplot(aes(value, col = grade)) +
-  geom_density(adjust = 2)
-```
+
+```{r 05-03-training-hists-value,fig.cap="Model results on the training set"}
 
 
-```{r 05-03-training-hists-p}
-loansTraining %>%
-  cbind(TrainingLogit) %>%
-  ggplot(aes(p, col = grade)) +
-  geom_density(adjust = 2) +
-  scale_x_log10()
-```
-
-
-```{r 05-03-training-hists-odds}
-loansTraining %>%
-  cbind(TrainingLogit) %>%
-  filter(between(oddsGood, 0.1, 100)) %>% 
-  ggplot(aes(oddsGood, col = grade)) +
-  geom_density(adjust = 2) + 
-  scale_x_log10()
+gridExtra::grid.arrange(
+  loansTraining %>%
+    cbind(TrainingLogit) %>%
+    filter(between(value, -2, 5)) %>%
+    ggplot(aes(value, col = grade)) +
+    geom_density(adjust = 0.5) +
+    ggtitle("Logit value"),
   
+  loansTraining %>%
+    cbind(TrainingLogit) %>%
+    ggplot(aes(p, col = grade)) +
+    geom_density(adjust = 0.5) +
+    scale_x_log10() +
+    ggtitle("Probability of being GOOD"),
+  
+  loansTraining %>%
+    cbind(TrainingLogit) %>%
+    filter(between(oddsGood, 0.1, 100)) %>%
+    ggplot(aes(oddsGood, col = grade)) +
+    geom_density(adjust = 0.5) +
+    scale_x_log10() +
+    ggtitle("Odds of being GOOD"),
+  
+  loansTraining %>%
+    cbind(TrainingLogit) %>%
+    ggplot(aes(TrainingScorecard, col = grade)) +
+    geom_density(adjust = 1) +
+    ggtitle("Scorecards"),
+
+  ncol = 1
+)
+
 ```
-
-The following histogram shows the density plot of the scorecards. Note the log-scale for the score, and the square-root scale for the density. It mirrors the multimodal density distributions of previous visualisations. 
-
-```{r 05-03-training-scores}
-loansTraining %>%
-  cbind(TrainingLogit) %>%
-  ggplot(aes(TrainingScorecard, col = grade)) +
-  geom_density(adjust = 2) +
-  scale_x_log10() + 
-  scale_y_sqrt()
-```
-
 
 
 ## Test set
@@ -254,7 +265,6 @@ loansTraining %>%
 ```{r 05-03-test-bins}
 # Prepare the full test set
 bestBins <- readRDS("datasets/bestBins100.rds")
-
 predictionCategories <- loansTest[, "loanID"]
 
 for (index in 1:length(bestBins$variable)) {
@@ -300,16 +310,14 @@ TestLogit <-
 predictionScorecard <- predictionMatrix %*% ( GLMScores$points %>% as.matrix() ) 
 ```
 
-```{r 05-03-test-estimates}
+```{r 05-03-test-estimates,fig.cap="Density of loans by scorecard"}
 loansTest %>%
   cbind(TestLogit) %>%
   cbind(predictionScorecard) %>%
-  mutate(scoreBand = floor(predictionScorecard / 50) * 50) %>%
   filter(predictionScorecard > 0) %>%
-  group_by(scoreBand) %>%
-  summarise(Count = n()) %>%
-  ggplot(aes(scoreBand, Count)) +
-  geom_col(col = "blue")
+  ggplot(aes(predictionScorecard)) +
+  geom_density(col = "blue", fill = "lightblue", adjust = 3)
+
 ```
 
 
@@ -320,7 +328,7 @@ median(predictionScorecard)
 Same downward dynamics as training set
 
 
-```{r 05-03-test-viz-value}
+```{r 05-03-test-viz-value,fig.cap="Logit value predicted by the model"}
 loansTest %>%
   cbind(TestLogit) %>%
   filter(between(value, -2, 5)) %>% 
@@ -329,7 +337,7 @@ loansTest %>%
 ```
 
 
-```{r 05-03-test-viz-p}
+```{r 05-03-test-viz-p,fig.cap="Probability of a loan being GOOD predicted by the model"}
 loansTest %>%
   cbind(TestLogit) %>%
   ggplot(aes(p, col = grade)) +
@@ -338,7 +346,7 @@ loansTest %>%
 ```
 
 
-```{r 05-03-test-viz-odds}
+```{r 05-03-test-viz-odds,fig.cap="Odds of a loan being GOOD predicted by the model"}
 loansTest %>%
   cbind(TestLogit) %>%
   filter(between(oddsGood, 0.1, 100)) %>% 
@@ -349,40 +357,54 @@ loansTest %>%
 ```
 
 
-## Correlation matrix
+## Confusion matrix
 
-[TODO]
+Given a probability $p$ from the model, we use a $p = 0.50$ cut-off point to decide whether a loan is Good or Bad. The Confusion Matrix results are:
+
+```{r 05-03-test-confusion-matrix,echo=TRUE}
+tCM <- loansTest %>%
+  cbind(TestLogit) %>%
+  select(p, isGoodLoan) %>% 
+  
+  mutate(p = if_else(p >= 0.50, "GOOD", "BAD"), 
+         isGoodLoan = if_else(isGoodLoan, "GOOD", "BAD")) %>% 
+  rename(Predicted = p, 
+         Actual = isGoodLoan) %>% 
+  
+  table() %>% 
+  caret::confusionMatrix(positive = "GOOD")
+
+tCM
+
+```
+
+The results suggest that the model is effrective at predicting good loans (measured by the sensitivity = $\frac{TP}{TP + FN}$ = `r round(100*tCM$byClass["Sensitivity"], digits = 2)`%). However, this is deceptive since the dataset is unbalanced. The model is performing poorly at detecting bad loans (measured by the specificity = $\frac{TN}{TN + FP}$ = `r round(100*tCM$byClass["Specificity"], digits = 2)`%) The dataset is unbalanced and measuring the model's performance with a confusion matrix is imprecise. A much better approach would be to train many models on balanced datasets (by sampling a reduced 'good loans' dataset) and study the distribution of that resulting models and their parameters.
+
+More critically, tThe confusion matrix does not  (and cannot) reflect the consequence of getting predictions wrong. At the end of the day, the only relevant consequence is estimating the number of dollars lost on a loan. A misqualified loan might lead to a loss of a single dollar, or a million. Predicting a probability of default is not enough. We need to subsequently predict the expected loss when a particular loan defaults. In the conclusion, we suggest one possible avenue.
 
 
 ## ROC Curve
 
-```{r 05-03-test-ROC}
+A popular measure for the performance of such a logistic regression model is to consider its _Receiver Operating Characteristic_ curve (_ROC_) and calculate its area under curve (_AUC_). Ideally, a model able to perfectly classify 
+
+
+
+```{r 05-03-test-ROC,echo=TRUE}
 ROCRPrediction <- ROCR::prediction(TestLogit$value, loansTest$isGoodLoan)
 ROCRPerformance <- ROCR::performance(ROCRPrediction, "tpr", "fpr")
 
-ROCRPlot <-
-  tibble(x = ROCRPerformance@x.values[[1]], y = ROCRPerformance@y.values[[1]])
+ROCData <- tibble(x = ROCRPerformance@x.values[[1]], 
+       y = ROCRPerformance@y.values[[1]])
 
+ROCData %>% 
+  ggplot(aes(x, y)) +
+  geom_point(alpha = 0.2, col = "blue")
 
-ROCRPlot %>% ggplot(aes(x, y)) +
-  geom_point()
 ```
 
 
 ```{r 05-03-test-ROC2}
-stats::ks.test(x = ROCRPlot$x, y = ROCRPlot$y)
+stats::ks.test(x = ROCData$x, y = ROCData$y)
 ```
 
-```{r}
-str(ROCRPerformance)
-```
-
-
-## Bin test set by prediction
-
-```{r}
-probEstimates <- if_else(TestLogit$value < 0, 0, TestLogit$value)
-
-summary(probEstimates / (1 + probEstimates))
-```
 

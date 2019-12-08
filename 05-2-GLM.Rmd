@@ -57,8 +57,11 @@ rm(allFactorsAsCharacteristics)
 
 ```{r message=FALSE,echo=FALSE}
 rm(loansTraining)
-
 gc(full = TRUE)
+```
+
+
+```{r message=FALSE,echo=FALSE}
 ncol(loanSampleBins)
 ncol(loanSampleCharacteristics)
 ```
@@ -136,7 +139,7 @@ saveRDS(SGLM_C_train, "datasets/SGLM_C_train.rds")
 
 #### GLM on bins
 
-```{r}
+```{r message=FALSE,echo=FALSE}
 gc(full = TRUE)
 ```
 
@@ -207,7 +210,7 @@ NAsFirstTraining <- NAsFirstTraining$name
 
 ### Second training
 
-```{r}
+```{r message=FALSE,echo=FALSE}
 gc(full = TRUE)
 ```
 
@@ -272,7 +275,7 @@ NAsSecondTraining <- NAsSecondTraining$name
 ### Third training
 
 
-```{r}
+```{r message=FALSE,echo=FALSE}
 gc(full = TRUE)
 ```
 
