@@ -432,34 +432,68 @@ $$\text{ }$$
 
 The results suggest that the model is effrective at predicting good loans (measured by the sensitivity = $\frac{TP}{TP + FN}$ = `r round(100*tCM$byClass["Sensitivity"], digits = 2)`%). However, this is deceptive since the dataset is unbalanced. The model is performing poorly at detecting bad loans (measured by the specificity = $\frac{TN}{TN + FP}$ = `r round(100*tCM$byClass["Specificity"], digits = 2)`%) The dataset is unbalanced and measuring the model's performance with a confusion matrix is imprecise. A much better approach would be to train many models on balanced datasets (by sampling a reduced 'good loans' dataset) and study the distribution of that resulting models and their parameters.
 
-More critically, tThe confusion matrix does not  (and cannot) reflect the consequence of getting predictions wrong. At the end of the day, the only relevant consequence is estimating the number of dollars lost on a loan. A misqualified loan might lead to a loss of a single dollar, or a million. Predicting a probability of default is not enough. We need to subsequently predict the expected loss when a particular loan defaults. In the conclusion, we suggest one possible avenue.
+More critically, the confusion matrix does not (and cannot) reflect the consequence of getting predictions wrong. At the end of the day, the only relevant consequence is estimating the number of dollars lost on a loan. A misqualified loan might lead to a loss of a single dollar, or a million. Predicting a probability of default is not enough. We need to subsequently predict the expected loss when a particular loan defaults. In the conclusion, we suggest one possible avenue.
 
 
 ## ROC Curve
 
-A popular measure for the performance of such a logistic regression model is to consider its _Receiver Operating Characteristic_ curve (_ROC_) and calculate its area under curve (_AUC_). Ideally, a model able to perfectly classify 
+A popular measure for the performance of such a logistic regression model is to consider its _Receiver Operating Characteristic_ curve (_ROC_) and calculate its area under curve (_AUC_). We use the `ROCR` package ([@10.1093/bioinformatics/bti623]). We recommend See [@fawcett2004roc] for a very good overview of Receiver Operating Characteristics graphs.
 
-
+We first create a prediction object that will 
 
 ```{r 05-03-test-ROC,echo=TRUE}
-ROCRPrediction <- ROCR::prediction(TestLogit$value, loansTest$isGoodLoan)
-ROCRPerformance <- ROCR::performance(ROCRPrediction, "tpr", "fpr")
+ROCRPrediction <- ROCR::prediction(TestLogit$p, loansTest$isGoodLoan)
+```
+$$\text{ }$$
 
-ROCData <- tibble(x = ROCRPerformance@x.values[[1]], 
-       y = ROCRPerformance@y.values[[1]])
+Figure \ref@(fig:05-03-ROC-curve) plots the Receiver Operating Characteristic curve of the regression. The area under the ROC curve is `r ROCR::performance(ROCRPrediction, "auc")@y.values[[1]]`. 
 
-ROCData %>% 
-  ggplot(aes(x, y)) +
-  geom_point(alpha = 0.2, col = "blue")
+
+```{r 05-03-ROC-curve,echo=TRUE,message=FALSE,fig.cap="Receiver Operating Characteristic"}
+
+ROCR::performance(ROCRPrediction, 
+                  measure = "tpr", 
+                  x.measure = "fpr") %>% 
+  ROCR::plot(colorize = TRUE) 
+
+```
+$$\text{ }$$
+The AUC has an important statistical property: the AUC of a classifer is equivalent to the probability that the classifer will rank a randomly chosen positive instance higher than a randomly chosen negative instance. This is equivalent to the Wilcoxon test of ranks.The AUC is also closely related to the Gini index, which is twice the area between the diagonal and the ROC curve ($\text{Gini} + 1 = 2 \times \text{AUC}$). 
+
+
+
+
+```{r 05-03-precision-recall-curve,echo=TRUE,message=FALSE,fig.cap="Precision/Recall curve"}
+
+ROCR::performance(ROCRPrediction, 
+                  measure = "prec",
+                  x.measure = "rec") %>% 
+  ROCR::plot(colorize = TRUE) 
+
 
 ```
 $$\text{ }$$
 
+```{r 05-03-sens-spec-curve,echo=TRUE,message=FALSE,fig.cap="Sensitivity/Specificity curve"}
 
+ROCR::performance(ROCRPrediction, 
+                  measure = "sens", 
+                  x.measure = "spec") %>% 
+  ROCR::plot(colorize = TRUE) 
 
-```{r 05-03-test-ROC2}
-stats::ks.test(x = ROCData$x, y = ROCData$y)
 ```
 $$\text{ }$$
+
+```{r 05-03-lift-chart,echo=TRUE,fig.cap="Lift Chart"}
+
+ROCRPerformance <- ROCR::performance(ROCRPrediction, 
+                  measure = "lift", 
+                  x.measure = "rpp") %>% 
+  ROCR::plot(colorize = TRUE) 
+
+
+```
+
+
 
 

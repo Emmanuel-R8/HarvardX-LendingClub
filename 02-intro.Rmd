@@ -1,16 +1,3 @@
-# TODO {-}
-
-## Dataset
-
-[TODO: DTI, amount... by grade]
-
-## Model preparation
-
-
-[TODO: Bias/Complexity trade-off]
-[TODO: AoC? or AuC?]
-
-Correlation matrix?
 
 # Introduction {-}
 

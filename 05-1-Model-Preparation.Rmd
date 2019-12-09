@@ -26,8 +26,6 @@ At the outset, the dataset presents a number of challenges:
 
 + The dataset has no context or reference point to interpret dollar amounts. Everybody intuitively understands that owing $10 or $1,000,000 are very different (amounts matter). Owing $1,000 when living in New York is different from owing $1,000 if living on $2 per day in a developing country (surrounding economic environment matter). That intuition is shared economic knowledge, but that intuition is nowhere represented in the dataset. As readers, we automatically attribute that implicit knowledge to the data we read in the dataset. However, any model based on that data will never reflect that implicit knowledge if we do not supplement with external data. As shown in the previous section, credit margins have changed over time. This is clearly related to the wider US economic environment. Financial hardship is a key driver for some of the loans. Availability of disposable income is important to assess the ability to repay. Therefore, the cost of living, which varies from state to state, seems relevant. As noted in the post-mortem section, such information will not be used.
 
-__ WARNING: IF YOU RUN THE MODELING SECTION, YOU WILL HAVE: MEMORY USAGE OF UP TO 32GB, ALL A LOT DISK SWAPPING WHEN DATASETS ARE JUGGLED IN AND OUT OF MEMORY TO DISK TO MINIMISE MEMORY USAGE, AND CALCULATION TIMES BY BATCHES OF UP TO 10 MINUTES (ON MY LAPTOP). THIS EXCLUDES TIME NECESSARY TO PREPARE THE DATASET AS EXPLAINED ON THE PREVIOUS SECTIONS (THAT IS HOURS).__
-
 ```{r}
 "IF YOU RUN THE MODELING SECTION, YOU WILL NEED UP TO 32GB OF MEMORY, AND EXPECT A LOT OF DISK SWAPPING WHEN DATASETS ARE JUGGLED IN AND OUT OF MEMORY TO DISK TO MINIMISE MEMORY USAGE. CALCULATION TIMES ARE BY BATCHES UP TO 10 MINUTES (DEPENDING ON HARDWARE). THIS EXCLUDES TIME NECESSARY TO PREPARE THE DATASET AS EXPLAINED ON THE PREVIOUS SECTIONS (THAT IS HOURS)." %>% 
   knitr::kable(col.names = "WARNING:")
@@ -478,7 +476,7 @@ saveRDS(bestBins, "datasets/bestBins100.rds")
 ```
 
 
-The 15 best variables that will retain are in the following table. Interestingly, the square and cubic powers of the issue date are retained. 
+The 15 most informative variables that will retain are in the following table. Interestingly, the square and cubic powers of the issue date are retained. 
 
 ```{r 05-01-create-bestbins-10bestavailable,echo=TRUE}
 bestBins %>% 
@@ -486,12 +484,12 @@ bestBins %>%
   mutate(IV = round(IV, digits = 5)) %>% 
   arrange(desc(IV)) %>% 
   slice(1:15) %>%
-  knitr::kable(caption = "15 top relevant variables by IV")
+  knitr::kable(caption = "15 top informative variables by IV")
 ```
 $$\text{ }$$
 
 
-And the 10 worst (but retained) variables are:
+And the 15 least informative (but retained) variables are:
 
 ```{r 05-01-create-bestbins-10worst,echo=TRUE}
 bestBins %>% 
@@ -499,13 +497,13 @@ bestBins %>%
   mutate(IV = round(IV, digits = 5)) %>% 
   arrange(IV) %>% 
   slice(1:15) %>%
-  knitr::kable(caption = "15 worst variables by IV")
+  knitr::kable(caption = "15 least informative variables by IV")
 ```
 $$\text{ }$$
 
 
 
-### Create data table with only binary variables (transform every bin to a 0/1 value)
+### Create data table with one-hot encoding
 
 
 Those variable will contain all the best characteristics. Every continuous variable is reformatted into factors reflecting the appropriate bins.
