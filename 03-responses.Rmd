@@ -83,7 +83,5 @@ Again, this was coded in Julia. The Julia code here takes about 1h20min to run. 
 ### NPV
 
 
-We also calculated the NPV of each loan. Again, this was coded in Julia. The code is in appendix.
-
-We calculate both the NPV as an absolute dollar amount and as a portion of the original 
+We also calculated the NPV of each loan, both as an absolute dollar amount and as a portion of the original. Again, this was coded in Julia. The code is in appendix. Visualisations based on the NPV are in the next section.
 

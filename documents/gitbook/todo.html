@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>LendingClub Loans Pricing</title>
+  <meta name="description" content="HarvardX - PH125.9x Data Science Capstone" />
+  <meta name="generator" content="bookdown 0.16 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="LendingClub Loans Pricing" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="HarvardX - PH125.9x Data Science Capstone" />
+  <meta name="github-repo" content="Emmanuel_R8/HarvardX-LendingClub" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="LendingClub Loans Pricing" />
+  
+  <meta name="twitter:description" content="HarvardX - PH125.9x Data Science Capstone" />
+  
+
+<meta name="author" content="Emmanuel Rialland - https://github.com/Emmanuel_R8" />
+
+
+<meta name="date" content="2019-12-09" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+
+<link rel="next" href="introduction.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<script src="libs/kePrint-0.0.1/kePrint.js"></script>
+
+
+<style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  { background-color: #f8f8f8; }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ef2929; } /* Alert */
+code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #c4a000; } /* Attribute */
+code span.bn { color: #0000cf; } /* BaseN */
+code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4e9a06; } /* Char */
+code span.cn { color: #000000; } /* Constant */
+code span.co { color: #8f5902; font-style: italic; } /* Comment */
+code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+code span.dt { color: #204a87; } /* DataType */
+code span.dv { color: #0000cf; } /* DecVal */
+code span.er { color: #a40000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #0000cf; } /* Float */
+code span.fu { color: #000000; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+code span.ot { color: #8f5902; } /* Other */
+code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+code span.sc { color: #000000; } /* SpecialChar */
+code span.ss { color: #4e9a06; } /* SpecialString */
+code span.st { color: #4e9a06; } /* String */
+code span.va { color: #000000; } /* Variable */
+code span.vs { color: #4e9a06; } /* VerbatimString */
+code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./introduction.html" target="blank>LendingClub Loans Pricing</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="todo.html"><a href="todo.html"><i class="fa fa-check"></i>TODO</a><ul>
+<li class="chapter" data-level="0.1" data-path="todo.html"><a href="todo.html#dataset"><i class="fa fa-check"></i><b>0.1</b> Dataset</a></li>
+<li class="chapter" data-level="0.2" data-path="todo.html"><a href="todo.html#model-preparation"><i class="fa fa-check"></i><b>0.2</b> Model preparation</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="introduction.html"><a href="introduction.html"><i class="fa fa-check"></i>Introduction</a></li>
+<li class="chapter" data-level="1" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html"><i class="fa fa-check"></i><b>1</b> Internal Rate of Return, Credit Margins and Net Present Values</a><ul>
+<li class="chapter" data-level="1.1" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#important-warning"><i class="fa fa-check"></i><b>1.1</b> Important warning</a></li>
+<li class="chapter" data-level="1.2" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#background"><i class="fa fa-check"></i><b>1.2</b> Background</a></li>
+<li class="chapter" data-level="1.3" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#internal-rate-of-return"><i class="fa fa-check"></i><b>1.3</b> Internal Rate of Return</a></li>
+<li class="chapter" data-level="1.4" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#dataset-calculation"><i class="fa fa-check"></i><b>1.4</b> Dataset calculation</a><ul>
+<li class="chapter" data-level="1.4.1" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#irr"><i class="fa fa-check"></i><b>1.4.1</b> IRR</a></li>
+<li class="chapter" data-level="1.4.2" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#credit-margins"><i class="fa fa-check"></i><b>1.4.2</b> Credit Margins</a></li>
+<li class="chapter" data-level="1.4.3" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#npv"><i class="fa fa-check"></i><b>1.4.3</b> NPV</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="dataset-1.html"><a href="dataset-1.html"><i class="fa fa-check"></i><b>2</b> Dataset</a><ul>
+<li class="chapter" data-level="2.1" data-path="dataset-1.html"><a href="dataset-1.html#preamble"><i class="fa fa-check"></i><b>2.1</b> Preamble</a></li>
+<li class="chapter" data-level="2.2" data-path="dataset-1.html"><a href="dataset-1.html#general-presentation"><i class="fa fa-check"></i><b>2.2</b> General presentation</a><ul>
+<li class="chapter" data-level="2.2.1" data-path="dataset-1.html"><a href="dataset-1.html#business-volume"><i class="fa fa-check"></i><b>2.2.1</b> Business volume</a></li>
+<li class="chapter" data-level="2.2.2" data-path="dataset-1.html"><a href="dataset-1.html#loan-lifecyle-and-status"><i class="fa fa-check"></i><b>2.2.2</b> Loan lifecyle and status</a></li>
+<li class="chapter" data-level="2.2.3" data-path="dataset-1.html"><a href="dataset-1.html#loan-application"><i class="fa fa-check"></i><b>2.2.3</b> Loan application</a></li>
+</ul></li>
+<li class="chapter" data-level="2.3" data-path="dataset-1.html"><a href="dataset-1.html#rates"><i class="fa fa-check"></i><b>2.3</b> Rates</a><ul>
+<li class="chapter" data-level="2.3.1" data-path="dataset-1.html"><a href="dataset-1.html#irr-and-required-credit-margins"><i class="fa fa-check"></i><b>2.3.1</b> IRR and required credit margins</a></li>
+<li class="chapter" data-level="2.3.2" data-path="dataset-1.html"><a href="dataset-1.html#dataset-2"><i class="fa fa-check"></i><b>2.3.2</b> Dataset</a></li>
+<li class="chapter" data-level="2.3.3" data-path="dataset-1.html"><a href="dataset-1.html#interest-rates"><i class="fa fa-check"></i><b>2.3.3</b> Interest rates</a></li>
+<li class="chapter" data-level="2.3.4" data-path="dataset-1.html"><a href="dataset-1.html#purpose"><i class="fa fa-check"></i><b>2.3.4</b> Purpose</a></li>
+<li class="chapter" data-level="2.3.5" data-path="dataset-1.html"><a href="dataset-1.html#payments"><i class="fa fa-check"></i><b>2.3.5</b> Payments</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="dataset-1.html"><a href="dataset-1.html#net-present-value"><i class="fa fa-check"></i><b>2.4</b> Net present value</a><ul>
+<li class="chapter" data-level="2.4.1" data-path="dataset-1.html"><a href="dataset-1.html#average-npv-and-credit-margin-by-subgrade"><i class="fa fa-check"></i><b>2.4.1</b> Average NPV and credit margin by subgrade</a></li>
+<li class="chapter" data-level="2.4.2" data-path="dataset-1.html"><a href="dataset-1.html#principal-losses"><i class="fa fa-check"></i><b>2.4.2</b> Principal losses</a></li>
+<li class="chapter" data-level="2.4.3" data-path="dataset-1.html"><a href="dataset-1.html#distribution-of-principal-losses-by-rating"><i class="fa fa-check"></i><b>2.4.3</b> Distribution of principal losses by rating</a></li>
+<li class="chapter" data-level="2.4.4" data-path="dataset-1.html"><a href="dataset-1.html#npv-distribution-by-rating"><i class="fa fa-check"></i><b>2.4.4</b> NPV distribution by rating</a></li>
+</ul></li>
+<li class="chapter" data-level="2.5" data-path="dataset-1.html"><a href="dataset-1.html#loan-decision"><i class="fa fa-check"></i><b>2.5</b> Loan decision</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html"><i class="fa fa-check"></i><b>3</b> Logistic Regression Model and Credit Scorecard</a><ul>
+<li class="chapter" data-level="3.1" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#introduction-1"><i class="fa fa-check"></i><b>3.1</b> Introduction</a></li>
+<li class="chapter" data-level="3.2" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#logistic-regression"><i class="fa fa-check"></i><b>3.2</b> Logistic Regression</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#data-preparation"><i class="fa fa-check"></i><b>3.2.1</b> Data preparation</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#binning-and-weight-of-evidence"><i class="fa fa-check"></i><b>3.3</b> Binning and Weight of Evidence</a><ul>
+<li class="chapter" data-level="3.3.1" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#background-1"><i class="fa fa-check"></i><b>3.3.1</b> Background</a></li>
+<li class="chapter" data-level="3.3.2" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#binning"><i class="fa fa-check"></i><b>3.3.2</b> Binning</a></li>
+<li class="chapter" data-level="3.3.3" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#woe-and-iv-definitions"><i class="fa fa-check"></i><b>3.3.3</b> WOE and IV definitions</a></li>
+<li class="chapter" data-level="3.3.4" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#modeling"><i class="fa fa-check"></i><b>3.3.4</b> Modeling</a></li>
+<li class="chapter" data-level="3.3.5" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#loop-through-all-variables"><i class="fa fa-check"></i><b>3.3.5</b> Loop through all variables</a></li>
+<li class="chapter" data-level="3.3.6" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#select-relevant-variables"><i class="fa fa-check"></i><b>3.3.6</b> Select relevant variables</a></li>
+<li class="chapter" data-level="3.3.7" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#create-data-table-with-only-binary-variables-transform-every-bin-to-a-01-value"><i class="fa fa-check"></i><b>3.3.7</b> Create data table with only binary variables (transform every bin to a 0/1 value)</a></li>
+<li class="chapter" data-level="3.3.8" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#comparison-of-individual-characteristics"><i class="fa fa-check"></i><b>3.3.8</b> Comparison of individual characteristics</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#logistic-regression-1"><i class="fa fa-check"></i><b>3.4</b> Logistic Regression</a><ul>
+<li class="chapter" data-level="3.4.1" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#remove-identical-bins"><i class="fa fa-check"></i><b>3.4.1</b> Remove identical bins</a></li>
+<li class="chapter" data-level="3.4.2" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#first-model---complete-dataset"><i class="fa fa-check"></i><b>3.4.2</b> First model - complete dataset</a></li>
+<li class="chapter" data-level="3.4.3" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#second-training---fitted-model-less-colinear-bins"><i class="fa fa-check"></i><b>3.4.3</b> Second training - fitted model less colinear bins</a></li>
+<li class="chapter" data-level="3.4.4" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#third-training---second-fitted-model-less-non-significant-bins"><i class="fa fa-check"></i><b>3.4.4</b> Third training - second fitted model less non-significant bins</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#model-result"><i class="fa fa-check"></i><b>3.5</b> Model result</a><ul>
+<li class="chapter" data-level="3.5.1" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#final-list-of-variables"><i class="fa fa-check"></i><b>3.5.1</b> Final list of variables</a></li>
+<li class="chapter" data-level="3.5.2" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#scoring"><i class="fa fa-check"></i><b>3.5.2</b> Scoring</a></li>
+</ul></li>
+<li class="chapter" data-level="3.6" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#training-set"><i class="fa fa-check"></i><b>3.6</b> Training set</a><ul>
+<li class="chapter" data-level="3.6.1" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#densities-of-the-training-results"><i class="fa fa-check"></i><b>3.6.1</b> Densities of the training results</a></li>
+</ul></li>
+<li class="chapter" data-level="3.7" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#test-set"><i class="fa fa-check"></i><b>3.7</b> Test set</a></li>
+<li class="chapter" data-level="3.8" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#confusion-matrix"><i class="fa fa-check"></i><b>3.8</b> Confusion matrix</a></li>
+<li class="chapter" data-level="3.9" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#roc-curve"><i class="fa fa-check"></i><b>3.9</b> ROC Curve</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="conclusion.html"><a href="conclusion.html"><i class="fa fa-check"></i><b>4</b> Conclusion</a></li>
+<li class="chapter" data-level="5" data-path="errands-and-post-mortem.html"><a href="errands-and-post-mortem.html"><i class="fa fa-check"></i><b>5</b> Errands and post-mortem</a><ul>
+<li class="chapter" data-level="5.1" data-path="errands-and-post-mortem.html"><a href="errands-and-post-mortem.html#geographical-data"><i class="fa fa-check"></i><b>5.1</b> Geographical data</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html"><i class="fa fa-check"></i><b>6</b> Stochastic Gradient Descent</a><ul>
+<li class="chapter" data-level="6.1" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#description-of-the-model"><i class="fa fa-check"></i><b>6.1</b> Description of the model</a></li>
+<li class="chapter" data-level="6.2" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#gradient-descent"><i class="fa fa-check"></i><b>6.2</b> Gradient descent</a><ul>
+<li class="chapter" data-level="6.2.1" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#generalities"><i class="fa fa-check"></i><b>6.2.1</b> Generalities</a></li>
+</ul></li>
+<li class="chapter" data-level="6.3" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#stochastic-gradient-descent-1"><i class="fa fa-check"></i><b>6.3</b> Stochastic Gradient Descent</a><ul>
+<li class="chapter" data-level="6.3.1" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#stochastic-gradient-descent-sgd"><i class="fa fa-check"></i><b>6.3.1</b> Stochastic Gradient Descent (SGD)</a></li>
+</ul></li>
+<li class="chapter" data-level="6.4" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#various-errands"><i class="fa fa-check"></i><b>6.4</b> Various errands</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#optimising-the-scorecard-or-rating-depending-on-the-npv-curve."><i class="fa fa-check"></i><b>6.4.1</b> Optimising the scorecard (or rating) depending on the NPV curve.</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="appendix.html"><a href="appendix.html"><i class="fa fa-check"></i>Appendix</a><ul>
+<li class="chapter" data-level="6.5" data-path="appendix.html"><a href="appendix.html#sec:list-assumptions"><i class="fa fa-check"></i><b>6.5</b> List of assumptions / limitations regarding the dataset</a></li>
+<li class="chapter" data-level="6.6" data-path="appendix.html"><a href="appendix.html#data-preparation-and-formatting"><i class="fa fa-check"></i><b>6.6</b> Data preparation and formatting</a><ul>
+<li class="chapter" data-level="6.6.1" data-path="appendix.html"><a href="appendix.html#sec:lendingclub-dataset"><i class="fa fa-check"></i><b>6.6.1</b> LendinClub dataset</a></li>
+<li class="chapter" data-level="6.6.2" data-path="appendix.html"><a href="appendix.html#zip-codes-and-fips-codes"><i class="fa fa-check"></i><b>6.6.2</b> Zip codes and FIPS codes</a></li>
+<li class="chapter" data-level="6.6.3" data-path="appendix.html"><a href="appendix.html#market-interest-rates"><i class="fa fa-check"></i><b>6.6.3</b> Market interest rates</a></li>
+</ul></li>
+<li class="chapter" data-level="6.7" data-path="appendix.html"><a href="appendix.html#sec:list-model-variables"><i class="fa fa-check"></i><b>6.7</b> List of variables</a></li>
+<li class="chapter" data-level="6.8" data-path="appendix.html"><a href="appendix.html#calculations-of-the-internal-rate-of-returns-and-month-to-default"><i class="fa fa-check"></i><b>6.8</b> Calculations of the internal rate of returns and month-to-default</a><ul>
+<li class="chapter" data-level="6.8.1" data-path="appendix.html"><a href="appendix.html#r-code"><i class="fa fa-check"></i><b>6.8.1</b> R code</a></li>
+<li class="chapter" data-level="6.8.2" data-path="appendix.html"><a href="appendix.html#julia-code"><i class="fa fa-check"></i><b>6.8.2</b> Julia code</a></li>
+<li class="chapter" data-level="6.8.3" data-path="appendix.html"><a href="appendix.html#maxima-derivation-of-the-cost-function"><i class="fa fa-check"></i><b>6.8.3</b> Maxima derivation of the cost function</a></li>
+</ul></li>
+<li class="chapter" data-level="6.9" data-path="appendix.html"><a href="appendix.html#system-version"><i class="fa fa-check"></i><b>6.9</b> System version</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://bookdown.org/" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">LendingClub Loans Pricing</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="header">
+<h1 class="title">LendingClub Loans Pricing</h1>
+<h2 class="subtitle"><em>HarvardX - PH125.9x Data Science Capstone</em></h2>
+<p class="author"><em>Emmanuel Rialland - <a href="https://github.com/Emmanuel_R8" class="uri">https://github.com/Emmanuel_R8</a></em></p>
+<p class="date"><em>December 09, 2019</em></p>
+</div>
+<div id="todo" class="section level1 unnumbered">
+<h1>TODO</h1>
+<div id="dataset" class="section level2">
+<h2><span class="header-section-number">0.1</span> Dataset</h2>
+<p>[TODO: DTI, amount… by grade]</p>
+</div>
+<div id="model-preparation" class="section level2">
+<h2><span class="header-section-number">0.2</span> Model preparation</h2>
+<p>[TODO: Bias/Complexity trade-off]
+[TODO: AoC? or AuC?]</p>
+<p>Correlation matrix?</p>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+
+<a href="introduction.html" class="navigation navigation-next navigation-unique" aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/Emmanuel-R8/HarvardX-LendingClub/edit/master/02-intro.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["HarvardX Credit Scoring of the LendingClub Dataset.pdf", "HarvardX Credit Scoring of the LendingClub Dataset.epub"],
+"toc": {
+"collapse": "subsection",
+"scroll_highlight": true
+},
+"toolbar": {
+"position": "fixed"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

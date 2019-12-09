@@ -1,4 +1,4 @@
-book_filename: "HarvardX - Credit Scoring of the LendingClub Dataset"
+book_filename: "HarvardX Credit Scoring of the LendingClub Dataset"
 output_dir: "documents"
 language:
   ui:
@@ -18,7 +18,7 @@ rmd_files: [
   "05-2-GLM.Rmd",
   "05-3-Scoring.Rmd",
 
-  "07-conclusion.Rmd",
+  "07-1-conclusion.Rmd",
   "07-2-postmortem.Rmd",
 
   "08-appendix.Rmd",

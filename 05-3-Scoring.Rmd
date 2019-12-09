@@ -1,11 +1,15 @@
 
-## Model result
-
-### Final list of variables
+<!------------------------------------------------------------------------------------>
+<!-- CLEANUP AND RELOAD DATASETS                                                    -->
 
 ```{r echo=FALSE,message=FALSE}
 library(tidyverse)
-rm(loansTraining, allFactorsAsCharacteristics, allFactorsAsBins, loanSampleBins, loanSampleCharacteristics)
+rm(loansTraining, 
+   allFactorsAsCharacteristics, 
+   allFactorsAsBins, 
+   loanSampleBins, 
+   loanSampleCharacteristics)
+
 knitr::opts_chunk$set(
   # Chunks
   eval = TRUE,
@@ -24,10 +28,28 @@ SGLM_B_reretrain <- readRDS("datasets/SGLM_B_reretrain.rds")
 ```
 
 
-```{r 05-03-model-names}
+<!-- END                                                                             -->
+<!------------------------------------------------------------------------------------->
+
+
+
+## Model result
+
+
+### Final list of variables
+
+We selected the model fitted during the second training.
+
+```{r}
 # Model to use
 GLModel <- SGLM_B_retrain
+```
+$$\text{ }$$
 
+
+We collect the list of selected bins.
+
+```{r 05-03-model-names}
 # List of model variables
 modelNames <- 
   attr(GLModel$coefficients, "names") %>%
@@ -36,16 +58,17 @@ modelNames <-
   select(variableName) %>%
   mutate(variableName = str_remove_all(variableName, "\`"))
 ```
+$$\text{ }$$
 
+
+And we collect the model summary (coefficients, significance, etc.). 
 
 ```{r 05-03-extract-coefficients}
 # and their coefficients in the model (the summary function for speedglm objects is not exported and
 # bookdown seems to have a problem with that).
 
-sumSpeed <- speedglm:::summary.speedglm
-
 GLMCoefficients <- 
-  sumSpeed(GLModel)$coefficients %>%
+  speedglm:::summary.speedglm(GLModel)$coefficients %>%
   as_tibble() %>%
   cbind(modelNames) %>%
   rename(
@@ -58,11 +81,17 @@ GLMCoefficients <-
   select(variableName, everything())
 
 ```
+$$\text{ }$$
 
 
 ### Scoring
 
-Scoring expresses the coefficients that were estimated during the logistic regression into points on a scale. The conversion is done using  three parameters that are chosen somewhat arbitrarily.
+
+Scoring expresses the coefficients that were estimated during the logistic regression into points on a scale. The model estimates the log-odds that a loan will not default. 
+
+
+
+The conversion is done using  three parameters that are chosen somewhat arbitrarily.
 
 + the number of points increase / decrease that would reflect halving / doubling the odds of defaulting;
 
@@ -97,6 +126,7 @@ numberOfCharacteristics <-
 
 numberOfCharacteristics
 ```
+$$\text{ }$$
 
 
 We can now perform the scoring calculation. 
@@ -123,6 +153,7 @@ ScoreOffset <- ScoreAnchor - ScoreFactor * log(OddsAnchor)
 # Score at the intercept
 Intercept <- summary(GLModel)$coefficients["(Intercept)", "Estimate"]
 ```
+$$\text{ }$$
 
 Then we apportion across characteristics.
 
@@ -138,6 +169,7 @@ GLMScores <-
     points = round(weightScaled)
   )
 ```
+$$\text{ }$$
 
 > VERY IMPORTANT:
 
@@ -146,6 +178,7 @@ The intercept points have been allocated across all characteristics. Therefore t
 ```{r}
 GLMScores[1, "points"] <-  0
 ```
+$$\text{ }$$
 
 
 The `speedglm` package does not have a `predict` function once models have been trained. However, using the model is a simple matrix multiplication: $\text{Loan matrix} \times \text{Scorecard weights}$
@@ -161,7 +194,7 @@ loansTest <- readRDS("datasets/LoansTest.rds")
 
 
 ```{r message=FALSE,echo=FALSE,cache=FALSE}
-gc(full = TRUE)
+gc(full = TRUE,verbose = FALSE)
 ```
 
 
@@ -174,6 +207,7 @@ allMatrix <-
   ))] %>%
   as.matrix()
 ```
+$$\text{ }$$
 
 
 ```{r 05-03-matrix-add-1-col}
@@ -184,11 +218,13 @@ allMatrix <-
   )), allMatrix)
 dim(allMatrix)
 ```
+$$\text{ }$$
+
 
 ```{r message=FALSE,echo=FALSE}
 # Done with this dataset
 rm(allFactorsAsBins)
-gc(full = TRUE)
+gc(full = TRUE, verbose = FALSE)
 ```
 
 
@@ -214,6 +250,7 @@ TrainingLogit <-
 
 
 ```
+$$\text{ }$$
 
 
 ### Densities of the training results
@@ -258,6 +295,7 @@ gridExtra::grid.arrange(
 )
 
 ```
+$$\text{ }$$
 
 
 ## Test set
@@ -280,6 +318,8 @@ for (index in 1:length(bestBins$variable)) {
 
 dim(predictionCategories)
 ```
+$$\text{ }$$
+
 
 
 ```{r 05-03-test-matrix-select-variables}
@@ -291,12 +331,14 @@ predictionMatrix <-
   ))] %>%
   as.matrix()
 ```
+$$\text{ }$$
 
 
 ```{r 05-03-test-matrix-add-1-col}
 predictionMatrix <- cbind(as.vector(rep.int(x = 1, times = dim(predictionMatrix)[1])), predictionMatrix)
 dim(predictionMatrix)
 ```
+$$\text{ }$$
 
 
 ```{r 05-03-test-matrix}
@@ -309,6 +351,8 @@ TestLogit <-
 
 predictionScorecard <- predictionMatrix %*% ( GLMScores$points %>% as.matrix() ) 
 ```
+$$\text{ }$$
+
 
 ```{r 05-03-test-estimates,fig.cap="Density of loans by scorecard"}
 loansTest %>%
@@ -319,11 +363,14 @@ loansTest %>%
   geom_density(col = "blue", fill = "lightblue", adjust = 3)
 
 ```
+$$\text{ }$$
 
 
 ```{r 05-03-test-estimates-median}
 median(predictionScorecard)
 ```
+$$\text{ }$$
+
 
 Same downward dynamics as training set
 
@@ -335,6 +382,7 @@ loansTest %>%
   ggplot(aes(value, col = grade)) +
   geom_density(adjust = 2)
 ```
+$$\text{ }$$
 
 
 ```{r 05-03-test-viz-p,fig.cap="Probability of a loan being GOOD predicted by the model"}
@@ -344,6 +392,7 @@ loansTest %>%
   geom_density(adjust = 2) +
   scale_x_log10()
 ```
+$$\text{ }$$
 
 
 ```{r 05-03-test-viz-odds,fig.cap="Odds of a loan being GOOD predicted by the model"}
@@ -355,6 +404,7 @@ loansTest %>%
   scale_x_log10()
   
 ```
+$$\text{ }$$
 
 
 ## Confusion matrix
@@ -377,6 +427,8 @@ tCM <- loansTest %>%
 tCM
 
 ```
+$$\text{ }$$
+
 
 The results suggest that the model is effrective at predicting good loans (measured by the sensitivity = $\frac{TP}{TP + FN}$ = `r round(100*tCM$byClass["Sensitivity"], digits = 2)`%). However, this is deceptive since the dataset is unbalanced. The model is performing poorly at detecting bad loans (measured by the specificity = $\frac{TN}{TN + FP}$ = `r round(100*tCM$byClass["Specificity"], digits = 2)`%) The dataset is unbalanced and measuring the model's performance with a confusion matrix is imprecise. A much better approach would be to train many models on balanced datasets (by sampling a reduced 'good loans' dataset) and study the distribution of that resulting models and their parameters.
 
@@ -401,10 +453,13 @@ ROCData %>%
   geom_point(alpha = 0.2, col = "blue")
 
 ```
+$$\text{ }$$
+
 
 
 ```{r 05-03-test-ROC2}
 stats::ks.test(x = ROCData$x, y = ROCData$y)
 ```
+$$\text{ }$$
 
 

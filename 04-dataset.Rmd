@@ -12,7 +12,7 @@ Note that the dataset was anonymised (all identifying ID numbers are deleted) an
 
 ## Preamble
 
-The LendingClub dataset, although rich, is difficult to interpret. The only explanation of what the variables mean comes from a spreadsheet attached to the dataset. The explanations are not precise and/or subject to conflicting interpretation. Despite serching the LendingClub website, no further original information was found. We collected a number of reasonable assumptions in Appendix (see @sec:list-assumptions in Appendix). 
+The LendingClub dataset, although rich, is difficult to interpret. The only explanation of what the variables mean comes from a spreadsheet attached to the dataset. The explanations are not precise and/or subject to conflicting interpretation. Despite serching the LendingClub website, no further original information was found. We collected a number of reasonable assumptions in Appendix (see subsection \ref@(sec:list-assumptions) in Appendix). 
 
 The dataset has been used a number of times in the past by various people. One paper [@kim2019ensemble] mentions they used a dataset that included 110 variables, which is less than ours with 145 variables. It is therefore clear that the dataset has changed over time in ways we do not know. For example, have loans been excluded because the full 145 veriables were not available?
 

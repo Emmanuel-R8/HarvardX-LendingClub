@@ -459,7 +459,6 @@ local({
 ```
 
 
-
 ## List of variables {#sec:list-model-variables}
 
 This table presents the list of variables provided in the original dataset. The descriptions come from a spreadsheet attached with the dataset and, unfortunately, are not extremely precise and subject to interpretation. We added comments and/or particular interpretations in _CAPITAL LETTERS_.
@@ -483,7 +482,7 @@ LC_variable %>%
   column_spec(1, width = "4cm") %>%
   column_spec(2, width = "3cm") %>%
   column_spec(3, width = "7cm")
-s
+
 ```
 
 

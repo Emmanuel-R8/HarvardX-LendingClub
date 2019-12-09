@@ -26,9 +26,15 @@ At the outset, the dataset presents a number of challenges:
 
 + The dataset has no context or reference point to interpret dollar amounts. Everybody intuitively understands that owing $10 or $1,000,000 are very different (amounts matter). Owing $1,000 when living in New York is different from owing $1,000 if living on $2 per day in a developing country (surrounding economic environment matter). That intuition is shared economic knowledge, but that intuition is nowhere represented in the dataset. As readers, we automatically attribute that implicit knowledge to the data we read in the dataset. However, any model based on that data will never reflect that implicit knowledge if we do not supplement with external data. As shown in the previous section, credit margins have changed over time. This is clearly related to the wider US economic environment. Financial hardship is a key driver for some of the loans. Availability of disposable income is important to assess the ability to repay. Therefore, the cost of living, which varies from state to state, seems relevant. As noted in the post-mortem section, such information will not be used.
 
+__ WARNING: IF YOU RUN THE MODELING SECTION, YOU WILL HAVE: MEMORY USAGE OF UP TO 32GB, ALL A LOT DISK SWAPPING WHEN DATASETS ARE JUGGLED IN AND OUT OF MEMORY TO DISK TO MINIMISE MEMORY USAGE, AND CALCULATION TIMES BY BATCHES OF UP TO 10 MINUTES (ON MY LAPTOP). THIS EXCLUDES TIME NECESSARY TO PREPARE THE DATASET AS EXPLAINED ON THE PREVIOUS SECTIONS (THAT IS HOURS).__
+
+```{r}
+"IF YOU RUN THE MODELING SECTION, YOU WILL NEED UP TO 32GB OF MEMORY, AND EXPECT A LOT OF DISK SWAPPING WHEN DATASETS ARE JUGGLED IN AND OUT OF MEMORY TO DISK TO MINIMISE MEMORY USAGE. CALCULATION TIMES ARE BY BATCHES UP TO 10 MINUTES (DEPENDING ON HARDWARE). THIS EXCLUDES TIME NECESSARY TO PREPARE THE DATASET AS EXPLAINED ON THE PREVIOUS SECTIONS (THAT IS HOURS)." %>% 
+  knitr::kable(col.names = "WARNING:")
+```
+
 
 ## Introduction
-
 
 We split the dataset randomly into training and validation sets (80/20 ratio).
 
@@ -78,17 +84,20 @@ Some variables (such as relating to financial outcomes) are used for visualisati
 #########################################################################################
 ```
 
-```{r}
+```{r eval=TRUE,echo=FALSE,message=FALSE}
 # Variables not used
 rm(lending_club, loans)
 ```
 
-\newline
 ```{r 05-01-vars-inout,echo=TRUE}
+# Quirk in bookdown?...
+library(tidyverse)
+
 #########################################################################################
 ##
 ## select the variables that might be used to create the training+test set
 ## 
+
 modelVarsIn <- c(LC_variable[LC_variable$inModel == TRUE, "variable_name"])$variable_name
 modelVarsIn <- c(modelVarsIn, 
                  "grade_num", "sub_grade_num", 
@@ -99,31 +108,31 @@ modelVarsOut <- c("grade_num", "sub_grade_num",
                   "principal_loss_pct", "creditMargin", "monthDefault", 
                   "zip_code")
 ```
-\newline
+$$\text{ }$$
 
 
 We prepare a dataset with ONLY the predictors NOT removing NA's.
 
 
-\newline
-```{r 05-01-loan-predictors,echo=TRUE}
+```{r 05-01-loan-predictors,echo=TRUE,cache=FALSE}
 ## ######################################################################################
 ##
 ## Prepare a dataset with ONLY the predictors NOT removing NA's
 ## 
+
 loansPredictors <-
-  loansWorkingSet %>%
+  loansWorkingSet %>% 
 
   # Keep the chosen predictors
   # Use tidyselect::one_of() to avoid errors if column does not exist
-  select(tidyselect::one_of(modelVarsIn)) %>%
+  select(one_of(modelVarsIn)) %>% 
 
   ##
   ## Dates to numeric, in 'decimal' years since 2000
   ##
   mutate_at(c("issue_d", "earliest_cr_line"), function(d) {
     return(year(d) - 2000 + (month(d) - 1) / 12)
-  }) %>%
+  }) %>% 
 
   ## Add polynomials of the dates to model the time-trend shape
   mutate(
@@ -131,18 +140,18 @@ loansPredictors <-
     issue_d3 = issue_d^3,
     earliest_cr_line2 = earliest_cr_line^2,
     earliest_cr_line3 = earliest_cr_line^3
-  ) %>%
+  ) %>% 
 
   ## Create a logical flag TRUE for non-defaulted (good) loans
-  mutate(isGoodLoan = (principal_loss_pct < 0.001)) %>%
+  mutate(isGoodLoan = (principal_loss_pct < 0.001)) %>% 
 
   select(-tidyselect::one_of(modelVarsOut))
 ```
-\newline
+$$\text{ }$$
+
 
 We split the dataset into a training (80%) and test set (20%). 
 
-\newline
 ```{r echo=TRUE}
 ## ######################################################################################
 ##
@@ -162,11 +171,11 @@ loansTest <- loansPredictors %>% slice(-sampleTraining)
 set.seed(42)
 nSamplesTraining <- nrow(loansTraining)
 ```
-\newline
+$$\text{ }$$
+
 
 We also create subsamples of the training set (1% and 20% thereof) for when quick calculation need making.
 
-\newline
 ```{r echo=TRUE}
 # 1%
 sample01 <- sample(1:nSamplesTraining, floor(nSamplesTraining * 0.01), 
@@ -178,13 +187,12 @@ sample20 <- sample(1:nSamplesTraining, floor(nSamplesTraining * 0.20),
                    replace = FALSE)
 loans20 <- loansTraining %>% slice(sample20)
 ```
-\newline
+$$\text{ }$$
 
 
 ```{r 05-01-cleanup,echo=FALSE,message=FALSE}
 # Not used later on
 rm(loansWorkingSet, loansPredictors, LoansNPV, LoansIRR, LoansMargin, RATES, RATES3Y, RATES5Y)
-gc(full = TRUE)
 ```
 
 
@@ -207,7 +215,7 @@ WOE and IV enable one to:
   
   + The IV is a variable-related measure which enables ranking variables between each other;
   
-  + The theoretical background to the measure lies in information theory. It cannot be over-emphasized that the measures __do not__ use the values of the factors: it is measure only calculated using the binary GOOD/BAD values (see definitions below);
+  + The theoretical background to the measure lies in information theory. It cannot be over-emphasized that the measures __do not__ use the values of the factors: it is measure only calculated using the number of GOOD/BAD outcomes (see definitions below);
 
   + Any NA values can be given their own factor: NAs are easily handle without filling values considerations. Given the previous point: the fact that NAs are present has no impact on the measures calculations! Sparse, incomplete or badly filled dataset are easily handled!
   
@@ -216,9 +224,14 @@ WOE and IV enable one to:
   + The interpretation and Visualisation of those measures is easy and intuitive;
 
 
+### Binning 
+
+The binning of a continuous variable is handled by the `partykit` package which produces _Conditional Inference Trees_. We will not describe the algorithm and the R package. See [@doi:10.1198/106186006X133933] for the theoretical background on Conditional Inference Trees, and [@JMLR:v16:hothorn15a] for a description of `partykit` implementation. 
+
+
 ### WOE and IV definitions
 
-(This subsections is essentially an extract for the Information R package vignette).
+(This subsections is a modified copy for the `Information` R package vignette).
 
 Let’s say that we have a binary dependent variable $Y$ and a set of predictive variable $X$ taking a discrete set of values $x_1$ to $x_p$ (the factors). $Y$ captures the loan defaults. Basically, the $X_i$ represent one-hot encoding of the variable $X$.
 
@@ -257,7 +270,7 @@ As mentioned above, this relationship _does not_ depend on the actual values of 
 
 We can leverage WoE to measure the predictive strength of $X$ – i.e., how well it helps us separate cases when $Y=1$ from cases when $Y=0$. This is done through the information value (IV) which is defined like this for continuous variables:
 
-$\text{IV}_j = \int \log \frac{f(X_j | Y=1)}{f(X_j | Y=0)} \, (f(X_j | Y=1) - f(X_j | Y=0)) \, dx$
+$$\text{IV}_j = \int \log \frac{f(X_j | Y=1)}{f(X_j | Y=0)} \, (f(X_j | Y=1) - f(X_j | Y=0)) \, dx$$
 
 Note that the IV is essentially a weighted “sum” of all the individual WoE values where the weights incorporate the absolute difference between the numerator and the denominator (WoE captures the relative difference). Generally, if $\text{IV} < 0.05$ the variable has very little predictive power and will not add any meaningful predictive power to your model.
 
@@ -269,7 +282,7 @@ $$\text{WoE}_{k,j} = \log \frac{GOOD_{k,j}}{BAD_{k,j}}$$
 
 and the IV for variable $X_k$ can be calculated as
 
-$$\text{IV}_k =  \sum_{j} (GOOD_{k,j} - BAD_{k,j}) \times \text{WOE}_{k,j}$$
+$$\text{IV}_k =  \sum_{j} (GOOD_{k,j} - BAD_{k,j}) \times \text{WoE}_{k,j}$$
 
 
 ### Modeling
@@ -280,8 +293,7 @@ We decided to implement a few functions that we will require (not the entire `sm
 
 Let's install that package:
 
-\newline
-```{r 05-01-reinstall-binner,echo=FALSE,message=FALSE}
+```{r 05-01-reinstall-binner,echo=TRUE,message=FALSE}
 # Ensure that `binner` is here and available
 if ("package:binner" %in% search()) { 
   detach("package:binner", unload = TRUE, force = TRUE) 
@@ -294,21 +306,21 @@ if (!("binner" %in% installed.packages()[,1])) {
   # devtools::install_github("Emmanuel-R8/SMBinning")
 }
 ```
-\newline
+$$\text{ }$$
+
 
 and attach it to the environment.
 
-\newline
 ```{r 05-01-load-binner,echo=TRUE}
 library(binner)
 ```
-\newline
+$$\text{ }$$
+
 
 ### Loop through all variables
 
 Before creating the bins, we create a new dataframe and transform some string values to factors.
 
-\newline
 ```{r echo=TRUE,message=FALSE}
 loansBinning <- loansTraining %>%
   mutate(
@@ -317,11 +329,10 @@ loansBinning <- loansTraining %>%
     grade = as_factor(grade)
   )
 ```
-\newline
+$$\text{ }$$
 
 For each variable we will create a new entry in a new tibble.
 
-\newline
 ```{r 05-01-create-list-bins,echo=TRUE,message=FALSE}
 #########################################################################################
 ##
@@ -329,17 +340,18 @@ For each variable we will create a new entry in a new tibble.
 ##
 listBins <-
   tibble(
-    variable = names(loansBinning),
+    variable = "",
     type = "",
     IV = 0.0,
-    WoE = list()
+    WoE = list(), 
+    .rows = 0
   )
 ```
-\newline
+$$\text{ }$$
+
 
 We then loop through each variable to create factors (for continuous variables) and calculate a table with the Weights of Evidence. We then calculate the Information Value.
 
-\newline
 ```{r 05-01-create-all-bins,message=FALSE,echo=TRUE}
 # About 500 sec wall-time
 startTime <- proc.time()
@@ -392,23 +404,20 @@ for (n in names(loansBinning)) {
 }
 proc.time() - startTime
 ```
-\newline
+$$\text{ }$$
 
 
 ```{r message=FALSE,echo=FALSE}
 # SAVE TO SPEED UP ITERATIVE EXPLORATION
-
-saveRDS(informationValues, "datasets/informationValues100.rds")
 saveRDS(listBins, "datasets/listBins100.rds")
 
 ```
 
 ### Select relevant variables
 
-Table \@ref(tab:05-1-information-value-table) guidelines are recommended to the relevance of variables given their Information Value [@bokhari2019credit].
+Table \@ref(tab:05-01-information-value-table) guidelines are recommended to the relevance of variables given their Information Value [@bokhari2019credit].
 
-\newline
-```{r 05-1-information-value-table}
+```{r 05-01-information-value-table,echo=FALSE}
 tibble(
   "Information Value Band" = c("IV < 2%",
                                "2% < IV < 10%",
@@ -423,42 +432,37 @@ tibble(
     "warning: something is probably wrong!"
   )
 ) %>%
-  kable(
-    "latex",
+  knitr::kable(
     caption = "Variable relevance by Information Value",
-    booktabs = T,
-    # longtable = T,
     col.names = c("Information Value", "Relevance")
-  ) %>%
-  kable_styling(latex_options = c("repeat_header")) %>%
-  column_spec(1, width = "6cm") %>%
-  column_spec(2, width = "6cm")
+  )
 
 ```
-\newline
+$$\text{ }$$
 
 
 
 
 The 15 best variables (in terms of Information Value in excess of 2%) are in Table \@ref(tab:05-01-create-bestbins-10best):
 
-
-```{r 05-01-create-bestbins-10best,echo=TRUE,fig.cap="15 top variables by IV"}
+```{r 05-01-create-bestbins-10best,echo=TRUE}
 bestBins <- listBins %>% filter(IV >= 0.02)
 
 bestBins %>% 
   select(variable, IV) %>% 
   mutate(IV = round(100 * IV, digits = 2)) %>% 
   arrange(desc(IV)) %>% 
-  slice(1:15)
+  slice(1:15) %>%
+  knitr::kable(caption = "15 top variables by IV")
 ```
+$$\text{ }$$
 
 
 However, we notice that this list includes variables that would not be available at the time the credit scoring is performed. 
 
-
 ```{r 05-01-create-bestbins,echo=TRUE}
-bestBins <- bestBins %>%
+bestBins <- 
+  bestBins %>%
   filter(!(variable %in% c(
     "loanID", "term", "int_rate", "creditMargin", "loan_status",
     "grade", "sub_grade", "grade_num", "sub_grade_num",
@@ -466,11 +470,11 @@ bestBins <- bestBins %>%
     "principal_loss_pct", "creditMargin", "monthDefault",
     "isGoodLoan")))
 ```
+$$\text{ }$$
 
 
 ```{r echo=FALSE}
 saveRDS(bestBins, "datasets/bestBins100.rds")
-
 ```
 
 
@@ -481,8 +485,11 @@ bestBins %>%
   select(variable, IV) %>% 
   mutate(IV = round(IV, digits = 5)) %>% 
   arrange(desc(IV)) %>% 
-  slice(1:15)
+  slice(1:15) %>%
+  knitr::kable(caption = "15 top relevant variables by IV")
 ```
+$$\text{ }$$
+
 
 And the 10 worst (but retained) variables are:
 
@@ -491,34 +498,37 @@ bestBins %>%
   select(variable, IV) %>% 
   mutate(IV = round(IV, digits = 5)) %>% 
   arrange(IV) %>% 
-  slice(1:15)
+  slice(1:15) %>%
+  knitr::kable(caption = "15 worst variables by IV")
 ```
-
-
+$$\text{ }$$
 
 
 
 ### Create data table with only binary variables (transform every bin to a 0/1 value)
 
-For each variable, create new variables for each bin in the WoE table of that variable. Strictly speaking, this is not necessary for the generalised model algorithms. They are able to model using categories containing the factors. However, as we will see, the model will generate a number of NAs for variable (factors) which are co-linear. (This is the case for any linear model.) This will require removing those individual factors, which we found easier to do when each factor is given an individual variable (column).
+
+Those variable will contain all the best characteristics. Every continuous variable is reformatted into factors reflecting the appropriate bins.
 
 ```{r 05-01-create-factored-datasets-loanID,echo=TRUE}
-# Variable will contain all the best characteristics. Every continuous variable is reformatted
-# into factors reflecting the appropriate bins
-
+# Those variable will contain all the best characteristics. Every continuous variable is
+# reformatted into factors reflecting the appropriate bins.
 allFactorsAsCharacteristics <- loansTraining[,"loanID"]
 allFactorsAsBins <- loansTraining[,"loanID"]
 ```
+$$\text{ }$$
 
+
+For each variable, create new variables for each bin in the WoE table of that variable. Strictly speaking, this is not necessary for the generalised model algorithms. They are able to model using categories containing the factors. However, as we will see, the model will generate a number of NAs for variable (factors) which are co-linear. (This is the case for any linear model.) This will require removing those individual factors, which we found easier to do when each factor is given an individual variable (column).
 
 ```{r 05-01-create-factored-datasets,message=FALSE,echo=TRUE}
 for (index in 1:nrow(bestBins)) {
 #for (index in 1:27) {
   name <- bestBins$variable[index][[1]]
   
-  cat("--------------------",
+  cat("--- Variable No. ",
       index,
-      "--",
+      "-- Name: ",
       name, "\n")
   
   ltIndex <- which(names(loansTraining) == name)
@@ -542,36 +552,24 @@ for (index in 1:nrow(bestBins)) {
   
 }
 ```
+$$\text{ }$$
 
 
-```{r 05-01-create-factored-datasets-save}
+```{r 05-01-create-factored-datasets-save,message=FALSE,echo=FALSE}
 saveRDS(allFactorsAsCharacteristics, "datasets/allCharacteristics100.rds")
 saveRDS(allFactorsAsBins, "datasets/allBins100.rds")
-
 ```
 
 
 
 ### Comparison of individual characteristics
 
->
-+ re-train secures the lowest Akaike criterion and will be chosen.
-
-+ On this test, the best variables are: SORT BY IV. Then WoE for the first few ones.
-
-
-
-```{r echo=TRUE}
-loansBinning <- loans20 %>%
-  mutate(
-    home_ownership = as_factor(home_ownership),
-    emp_length = as_factor(emp_length)
-  )
-
-```
 
 The following plots the 10 top variables weight of evidence plots. They show for those variables the weght of evidence of each individual factor. A positive WoE shows that the factor is positive to explain a positive outcome (that is that a loan is good).
 
+The description of each variable is in the Appendix.
+
+$$\text{ }$$
 ```{r echo=TRUE}
 
 best10 <- bestBins %>% arrange(desc(IV)) %>% slice(1:10)
@@ -598,11 +596,6 @@ plotBinWoE <- function(n = 1) {
   
 }
 
-```
-
-
-```{r}
-
 listPlots <- lapply(1:10, function(n) { plotBinWoE(n) })
 
 listPlots[[1]]
@@ -616,8 +609,8 @@ listPlots[[8]]
 listPlots[[9]]
 listPlots[[10]]
 
-
 ```
+$$\text{ }$$
 
 
 ```{r echo=FALSE,message=FALSE}

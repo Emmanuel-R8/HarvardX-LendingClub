@@ -1,12 +1,17 @@
 ## Logistic Regression
 
-### Logistic regression using the `SpeedGLM` package
+In this section, we fit a linear regression model using the fully binned dataset.
 
 
-> NOTE: `speedglm` has a `select()` function which would shadow `dplyr::select()`, so it is only used fully qualified to avoid any collision.
+We tested several R linear regression packages. `glm` crashed on even small extracts of the dataset. `glmnet` returns errors that were not understandable nor documented on the internet. We settled on the `speedglm` package which is designed to handled very large datatsets. Note that it includes has a `select()` function which would shadow or conflict with `dplyr::select()`, so it is only used fully qualified to avoid any collision.
 
 
-```{r 05-02-load-dataset,message=FALSE}
+
+
+<!------------------------------------------------------------------------------------>
+<!-- THIS IS A COPY OF PREVIOUS TO RELOAD DATASETS                                  -->
+
+```{r 05-02-load-dataset,message=FALSE,echo=FALSE}
 # Cleanup and reload
 
 # Training set to speed up analysis
@@ -20,7 +25,7 @@ if (!exists("loansTraining")) {
 ```
 
 
-```{r 05-02-cleanup-load-dataset,message=FALSE,echo=TRUE}
+```{r 05-02-cleanup-load-dataset,message=FALSE,echo=FALSE}
 if (!exists("allFactorsAsBins")) {
   allFactorsAsBins <- readRDS("datasets/allBins100.rds")
 }
@@ -34,8 +39,6 @@ loanSampleBins <-
   as.data.frame()
 
 rm(allFactorsAsBins)
-
-
 
 
 if (!exists("allFactorsAsCharacteristics")) {
@@ -57,8 +60,11 @@ rm(allFactorsAsCharacteristics)
 
 ```{r message=FALSE,echo=FALSE}
 rm(loansTraining)
-gc(full = TRUE)
+gc(full = TRUE, verbose = FALSE)
 ```
+
+<!-- END OF COPY                                                                     -->
+<!------------------------------------------------------------------------------------->
 
 
 ```{r message=FALSE,echo=FALSE}
@@ -69,78 +75,55 @@ ncol(loanSampleCharacteristics)
 
 ### Remove identical bins
 
-```{r 05-02-rm-useless-bins,message=FALSE,echo=TRUE}
+All linear regression algorithms require the variables to not have any linear relationship. Any colinearity prevents fitting a coefficient to such variables.
 
+Although the original dataset may not contain such variables, binning variables into discrete factors will create such situations. The original variables were not identical, but when split into categories, some bins can become identical. For example, if a loan application does not provide income information (`income=NA` is TRUE for that loan), no debt-to-income ratio can be calculated (`dti=NA` will also be true for that loan). The `income` and `dti` variables were not colinear, but some of their bins can be. 
+
+
+To identify such bins, we use a "trick" to speed up comparison: we run a hash digest on each column and spot identical hashes. 
+
+```{r 05-02-rm-useless-bins,message=FALSE,echo=TRUE}
 namesCharacteristics <- names(loanSampleCharacteristics)
 namesBins <- names(loanSampleBins)
 
+# Starting list of names, calculate a hash value for each column with that name and
+# identify duplicates.
+duplicateNames <- names(
+                    loanSampleBins[
+                      duplicated(
+                        lapply(loanSampleBins, digest::digest))])
+```
+$$\text{ }$$
 
-# Starting list of names
-# > The following two variables are only useful if all the bins have been given their own column (if a
-# > characteristic has 7 factors, that creates 7 bins and column).
+We also identify any empty bin (this has only been useful when working on extremely small extracts of the original dataset).
 
-
-# Running GLM would give a number of NAs if some columns are linearly dependant (in our case
-# actually equal). A "trick" to identify them is to run a hash digest on each column and spot
-# identical hashes The original variables were not identical, but when split into categories, they
-# can become identical. For example, if no income is provided (income=NA category), no
-# debt-to-income ratio can be calculated (dti=NA).
-duplicateNames <- loanSampleBins[duplicated(lapply(loanSampleBins, digest::digest))] %>% names()
-duplicateNames
-
+```{r message=FALSE,echo=TRUE}
 # Remove any categories uniformaly constant (only 0)
 #
-# This is important when working on a small extract of the dataset for variables that are seldom
-# used (e.g. customers from certain states).
+# This is important when working on a small extract of the dataset for variables that are
+# seldom used (e.g. customers from certain states).
 zeroColumnsNames <- loanSampleBins[, colSums(loanSampleBins) == 0] %>% names()
 
 ```
+$$\text{ }$$
 
 
-### First training on variables previously selected on their Information Value
 
+Fitting the model will be done in four consecutive steps. We start with the binned dataset, removing variables with IV under 2%. All variables are one-hot encoded. 
 
-We use `speedglm` being quick. Note that alternatives were also tried: `glm` crashed on even small extracts of the dataset. `glmnet` returns errors that were not understandable or documented on the internet. 
-
-#### GLM on characteristics
-
-```{r echo=FALSE,message=FALSE}
-gc(full = TRUE)
-```
-
-
-```{r 05-02-first-training-C,echo=TRUE,message=FALSE}
-# About 700 sec wall-time to complete training dataset
-# The dataset is the sample less duplicate, less zero-ed columns
-{
-  doMC::registerDoMC(cores = 1) # Too many processes push over 32GB
-  startTime <- proc.time()
+  1. We fit a model on the binned dataset.
   
-  loansData <- loanSampleCharacteristics %>%
-    select(-one_of( c(duplicateNames, 
-                      zeroColumnsNames)))
+  2. Next, we refit after removing any variable identified as colinear (i.e. NA coefficient).
   
-  SGLM_C_train <- speedglm::speedglm(isGoodLoan ~ .,
-                                  data = loansData,
-                                  family = binomial())
+  3. Next, we refit after removing any variable whose significance is not at least p-value > 95%.
   
-  doMC::registerDoMC(cores = NULL)
-  cat(proc.time() - startTime, "\n")
-}
-
-#summary(SGLM_C_train)
-
-# There are a number of NA estimates that need to be removed by removing indivual bins
-length( which(is.na(summary(SGLM_C_train)$coefficient$Estimate)) )
-
-saveRDS(SGLM_C_train, "datasets/SGLM_C_train.rds")
-```
+Finally, we will select a model.
 
 
-#### GLM on bins
+### First model - complete dataset
 
 ```{r message=FALSE,echo=FALSE}
-gc(full = TRUE)
+gc(full = TRUE, verbose = FALSE)
 ```
 
 
@@ -160,36 +143,51 @@ gc(full = TRUE)
   doMC::registerDoMC(cores = NULL)
   cat(proc.time() - startTime, "\n")
 }
+```
+$$\text{ }$$
 
+
+```{r echo=FALSE,message=FALSE}
 saveRDS(SGLM_B_train, "datasets/SGLM_B_train.rds")
-
-# There are a number of NA estimates that need to be removed by removing indivual bins
 ```
 
+
+There are a number of NA coefficients. The first 10 are:
 
 ```{r 05-02-first-training-B-NA,echo=TRUE,message=FALSE}
 speedglm:::summary.speedglm(SGLM_B_train)$coefficients %>% 
   as.data.frame() %>% 
-  rownames_to_column(var = "binName") %>% 
+  rownames_to_column(var = "Bin name") %>% 
   filter(is.na(Estimate)) %>% 
-  slice(1:10)
+  slice(1:10) %>% 
+  select("Bin name") %>% 
+  knitr::kable(caption = "First model. Example of NA coefficients.") %>% 
+  kableExtra::kable_styling(latex_options = "HOLD_position")
+
 ```
+$$\text{ }$$
+
+
+The most significant bins are:
 
 ```{r 05-02-first-training-B-best10,echo=TRUE,message=FALSE}
 speedglm:::summary.speedglm(SGLM_B_train)$coefficients %>% 
   as.data.frame() %>% 
-  rownames_to_column(var = "binName") %>% 
-  rename(p = "Pr(>|z|)", 
-         z = "z value") %>% 
-  arrange(desc(z)) %>% 
-  slice(1:10)
-```
+  rownames_to_column(var = "Bin_name") %>% 
+  rename(z_value = "z value") %>% 
+  arrange(desc(z_value)) %>% 
+  select(Bin_name, Estimate, z_value) %>% 
+  slice(1:15) %>%
+  knitr::kable(caption = "First training. 15 best bins") %>% 
+  kableExtra::kable_styling(latex_options = "HOLD_position")
 
+```
+$$\text{ }$$
+
+
+We store the list of bins identified as colinear for later use. 
 
 ```{r  05-02-first-training-B-vars,echo=TRUE,message=FALSE}
-# Does the model throw NAs? They are produced not only for identical variables, but also co-linear
-# combinations. Let us select those variables:
-
 NAsFirstTraining <-
   
   # Take the results (just the estimated coefficients) from the model
@@ -207,13 +205,16 @@ NAsFirstTraining <-
 NAsFirstTraining <- NAsFirstTraining$name
 
 ```
+$$\text{ }$$
 
-### Second training
+### Second training - fitted model less colinear bins
 
 ```{r message=FALSE,echo=FALSE}
-gc(full = TRUE)
+gc(full = TRUE, verbose = FALSE)
 ```
 
+
+For the second training, we use the complete dataset with duplicate and colinear bins removed. 
 
 ```{r 05-02-second-training-B,echo=TRUE,message=FALSE}
 # Start the model training again
@@ -233,27 +234,36 @@ gc(full = TRUE)
   doMC::registerDoMC(cores = NULL)
   cat(proc.time() - startTime)
 }
+```
+$$\text{ }$$
 
+```{r echo=FALSE,message=FALSE}
 saveRDS(SGLM_B_retrain, "datasets/SGLM_B_retrain.rds")
 ```
 
+
+
+The most significant bins are:
 
 ```{r 05-02-second-training-B-best10,echo=TRUE,message=FALSE}
 
 speedglm:::summary.speedglm(SGLM_B_retrain)$coefficients %>% 
   as.data.frame() %>% 
-  rownames_to_column(var = "binName") %>% 
-  rename(p = "Pr(>|z|)", 
-         z = "z value") %>% 
-  arrange(desc(z)) %>% 
-  slice(1:10)
+  rownames_to_column(var = "Bin_name") %>% 
+  rename(z_value = "z value") %>% 
+  arrange(desc(z_value)) %>% 
+  select(Bin_name, Estimate, z_value) %>% 
+  slice(1:15) %>%
+  knitr::kable(caption = "Second training. 15 best bins") %>% 
+  kableExtra::kable_styling(latex_options = "HOLD_position")
 
 ```
+$$\text{ }$$
 
+
+We can now select any bins whose significance value is under 2 $\sigma$. 
 
 ```{r 05-02-second-training-B-vars,echo=TRUE,message=FALSE}
-# Just in case, new NAs popped up. Then select variables whose significance value is under 2 sigmas.
-
 NAsSecondTraining <-
   tibble(
     name = rownames(summary(SGLM_B_retrain)$coefficient),
@@ -269,16 +279,19 @@ NAsSecondTraining <-
 
 NAsSecondTraining <- NAsSecondTraining$name
 
-
 ```
+$$\text{ }$$
 
-### Third training
+
+### Third training - second fitted model less non-significant bins
 
 
 ```{r message=FALSE,echo=FALSE}
-gc(full = TRUE)
+gc(full = TRUE, verbose = FALSE)
 ```
 
+
+For the third training, we use the complete dataset with duplicate, colinear and non-significant bins removed. 
 
 ```{r 05-02-third-training-B,echo=TRUE,message=FALSE}
 # Start the model training again. About 350 sec.
@@ -302,25 +315,35 @@ gc(full = TRUE)
   doMC::registerDoMC(cores = NULL)
   cat(proc.time() - startTime)
 }
+```
+$$\text{ }$$
 
+```{r echo=FALSE,message=FALSE}
 saveRDS(SGLM_B_reretrain, "datasets/SGLM_B_reretrain.rds")
 ```
 
+
+
+The most significant bins are:
 
 ```{r 05-02-third-training-B-best10,echo=TRUE,message=FALSE}
 
 speedglm:::summary.speedglm(SGLM_B_reretrain)$coefficients %>% 
   as.data.frame() %>% 
-  rownames_to_column(var = "binName") %>% 
-  rename(p = "Pr(>|z|)", 
-         z = "z value") %>% 
-  arrange(desc(z)) %>% 
-  slice(1:10)
+  rownames_to_column(var = "Bin_name") %>% 
+  rename(z_value = "z value") %>% 
+  arrange(desc(z_value)) %>% 
+  select(Bin_name, Estimate, z_value) %>% 
+  slice(1:15) %>%
+  knitr::kable(caption = "Third training: 15 best bins") %>% 
+  kableExtra::kable_styling(latex_options = "HOLD_position")
 
 ```
+$$\text{ }$$
 
 
-```{r 05-02-third-training-B-vars,echo=TRUE,message=FALSE}
+
+```{r 05-02-third-training-B-vars,echo=FALSE,message=FALSE}
 NAsThirdTraining <-
   tibble(
     name     = rownames(summary(SGLM_B_reretrain)$coefficient),
@@ -336,20 +359,44 @@ NAsThirdTraining <-
 NAsThirdTraining <- NAsThirdTraining$name
 
 ```
+$$\text{ }$$
 
 
-  speedglm:::summary.speedglm(SGLM_B_train)
-  # AIC = 977037.2
-  # Log likelihood = -488350.6
+Table \@ref(tab:0502-training-criteria) shows the Akaike Information Criterion and Log-likelihood for each of the 3 training results. Two points to note:
 
-  speedglm:::summary.speedglm(SGLM_B_reretrain)
-  # AIC = 982957
-  # Log likelihood = -491370.5
- 
-  speedglm:::summary.speedglm(SGLM_B_reretrain)
-  # AIC = 982957
-  # log Likelihood = -491370.5
+  + The results did not change from first to second training. This is normal since we only removed non-informative categorical bins for which the regression could not determine a coefficient (i.e. colinearity with other variables);
 
+  + Removing seemingly non-significant bins makes the model worse (at least by those measures). This would suggest that individual bins should not be considered but only the entire variable to which they belong.
+
+
+
+```{r 05-02-training-criteria,echo=FALSE}
+tibble(
+  "Criteria" = c("AIC", "Log likelihood"),
+  "First #1" = c(
+    speedglm:::summary.speedglm(SGLM_B_train)$aic,
+    speedglm:::summary.speedglm(SGLM_B_train)$logLik
+  ),
+  
+  "Second #2" = c(
+    speedglm:::summary.speedglm(SGLM_B_retrain)$aic,
+    speedglm:::summary.speedglm(SGLM_B_retrain)$logLik
+  ),
+  
+  "Third #3" = c(
+    speedglm:::summary.speedglm(SGLM_B_reretrain)$aic,
+    speedglm:::summary.speedglm(SGLM_B_reretrain)$logLik
+  )
+) %>%
+  
+  knitr::kable(caption = "Training AIC and Log-likelihood") %>% 
+  kableExtra::kable_styling(latex_options = "HOLD_position")
+
+```
+$$\text{ }$$
+
+
+In the next section we will only work with the second model since it appears to be the best.
 
 
 ```{r echo=FALSE,message=FALSE}

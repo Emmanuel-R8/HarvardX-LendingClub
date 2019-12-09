@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 2 Dataset | LendingClub Loans Pricing</title>
+  <meta name="description" content="HarvardX - PH125.9x Data Science Capstone" />
+  <meta name="generator" content="bookdown 0.16 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 2 Dataset | LendingClub Loans Pricing" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="HarvardX - PH125.9x Data Science Capstone" />
+  <meta name="github-repo" content="Emmanuel_R8/HarvardX-LendingClub" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 2 Dataset | LendingClub Loans Pricing" />
+  
+  <meta name="twitter:description" content="HarvardX - PH125.9x Data Science Capstone" />
+  
+
+<meta name="author" content="Emmanuel Rialland - https://github.com/Emmanuel_R8" />
+
+
+<meta name="date" content="2019-12-09" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="internal-rate-of-return-credit-margins-and-net-present-values.html"/>
+<link rel="next" href="logistic-regression-model-and-credit-scorecard.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<script src="libs/kePrint-0.0.1/kePrint.js"></script>
+
+
+<style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  { background-color: #f8f8f8; }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ef2929; } /* Alert */
+code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #c4a000; } /* Attribute */
+code span.bn { color: #0000cf; } /* BaseN */
+code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4e9a06; } /* Char */
+code span.cn { color: #000000; } /* Constant */
+code span.co { color: #8f5902; font-style: italic; } /* Comment */
+code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+code span.dt { color: #204a87; } /* DataType */
+code span.dv { color: #0000cf; } /* DecVal */
+code span.er { color: #a40000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #0000cf; } /* Float */
+code span.fu { color: #000000; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+code span.ot { color: #8f5902; } /* Other */
+code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+code span.sc { color: #000000; } /* SpecialChar */
+code span.ss { color: #4e9a06; } /* SpecialString */
+code span.st { color: #4e9a06; } /* String */
+code span.va { color: #000000; } /* Variable */
+code span.vs { color: #4e9a06; } /* VerbatimString */
+code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./introduction.html" target="blank>LendingClub Loans Pricing</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="todo.html"><a href="todo.html"><i class="fa fa-check"></i>TODO</a><ul>
+<li class="chapter" data-level="0.1" data-path="todo.html"><a href="todo.html#dataset"><i class="fa fa-check"></i><b>0.1</b> Dataset</a></li>
+<li class="chapter" data-level="0.2" data-path="todo.html"><a href="todo.html#model-preparation"><i class="fa fa-check"></i><b>0.2</b> Model preparation</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="introduction.html"><a href="introduction.html"><i class="fa fa-check"></i>Introduction</a></li>
+<li class="chapter" data-level="1" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html"><i class="fa fa-check"></i><b>1</b> Internal Rate of Return, Credit Margins and Net Present Values</a><ul>
+<li class="chapter" data-level="1.1" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#important-warning"><i class="fa fa-check"></i><b>1.1</b> Important warning</a></li>
+<li class="chapter" data-level="1.2" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#background"><i class="fa fa-check"></i><b>1.2</b> Background</a></li>
+<li class="chapter" data-level="1.3" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#internal-rate-of-return"><i class="fa fa-check"></i><b>1.3</b> Internal Rate of Return</a></li>
+<li class="chapter" data-level="1.4" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#dataset-calculation"><i class="fa fa-check"></i><b>1.4</b> Dataset calculation</a><ul>
+<li class="chapter" data-level="1.4.1" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#irr"><i class="fa fa-check"></i><b>1.4.1</b> IRR</a></li>
+<li class="chapter" data-level="1.4.2" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#credit-margins"><i class="fa fa-check"></i><b>1.4.2</b> Credit Margins</a></li>
+<li class="chapter" data-level="1.4.3" data-path="internal-rate-of-return-credit-margins-and-net-present-values.html"><a href="internal-rate-of-return-credit-margins-and-net-present-values.html#npv"><i class="fa fa-check"></i><b>1.4.3</b> NPV</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="dataset-1.html"><a href="dataset-1.html"><i class="fa fa-check"></i><b>2</b> Dataset</a><ul>
+<li class="chapter" data-level="2.1" data-path="dataset-1.html"><a href="dataset-1.html#preamble"><i class="fa fa-check"></i><b>2.1</b> Preamble</a></li>
+<li class="chapter" data-level="2.2" data-path="dataset-1.html"><a href="dataset-1.html#general-presentation"><i class="fa fa-check"></i><b>2.2</b> General presentation</a><ul>
+<li class="chapter" data-level="2.2.1" data-path="dataset-1.html"><a href="dataset-1.html#business-volume"><i class="fa fa-check"></i><b>2.2.1</b> Business volume</a></li>
+<li class="chapter" data-level="2.2.2" data-path="dataset-1.html"><a href="dataset-1.html#loan-lifecyle-and-status"><i class="fa fa-check"></i><b>2.2.2</b> Loan lifecyle and status</a></li>
+<li class="chapter" data-level="2.2.3" data-path="dataset-1.html"><a href="dataset-1.html#loan-application"><i class="fa fa-check"></i><b>2.2.3</b> Loan application</a></li>
+</ul></li>
+<li class="chapter" data-level="2.3" data-path="dataset-1.html"><a href="dataset-1.html#rates"><i class="fa fa-check"></i><b>2.3</b> Rates</a><ul>
+<li class="chapter" data-level="2.3.1" data-path="dataset-1.html"><a href="dataset-1.html#irr-and-required-credit-margins"><i class="fa fa-check"></i><b>2.3.1</b> IRR and required credit margins</a></li>
+<li class="chapter" data-level="2.3.2" data-path="dataset-1.html"><a href="dataset-1.html#dataset-2"><i class="fa fa-check"></i><b>2.3.2</b> Dataset</a></li>
+<li class="chapter" data-level="2.3.3" data-path="dataset-1.html"><a href="dataset-1.html#interest-rates"><i class="fa fa-check"></i><b>2.3.3</b> Interest rates</a></li>
+<li class="chapter" data-level="2.3.4" data-path="dataset-1.html"><a href="dataset-1.html#purpose"><i class="fa fa-check"></i><b>2.3.4</b> Purpose</a></li>
+<li class="chapter" data-level="2.3.5" data-path="dataset-1.html"><a href="dataset-1.html#payments"><i class="fa fa-check"></i><b>2.3.5</b> Payments</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="dataset-1.html"><a href="dataset-1.html#net-present-value"><i class="fa fa-check"></i><b>2.4</b> Net present value</a><ul>
+<li class="chapter" data-level="2.4.1" data-path="dataset-1.html"><a href="dataset-1.html#average-npv-and-credit-margin-by-subgrade"><i class="fa fa-check"></i><b>2.4.1</b> Average NPV and credit margin by subgrade</a></li>
+<li class="chapter" data-level="2.4.2" data-path="dataset-1.html"><a href="dataset-1.html#principal-losses"><i class="fa fa-check"></i><b>2.4.2</b> Principal losses</a></li>
+<li class="chapter" data-level="2.4.3" data-path="dataset-1.html"><a href="dataset-1.html#distribution-of-principal-losses-by-rating"><i class="fa fa-check"></i><b>2.4.3</b> Distribution of principal losses by rating</a></li>
+<li class="chapter" data-level="2.4.4" data-path="dataset-1.html"><a href="dataset-1.html#npv-distribution-by-rating"><i class="fa fa-check"></i><b>2.4.4</b> NPV distribution by rating</a></li>
+</ul></li>
+<li class="chapter" data-level="2.5" data-path="dataset-1.html"><a href="dataset-1.html#loan-decision"><i class="fa fa-check"></i><b>2.5</b> Loan decision</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html"><i class="fa fa-check"></i><b>3</b> Logistic Regression Model and Credit Scorecard</a><ul>
+<li class="chapter" data-level="3.1" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#introduction-1"><i class="fa fa-check"></i><b>3.1</b> Introduction</a></li>
+<li class="chapter" data-level="3.2" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#logistic-regression"><i class="fa fa-check"></i><b>3.2</b> Logistic Regression</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#data-preparation"><i class="fa fa-check"></i><b>3.2.1</b> Data preparation</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#binning-and-weight-of-evidence"><i class="fa fa-check"></i><b>3.3</b> Binning and Weight of Evidence</a><ul>
+<li class="chapter" data-level="3.3.1" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#background-1"><i class="fa fa-check"></i><b>3.3.1</b> Background</a></li>
+<li class="chapter" data-level="3.3.2" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#binning"><i class="fa fa-check"></i><b>3.3.2</b> Binning</a></li>
+<li class="chapter" data-level="3.3.3" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#woe-and-iv-definitions"><i class="fa fa-check"></i><b>3.3.3</b> WOE and IV definitions</a></li>
+<li class="chapter" data-level="3.3.4" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#modeling"><i class="fa fa-check"></i><b>3.3.4</b> Modeling</a></li>
+<li class="chapter" data-level="3.3.5" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#loop-through-all-variables"><i class="fa fa-check"></i><b>3.3.5</b> Loop through all variables</a></li>
+<li class="chapter" data-level="3.3.6" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#select-relevant-variables"><i class="fa fa-check"></i><b>3.3.6</b> Select relevant variables</a></li>
+<li class="chapter" data-level="3.3.7" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#create-data-table-with-only-binary-variables-transform-every-bin-to-a-01-value"><i class="fa fa-check"></i><b>3.3.7</b> Create data table with only binary variables (transform every bin to a 0/1 value)</a></li>
+<li class="chapter" data-level="3.3.8" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#comparison-of-individual-characteristics"><i class="fa fa-check"></i><b>3.3.8</b> Comparison of individual characteristics</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#logistic-regression-1"><i class="fa fa-check"></i><b>3.4</b> Logistic Regression</a><ul>
+<li class="chapter" data-level="3.4.1" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#remove-identical-bins"><i class="fa fa-check"></i><b>3.4.1</b> Remove identical bins</a></li>
+<li class="chapter" data-level="3.4.2" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#first-model---complete-dataset"><i class="fa fa-check"></i><b>3.4.2</b> First model - complete dataset</a></li>
+<li class="chapter" data-level="3.4.3" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#second-training---fitted-model-less-colinear-bins"><i class="fa fa-check"></i><b>3.4.3</b> Second training - fitted model less colinear bins</a></li>
+<li class="chapter" data-level="3.4.4" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#third-training---second-fitted-model-less-non-significant-bins"><i class="fa fa-check"></i><b>3.4.4</b> Third training - second fitted model less non-significant bins</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#model-result"><i class="fa fa-check"></i><b>3.5</b> Model result</a><ul>
+<li class="chapter" data-level="3.5.1" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#final-list-of-variables"><i class="fa fa-check"></i><b>3.5.1</b> Final list of variables</a></li>
+<li class="chapter" data-level="3.5.2" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#scoring"><i class="fa fa-check"></i><b>3.5.2</b> Scoring</a></li>
+</ul></li>
+<li class="chapter" data-level="3.6" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#training-set"><i class="fa fa-check"></i><b>3.6</b> Training set</a><ul>
+<li class="chapter" data-level="3.6.1" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#densities-of-the-training-results"><i class="fa fa-check"></i><b>3.6.1</b> Densities of the training results</a></li>
+</ul></li>
+<li class="chapter" data-level="3.7" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#test-set"><i class="fa fa-check"></i><b>3.7</b> Test set</a></li>
+<li class="chapter" data-level="3.8" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#confusion-matrix"><i class="fa fa-check"></i><b>3.8</b> Confusion matrix</a></li>
+<li class="chapter" data-level="3.9" data-path="logistic-regression-model-and-credit-scorecard.html"><a href="logistic-regression-model-and-credit-scorecard.html#roc-curve"><i class="fa fa-check"></i><b>3.9</b> ROC Curve</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="conclusion.html"><a href="conclusion.html"><i class="fa fa-check"></i><b>4</b> Conclusion</a></li>
+<li class="chapter" data-level="5" data-path="errands-and-post-mortem.html"><a href="errands-and-post-mortem.html"><i class="fa fa-check"></i><b>5</b> Errands and post-mortem</a><ul>
+<li class="chapter" data-level="5.1" data-path="errands-and-post-mortem.html"><a href="errands-and-post-mortem.html#geographical-data"><i class="fa fa-check"></i><b>5.1</b> Geographical data</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html"><i class="fa fa-check"></i><b>6</b> Stochastic Gradient Descent</a><ul>
+<li class="chapter" data-level="6.1" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#description-of-the-model"><i class="fa fa-check"></i><b>6.1</b> Description of the model</a></li>
+<li class="chapter" data-level="6.2" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#gradient-descent"><i class="fa fa-check"></i><b>6.2</b> Gradient descent</a><ul>
+<li class="chapter" data-level="6.2.1" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#generalities"><i class="fa fa-check"></i><b>6.2.1</b> Generalities</a></li>
+</ul></li>
+<li class="chapter" data-level="6.3" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#stochastic-gradient-descent-1"><i class="fa fa-check"></i><b>6.3</b> Stochastic Gradient Descent</a><ul>
+<li class="chapter" data-level="6.3.1" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#stochastic-gradient-descent-sgd"><i class="fa fa-check"></i><b>6.3.1</b> Stochastic Gradient Descent (SGD)</a></li>
+</ul></li>
+<li class="chapter" data-level="6.4" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#various-errands"><i class="fa fa-check"></i><b>6.4</b> Various errands</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="stochastic-gradient-descent.html"><a href="stochastic-gradient-descent.html#optimising-the-scorecard-or-rating-depending-on-the-npv-curve."><i class="fa fa-check"></i><b>6.4.1</b> Optimising the scorecard (or rating) depending on the NPV curve.</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="appendix.html"><a href="appendix.html"><i class="fa fa-check"></i>Appendix</a><ul>
+<li class="chapter" data-level="6.5" data-path="appendix.html"><a href="appendix.html#sec:list-assumptions"><i class="fa fa-check"></i><b>6.5</b> List of assumptions / limitations regarding the dataset</a></li>
+<li class="chapter" data-level="6.6" data-path="appendix.html"><a href="appendix.html#data-preparation-and-formatting"><i class="fa fa-check"></i><b>6.6</b> Data preparation and formatting</a><ul>
+<li class="chapter" data-level="6.6.1" data-path="appendix.html"><a href="appendix.html#sec:lendingclub-dataset"><i class="fa fa-check"></i><b>6.6.1</b> LendinClub dataset</a></li>
+<li class="chapter" data-level="6.6.2" data-path="appendix.html"><a href="appendix.html#zip-codes-and-fips-codes"><i class="fa fa-check"></i><b>6.6.2</b> Zip codes and FIPS codes</a></li>
+<li class="chapter" data-level="6.6.3" data-path="appendix.html"><a href="appendix.html#market-interest-rates"><i class="fa fa-check"></i><b>6.6.3</b> Market interest rates</a></li>
+</ul></li>
+<li class="chapter" data-level="6.7" data-path="appendix.html"><a href="appendix.html#sec:list-model-variables"><i class="fa fa-check"></i><b>6.7</b> List of variables</a></li>
+<li class="chapter" data-level="6.8" data-path="appendix.html"><a href="appendix.html#calculations-of-the-internal-rate-of-returns-and-month-to-default"><i class="fa fa-check"></i><b>6.8</b> Calculations of the internal rate of returns and month-to-default</a><ul>
+<li class="chapter" data-level="6.8.1" data-path="appendix.html"><a href="appendix.html#r-code"><i class="fa fa-check"></i><b>6.8.1</b> R code</a></li>
+<li class="chapter" data-level="6.8.2" data-path="appendix.html"><a href="appendix.html#julia-code"><i class="fa fa-check"></i><b>6.8.2</b> Julia code</a></li>
+<li class="chapter" data-level="6.8.3" data-path="appendix.html"><a href="appendix.html#maxima-derivation-of-the-cost-function"><i class="fa fa-check"></i><b>6.8.3</b> Maxima derivation of the cost function</a></li>
+</ul></li>
+<li class="chapter" data-level="6.9" data-path="appendix.html"><a href="appendix.html#system-version"><i class="fa fa-check"></i><b>6.9</b> System version</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://bookdown.org/" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">LendingClub Loans Pricing</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="dataset-1" class="section level1">
+<h1><span class="header-section-number">Chapter 2</span> Dataset</h1>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p>The data is sourced as a <em>SQLite</em> database that downloaded from <span class="citation">(Preparation: Wendy Kan <a href="#ref-KaggleLC">2019</a>)</span> and imported as a <code>tibble dataframe</code> with the <code>RSQLite</code> package. The variables were reformatted according to their respective types.The full list of variable is given in appendix (see Table <a href="#tab:08-variable-description"><strong>??</strong></a>). This dataset will be reduced as we focused on the core intent of modeling the probability of default.</p>
+<p>Note that the dataset was anonymised (all identifying ID numbers are deleted) and we therefore removed the corresponding empty columns from the dataset. Since the identification <code>ID</code>s have been removed to anonymise the dataset, we cannot see if a borrower borrowed several times.</p>
+<div id="preamble" class="section level2">
+<h2><span class="header-section-number">2.1</span> Preamble</h2>
+<p>The LendingClub dataset, although rich, is difficult to interpret. The only explanation of what the variables mean comes from a spreadsheet attached to the dataset. The explanations are not precise and/or subject to conflicting interpretation. Despite serching the LendingClub website, no further original information was found. We collected a number of reasonable assumptions in Appendix (see subsection (sec:list-assumptions) in Appendix).</p>
+<p>The dataset has been used a number of times in the past by various people. One paper <span class="citation">(Kim and Cho <a href="#ref-kim2019ensemble">2019</a>)</span> mentions they used a dataset that included 110 variables, which is less than ours with 145 variables. It is therefore clear that the dataset has changed over time in ways we do not know. For example, have loans been excluded because the full 145 veriables were not available?</p>
+</div>
+<div id="general-presentation" class="section level2">
+<h2><span class="header-section-number">2.2</span> General presentation</h2>
+<p>The original dataset is large: it includes 2260668 loan samples, each containing 145 variables (after the identification variables filled with null values). The loans were issued from 2007-06-01 to 2018-12-01.</p>
+<div id="business-volume" class="section level3">
+<h3><span class="header-section-number">2.2.1</span> Business volume</h3>
+<p>The dataset represents a total of ca.$34bln in loan principals, which is a substantial share of the total amount stated to have been intermediated to date by LC (publicly reported to be $50bln+). About 55%/60% of the portfolio is fully repaid. See Table <a href="#tab:04-loan-per-status"><strong>??</strong></a>.</p>
+<p></p>
+
+<p></p>
+<p>Figure <a href="dataset-1.html#fig:04-business-volume-per-month">2.1</a> plots the number, volume (cumulative principal amount) and average principal per loan. It shows that the business grew exponentially (in the common sense of the word) from inception until 2016. At this point, according to Wikipedia:<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-business-volume-per-month"></span>
+<img src="build/figure/graphics-04-business-volume-per-month-1.png" alt="Business volume written per month" width="70%" />
+<p class="caption">
+Figure 2.1: Business volume written per month
+</p>
+</div>
+<p></p>
+<p>&quot; <em>Like other peer-to-peer lenders including Prosper, Sofi and Khutzpa.com, LendingClub experienced increasing difficulty attracting investors during early 2016. This led the firm to increase the interest rate it charges borrowers on three occasions during the first months of the year. The increase in interest rates and concerns over the impact of the slowing United States economy caused a large drop in LendingClub’s share price.</em>&quot;</p>
+<p>The number and volume of loans plotted have been aggregated by month. The growth is very smooth in the early years, and suddenly very volatile. As far as the first part of the dataset is concerned, a starting business could expect to be volatile and could witness a yearly cycle (expected from economic consumption figures) superimposed on the growth trend. This is not the case.</p>
+<p>An interesting metric is that the average principal of loans has increased (see RHS Figure <a href="dataset-1.html#fig:04-business-volume-per-month">2.1</a>, on a sample of 100,000 loans). Partly, the increase in the early years could be interpreted success in improving marketing, distribution capabilities and confidence building. This metric plateau-ed in 2016 and decreased afterwards, but to a much lesser extent than the gross volume metrics. However, it is more volatile than the two previous metrics in the early years.</p>
+<p>By the end of the dataset, those metrics have essentially recovered to their 2016 level.</p>
+</div>
+<div id="loan-lifecyle-and-status" class="section level3">
+<h3><span class="header-section-number">2.2.2</span> Loan lifecyle and status</h3>
+<p>In the dataset, less loans are still outstanding than matured or “<em>charged off</em>” (term that LC use to mean partially or fully written off, i.e. there are no possibilty for LC and/or the investors to receive further payments). The share of outstanding loans is:</p>
+<p></p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode numberSource numberLines lineAnchors chunkout"><code class="sourceCode"><a class="sourceLine" id="cb1-1" href="#cb1-1" data-line-number="1">## Share of current loans =  42.214 %</a></code></pre></div>
+<p></p>
+<p>The dataset describes the life cycle of a loan. In the typical (ideal) case, we understand it to be:</p>
+<p><span class="math display">\[ 
+\text{Loan is approved}  \rightarrow  \text{Full amount funded by investors} \rightarrow \text{Loan marked as Current} \rightarrow \text{Fully Paid}
+\]</span></p>
+<p>In the worst case, it is:</p>
+<p><span class="math display">\[ 
+\text{Loan is approved}  \rightarrow  \text{Full amount funded by investors} \rightarrow \text{Loan marked as Current} \rightarrow 
+\]</span></p>
+<p><span class="math display">\[
+\rightarrow \text{Grace period (missed payments under 2 weeks)} \rightarrow \text{Late 15 to 31 days} \rightarrow
+\]</span></p>
+<p><span class="math display">\[
+\rightarrow  \text{Late 31 to 120 days} \rightarrow  \text{Default} \rightarrow  \text{Charged Off}
+\]</span></p>
+<p>Note that <em>Default</em> precedes and is distinct from <em>Charged Off</em>.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> A couple of things could happen to a loan in default:</p>
+<ul>
+<li><p>LC and the borrower restructure the loan with a new repayment schedule, where the borrower may repay a lesser amount over a longer period; or,</p></li>
+<li><p>the claim could be sold to a debt recovery company that would buy the claim from LC/investors. This would be the final payment (if any) received by LC and the investors.</p></li>
+</ul>
+<p>The dataset also describes situations where a borrower negotiated a restructuring of the repayment schedule in case of unexpected hardship (e.g. disaster, sudden unemployment).</p>
+<p>Note that this progression of distinguishing default (event in time) from actual financial loss mirrors what banks and rating agencies do. The former is called the <em>Probability of Default</em> (PD), the latter <em>Loss Given Default</em> (LGD). Ratings change over time (in a process resembling Markov Chains transitions). LGD show some correlations with ratings. The dataset, although detailed, does not include the full life of each loan to conduct this sort of analysis (change of loan quality over time). This is an important reason why we decided to focus on the loan approval and expected return.</p>
+</div>
+<div id="loan-application" class="section level3">
+<h3><span class="header-section-number">2.2.3</span> Loan application</h3>
+<p>Before a loan is approved, the borrower undergoes a review process that assess his/her capacity to repay. This includes:</p>
+<ul>
+<li><p>employment situation and income, as well whether this income and possibly its source has been independently verified;</p></li>
+<li><p>whether the application is made jointly (likely with a partner or a spouse, but there are no details);</p></li>
+<li><p>housing situation (owner, owner with current mortgage, rental) and in which county he/she lives (that piece of information is partially anonymised by removing the last 2 digits of the borrower’s zipcode);</p></li>
+<li><p>the amount sought, its tenor and the purpose of the loan; and,</p></li>
+<li><p>what seems to be previous credit history (number of previous deliquencies). The dataset is very confusing in that regard: in the case of the <strong>joint</strong> applicant, it is clear that such information relates to before the loan is approved . In the case of the <strong>principal borrower</strong> however, the variable descriptions could be read as being pre-approval information, or post-approval gathered during the life of the loan. We have assumed that the information related to the principal borrower is also pre-approval. We also used <em>Sales Supplements</em> from the LC website<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a> that describe some of the information provided to investors. LendingClub also provides a summary description of its approval process in its regulatory filings with the Securities Exchange Commission <span class="citation">(San Francisco - California <a href="#ref-LC201908S3">2019</a>)</span>.</p></li>
+</ul>
+</div>
+</div>
+<div id="rates" class="section level2">
+<h2><span class="header-section-number">2.3</span> Rates</h2>
+<div id="irr-and-required-credit-margins" class="section level3">
+<h3><span class="header-section-number">2.3.1</span> IRR and required credit margins</h3>
+<p>Figure <a href="dataset-1.html#fig:04-credit-margin-over-time">2.2</a> shows the evolution of credit margins over time grouped by ratings. The plots are made with a random sample of 300,000 loans.</p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-credit-margin-over-time"></span>
+<img src="build/figure/graphics-04-credit-margin-over-time-1.png" alt="Credit margins per grade over time" width="70%" />
+<p class="caption">
+Figure 2.2: Credit margins per grade over time
+</p>
+</div>
+<p></p>
+<p>We notice long periods where certain margins remain very stable which indicate that <em>both</em> the initial pricing was constant <em>and</em> that the proportion of default remains very low.</p>
+<p>The graphs show considerations that are relevant to the modeling&quot;:</p>
+<ul>
+<li><p>The margins clearly change over time. To the extent that they reflect a change in probability of default, the predictions will require to account for time (probably in a non-linear fashion).<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a></p></li>
+<li><p>For a given rating, it widens and narrows over time. The changes happen in multiples that depends on the ratings:</p>
+<ul>
+<li><p>For high quality / low margin loans: the changes are multiples of the margin, for example going from roughly 3% to 6/7%.</p></li>
+<li><p>Although the range of change is wide, those changes do not happen very often, especially in the later years.</p></li>
+<li><p>By comparison, for low quality / high margin loans, the range of change is proportionally smaller, but more frequent and volatile.</p></li>
+</ul></li>
+<li><p>In other words, the relation between loan quality (its rating) and its pricing (the credit margin) will significantly non-linear.</p></li>
+</ul>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-IRR-over-time"></span>
+<img src="build/figure/graphics-04-IRR-over-time-1.png" alt="Credit margins per grade over time" width="70%" />
+<p class="caption">
+Figure 2.3: Credit margins per grade over time
+</p>
+</div>
+<p></p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-CM-over-time"></span>
+<img src="build/figure/graphics-04-CM-over-time-1.png" alt="Credit margins per grade over time" width="70%" />
+<p class="caption">
+Figure 2.4: Credit margins per grade over time
+</p>
+</div>
+<p></p>
+</div>
+<div id="dataset-2" class="section level3">
+<h3><span class="header-section-number">2.3.2</span> Dataset</h3>
+<p>Because we are interested decisions made prior to invest, we will limit the predictors to those that are realistically available prior to funding.</p>
+</div>
+<div id="interest-rates" class="section level3">
+<h3><span class="header-section-number">2.3.3</span> Interest rates</h3>
+<p>Based on this information, the loan is approved or not. Approval includes the final amount (which could be lower than the amount requested), tenor (3 or 5 years) and a rating similar to those given to corporate borrowers. Unlike corporate borrowers however, the rating mechanically determines the rate of interest according to a grid known to the borrower in advance<a href="#fn9" class="footnote-ref" id="fnref9"><sup>9</sup></a>. The rates have changed over time. Those changes where not as frequent as market conditions (e.g. changes in Federal Reserve Bank’s rates)<a href="#fn10" class="footnote-ref" id="fnref10"><sup>10</sup></a>.</p>
+<p>Figure <a href="dataset-1.html#fig:04-interest-rate-table2">2.5</a><a href="#fn11" class="footnote-ref" id="fnref11"><sup>11</sup></a> shows the predetermined interest rate depending on the initial rating as of July 2019.</p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-interest-rate-table2"></span>
+<img src="images/interest-rates-jul2019.png" alt="Interest rates given rating" width="70%" height="70%" />
+<p class="caption">
+Figure 2.5: Interest rates given rating
+</p>
+</div>
+<p></p>
+<p>At the date of this report, the ratings range from <code>A</code> (the best) down to <code>D</code>, each split in 5 sub-ratings. However, LC previously also intermediated loans rated F or G (until 6 November 2017) and E (until 30 June 2019).<a href="#fn12" class="footnote-ref" id="fnref12"><sup>12</sup></a> This explains that such ratings are in the dataset. We will assume that the ratings in the dataset are the rating at the time of approval and that, even if loans are re-rated by LC, the dataset does not reflect it.</p>
+<p>Figures <a href="dataset-1.html#fig:04-interest-over-time">2.6</a> shows the change in interest rate over time for different ratings and separated for each tenor. (Each figure is on a sample of 100,000 loans.) For each rating, we can see several parallel lines which correspond to the 5 sub-rating of each rating. We note that the range of interest rates has substantial widened over time. That is, the risk premium necessary to attract potential investors has had to substantially increase. In the most recent years, the highest rates exceed 30% which is higher than many credit cards.3-year loans are naturally considered safer (more A-rated, less G-rated). Identical ratings attract identical rates of interest.</p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-interest-over-time"></span>
+<img src="build/figure/graphics-04-interest-over-time-1.png" alt="Interest rate per grade over time" width="70%" />
+<p class="caption">
+Figure 2.6: Interest rate per grade over time
+</p>
+</div>
+<p></p>
+<p>By comparison, we plot the 3-year (in red) and 5-year (in blue) bank swap rates in Figure <a href="dataset-1.html#fig:04-swap-rates">2.7</a>. We see that the swap curve has flattened in recent times (3-year and 5-y rates are almost identical). We also can see that in broad terms the interest rates charged reflect those underlying swap rates. It is therefore most relevant to examine the credit margins added to the swap rates.</p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-swap-rates"></span>
+<img src="build/figure/graphics-04-swap-rates-1.png" alt="Historical Swap Rates" width="70%" />
+<p class="caption">
+Figure 2.7: Historical Swap Rates
+</p>
+</div>
+<p></p>
+<p>Figures <a href="dataset-1.html#fig:04-margin-over-time">2.8</a> shows the change in credit margin over time for different ratings and separated for each tenor. (Each figure is on a sample of 100,000 loans.) As above, for each rating, we can see several parallel lines which correspond to the 5 sub-rating of each rating. We note that the range of credit margins has widened over time but less than the interest rates. Identical ratings attract identical credit margins.</p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-margin-over-time"></span>
+<img src="build/figure/graphics-04-margin-over-time-1.png" alt="Credit margins per grade over time" width="70%" />
+<p class="caption">
+Figure 2.8: Credit margins per grade over time
+</p>
+</div>
+<p></p>
+</div>
+<div id="purpose" class="section level3">
+<h3><span class="header-section-number">2.3.4</span> Purpose</h3>
+<p>When applying, a potential borrower must state the purpose of the loan. As shown in table <a href="#tab:04-loans-per-purpose"><strong>??</strong></a>, by far the main purpose is the consolidation of existing debts.</p>
+<p></p>
+
+<p></p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-credit-margin-hist"></span>
+<img src="build/figure/graphics-04-credit-margin-hist-1.png" alt="Histograms of credit margins per purpose" width="70%" />
+<p class="caption">
+Figure 2.9: Histograms of credit margins per purpose
+</p>
+</div>
+<p></p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-credit-margin-boxplot"></span>
+<img src="build/figure/graphics-04-credit-margin-boxplot-1.png" alt="Boxplots of credit margins per purpose" width="70%" />
+<p class="caption">
+Figure 2.10: Boxplots of credit margins per purpose
+</p>
+</div>
+<p></p>
+</div>
+<div id="payments" class="section level3">
+<h3><span class="header-section-number">2.3.5</span> Payments</h3>
+<p>The loans are approved for only two tenors, 3 and 5 years, with monthly repayments. Installments are calculated easily with the standard formula:</p>
+<p><span class="math display">\[
+Installment = Principal \times rate \times \frac{1}{1 - \frac{1}{(1+rate)^N}}
+\]</span></p>
+<p>Where <span class="math inline">\(Principal\)</span> is the amount borrowed, <span class="math inline">\(rate = \frac{\text{Quoted Interest Rate}}{12}\)</span> is the monthly interest rate, and <span class="math inline">\(N\)</span> is the number of installments (36 or 60 monthly payments). The following piece of code shows that the average error between this formula and the dataset value is about 2 cents. We therefore precisely understand this variable.</p>
+<p></p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode numberSource r numberLines lineAnchors"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" href="#cb2-1" data-line-number="1"><span class="kw">local</span>({</a>
+<a class="sourceLine" id="cb2-2" href="#cb2-2" data-line-number="2">  installmentError &lt;-<span class="st"> </span>loans <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb2-3" href="#cb2-3" data-line-number="3"><span class="st">    </span><span class="kw">mutate</span>(</a>
+<a class="sourceLine" id="cb2-4" href="#cb2-4" data-line-number="4">      <span class="dt">PMT =</span> <span class="kw">round</span>(funded_amnt <span class="op">*</span><span class="st"> </span>int_rate <span class="op">/</span><span class="st"> </span><span class="dv">12</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span><span class="dv">1</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>int_rate <span class="op">/</span><span class="st"> </span><span class="dv">12</span>) <span class="op">^</span></a>
+<a class="sourceLine" id="cb2-5" href="#cb2-5" data-line-number="5"><span class="st">                                                   </span>term), <span class="dv">2</span>),</a>
+<a class="sourceLine" id="cb2-6" href="#cb2-6" data-line-number="6">      <span class="dt">PMT_delta =</span> <span class="kw">abs</span>(installment <span class="op">-</span><span class="st"> </span>PMT)</a>
+<a class="sourceLine" id="cb2-7" href="#cb2-7" data-line-number="7">    ) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb2-8" href="#cb2-8" data-line-number="8"><span class="st">    </span><span class="kw">select</span>(PMT_delta)</a>
+<a class="sourceLine" id="cb2-9" href="#cb2-9" data-line-number="9">  </a>
+<a class="sourceLine" id="cb2-10" href="#cb2-10" data-line-number="10">  <span class="kw">round</span>(<span class="kw">mean</span>(<span class="dv">100</span> <span class="op">*</span><span class="st"> </span>installmentError<span class="op">$</span>PMT_delta), <span class="dt">digits =</span> <span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb2-11" href="#cb2-11" data-line-number="11">})</a></code></pre></div>
+<p></p>
+</div>
+</div>
+<div id="net-present-value" class="section level2">
+<h2><span class="header-section-number">2.4</span> Net present value</h2>
+<p>The behaviour of the NPV of loan losses is important.</p>
+<div id="average-npv-and-credit-margin-by-subgrade" class="section level3">
+<h3><span class="header-section-number">2.4.1</span> Average NPV and credit margin by subgrade</h3>
+<p>Figure <a href="dataset-1.html#fig:04-NPV-subrating">2.11</a> shows that as ratings worsen, the average NPV<a href="#fn13" class="footnote-ref" id="fnref13"><sup>13</sup></a> expressed as a portion of the funded amount decreases. For the best quality loans, we see that the NPV exceeds 1.00 = 100%: at a risk-free rate, investors receive more than what is necessary to compensate for credit loss and can use the excess to cover additional costs mentioned in the Preamble. As ratings worsen, the NPV drops down to about 50%.</p>
+<p>If loans were adequately priced, the excess returns (thanks to higher interest) should on average offset credit losses, that is an NPV average should be at least 100%. This seems to be the case down to ratings of about <code>D4</code>. Further down, credit losses become too frequent and/or too substantial to be covered on average. We posit that this justified rejecting loans applications rated <code>E1</code> and below.</p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-NPV-subrating"></span>
+<img src="build/figure/graphics-04-NPV-subrating-1.png" alt="Average NPV et credit margin (\%) depending on sub-rating" width="70%" />
+<p class="caption">
+Figure 2.11: Average NPV et credit margin (%) depending on sub-rating
+</p>
+</div>
+<p></p>
+</div>
+<div id="principal-losses" class="section level3">
+<h3><span class="header-section-number">2.4.2</span> Principal losses</h3>
+</div>
+<div id="distribution-of-principal-losses-by-rating" class="section level3">
+<h3><span class="header-section-number">2.4.3</span> Distribution of principal losses by rating</h3>
+<p>Figure <a href="dataset-1.html#fig:04-loss-distribution-subrating">2.12</a> shows that for a given grade, the losses are very widely spread. The loans are group by ratings and loans that have been fully repaid are removed.</p>
+<p>Setting aside the loans rated “A” or “B”, the distributions seem log-normal. Unsurprisingly, the worse the rating the larger the principal loss.</p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-loss-distribution-subrating"></span>
+<img src="build/figure/graphics-04-loss-distribution-subrating-1.png" alt="Distribution of the Principal Loss (\%) depending on rating 
+(y-axis square-root scaling)" width="70%" />
+<p class="caption">
+Figure 2.12: Distribution of the Principal Loss (%) depending on rating
+(y-axis square-root scaling)
+</p>
+</div>
+<p></p>
+</div>
+<div id="npv-distribution-by-rating" class="section level3">
+<h3><span class="header-section-number">2.4.4</span> NPV distribution by rating</h3>
+<p>Principal loss does not reflect the timing of that loss: a loss now is worse than a loss later. This subsection looks at the NPVs of actual loan cashflow (principal and interest) discounted the risk-free rate.</p>
+<p>Figure <a href="dataset-1.html#fig:04-NPV-distribution-subrating">2.13</a> shows that for a given grade, the NPVs are very widely spread. From top to bottom, loans are group by ratings: from quality ratings of <code>A</code> and <code>B</code>, average ratings of <code>C</code> and <code>D</code>, to poor ratings of <code>E</code> and below. From left to right, we focus on different parts of how NPVs are distributed. Note that each graph is based on a random sample of 100,000 loans (about 1/12th of the original set) and therefore the NPV densities are comparable from graph to graph.</p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-NPV-distribution-subrating"></span>
+<img src="build/figure/graphics-04-NPV-distribution-subrating-1.png" alt="Distribution of NPV (\%) depending on rating 
+(y-axis square-root scaling)" width="70%" />
+<p class="caption">
+Figure 2.13: Distribution of NPV (%) depending on rating
+(y-axis square-root scaling)
+</p>
+</div>
+<p></p>
+<p>At the outset, column by column (where NPVs are on the same scale), the NPV distribution show several modes on the same location. The modes are made more apparent by zooming on where the modes are present: the leftmost column basically shows the entire range of the NPVs (as portion of the loan). The middle graph zooms on the -20% / 50% range. The rightmost column zooms on the -100% / -25% section. Looking at the left hand scale, we can see that the lower NPVs overall gain in importance as the loan rating worsen.</p>
+<p>Zooming without scaling the y-axis and grouping all the ratings available for investment on a single plot gives more details.</p>
+<ul>
+<li>Figure <a href="dataset-1.html#fig:04-NPV-top">2.14</a> shows a mode with a maximum around 1.25 / 1.5 being loans seemingly repaid in full (the mode is above 100% given the repayment of principal <em>and</em> interest);</li>
+</ul>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-NPV-top"></span>
+<img src="build/figure/graphics-04-NPV-top-1.png" alt="NPV \% over 120\% 
+(no y-axis scaling)" width="70%" />
+<p class="caption">
+Figure 2.14: NPV % over 120%
+(no y-axis scaling)
+</p>
+</div>
+<p></p>
+<ul>
+<li>Figure <a href="dataset-1.html#fig:04-NPV-mid-high">2.15</a> and figure <a href="dataset-1.html#fig:04-NPV-zero">2.16</a> show a second and third mode around 41% and -1%;</li>
+</ul>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-NPV-mid-high"></span>
+<img src="build/figure/graphics-04-NPV-mid-high-1.png" alt="NPV \% around 41\% 
+(no y-axis scaling)" width="70%" />
+<p class="caption">
+Figure 2.15: NPV % around 41%
+(no y-axis scaling)
+</p>
+</div>
+<p></p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-NPV-zero"></span>
+<img src="build/figure/graphics-04-NPV-zero-1.png" alt="NPV \% around -1\% 
+(no y-axis scaling)" width="70%" />
+<p class="caption">
+Figure 2.16: NPV % around -1%
+(no y-axis scaling)
+</p>
+</div>
+<p></p>
+<ul>
+<li>Finally, figure <a href="dataset-1.html#fig:04-NPV-total-loss">2.17</a> one last very diffuse mode around -100%.</li>
+</ul>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-NPV-total-loss"></span>
+<img src="build/figure/graphics-04-NPV-total-loss-1.png" alt="NPV \% for close to total loss \% 
+(no y-axis scaling)" width="70%" />
+<p class="caption">
+Figure 2.17: NPV % for close to total loss %
+(no y-axis scaling)
+</p>
+</div>
+<p></p>
+<p>The overall trend is what we should expect. What is surprising is the existence of (1) very clearly defined modes which (2) are common to all types of borrowers. They roughly look log-normal, apart from the mode around 41% which look Gaussian.</p>
+</div>
+</div>
+<div id="loan-decision" class="section level2">
+<h2><span class="header-section-number">2.5</span> Loan decision</h2>
+<p>As indicated in the introduction, our focus is on loans that have gone through their entire life cycle to consider their respective pricing, risk and profitability. To that effect, we will remove all loans which are still current (either performing or not), and we will only retain loans which currently available (rated <code>A1</code> to <code>D5</code>). From here on, everything will be based on this reduced dataset.</p>
+<p>In this reduced dataset, we focus on loans that have matured or been terminated. It contains 1306356 samples. Most of the loans (ca.80%) have been repaid in full (in other words <strong>1 in 5 loans defaulted</strong>). See Table <a href="#tab:04-matured-loans"><strong>??</strong></a>.</p>
+<p></p>
+
+<p></p>
+<p>When grouped by grade (Figure <a href="dataset-1.html#fig:04-funded-by-subgrade">2.18</a>), we see a clear correlation between grade and default: the lower the grade the higher the portion defaults (note the limited scale with a minimum at about 50%). In addition, most of the business is written in the B- or C-rating range.</p>
+<p></p>
+<div class="figure" style="text-align: center"><span id="fig:04-funded-by-subgrade"></span>
+<img src="build/figure/graphics-04-funded-by-subgrade-1.png" alt="Funding and Write-offs by Sub-grades" width="70%" />
+<p class="caption">
+Figure 2.18: Funding and Write-offs by Sub-grades
+</p>
+</div>
+<p></p>
+
+</div>
+</div>
+<h3>References</h3>
+<div id="refs" class="references">
+<div id="ref-kim2019ensemble">
+<p>Kim, Aleum, and Sung-Bae Cho. 2019. “An Ensemble Semi-Supervised Learning Method for Predicting Defaults in Social Lending.” <em>Engineering Applications of Artificial Intelligence</em> 81. Elsevier: 193–99.</p>
+</div>
+<div id="ref-KaggleLC">
+<p>Preparation: Wendy Kan, LendingClub Corporation -. 2019. “Kaggle - LendingClub dataset.” <a href="https://www.kaggle.com/wendykan/lending-club-loan-data" class="uri">https://www.kaggle.com/wendykan/lending-club-loan-data</a>.</p>
+</div>
+<div id="ref-LC201908S3">
+<p>San Francisco - California, LendingClub Corporation -. 2019. “Prospectus Regulatory Filing S3-ASR for Member Payment Dependent Notes.” <a href="https://www.sec.gov/Archives/edgar/data/1409970/000140997019000988/0001409970-19-000988-index.htm" class="uri">https://www.sec.gov/Archives/edgar/data/1409970/000140997019000988/0001409970-19-000988-index.htm</a>.</p>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol start="5">
+<li id="fn5"><p>source: <a href="https://en.wikipedia.org/wiki/LendingClub" class="uri">https://en.wikipedia.org/wiki/LendingClub</a> - Retrieval date 15 September 2019<a href="dataset-1.html#fnref5" class="footnote-back">↩</a></p></li>
+<li id="fn6"><p> See LendingClub FAQ at [<a href="https://help.lendingclub.com/hc/en-us/articles/215488038" class="uri">https://help.lendingclub.com/hc/en-us/articles/215488038</a>] and help page [<a href="https://help.lendingclub.com/hc/en-us/articles/216127897-What-happens-when-a-loan-is-charged-off-" class="uri">https://help.lendingclub.com/hc/en-us/articles/216127897-What-happens-when-a-loan-is-charged-off-</a>] <a href="dataset-1.html#fnref6" class="footnote-back">↩</a></p></li>
+<li id="fn7"><p>See <a href="https://www.lendingclub.com/legal/prospectus" class="uri">https://www.lendingclub.com/legal/prospectus</a><a href="dataset-1.html#fnref7" class="footnote-back">↩</a></p></li>
+<li id="fn8"><p>Note that we will add the second and third power of time to create this non-linearity. This will be the only feature engineering that will be performed on the dataset.<a href="dataset-1.html#fnref8" class="footnote-back">↩</a></p></li>
+<li id="fn9"><p><a href="https://www.lendingclub.com/investing/investor-education/interest-rates-and-fees" class="uri">https://www.lendingclub.com/investing/investor-education/interest-rates-and-fees</a><a href="dataset-1.html#fnref9" class="footnote-back">↩</a></p></li>
+<li id="fn10"><p>Corporate borrowers would negociate interest margins on a case-by-case basis despite similar risk profiles.<a href="dataset-1.html#fnref10" class="footnote-back">↩</a></p></li>
+<li id="fn11"><p>source: <a href="https://www.lendingclub.com/investing/investor-education/interest-rates-and-fees" class="uri">https://www.lendingclub.com/investing/investor-education/interest-rates-and-fees</a><a href="dataset-1.html#fnref11" class="footnote-back">↩</a></p></li>
+<li id="fn12"><p>See <a href="https://www.lendingclub.com/info/demand-and-credit-profile.action" class="uri">https://www.lendingclub.com/info/demand-and-credit-profile.action</a><a href="dataset-1.html#fnref12" class="footnote-back">↩</a></p></li>
+<li id="fn13"><p>The averages are <em>not</em> weighted by loan amount since an investor can invest in $25 parcels. Weighting would have been appropriate if investors were instead forced to invest in the whole amount.<a href="dataset-1.html#fnref13" class="footnote-back">↩</a></p></li>
+</ol>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="internal-rate-of-return-credit-margins-and-net-present-values.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="logistic-regression-model-and-credit-scorecard.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/Emmanuel-R8/HarvardX-LendingClub/edit/master/04-dataset.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["HarvardX Credit Scoring of the LendingClub Dataset.pdf", "HarvardX Credit Scoring of the LendingClub Dataset.epub"],
+"toc": {
+"collapse": "subsection",
+"scroll_highlight": true
+},
+"toolbar": {
+"position": "fixed"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

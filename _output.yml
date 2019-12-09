@@ -3,11 +3,15 @@ bookdown::gitbook:
   css: style.css
   config:
     toc:
+      collapse: subsection
+      scroll_highlight: yes
       before: |
         <li><a href="./introduction.html" target="blank>LendingClub Loans Pricing</a></li>
       after: |
         <li><a href="https://bookdown.org/" target="blank">Published with bookdown</a></li>
     edit: https://github.com/Emmanuel-R8/HarvardX-LendingClub/edit/master/%s
+    toolbar:
+      position: fixed
     download: ["pdf", "epub"]
 
 bookdown::pdf_book:
