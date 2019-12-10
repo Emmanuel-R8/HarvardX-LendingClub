@@ -26,9 +26,10 @@ At the outset, the dataset presents a number of challenges:
 
 + The dataset has no context or reference point to interpret dollar amounts. Everybody intuitively understands that owing $10 or $1,000,000 are very different (amounts matter). Owing $1,000 when living in New York is different from owing $1,000 if living on $2 per day in a developing country (surrounding economic environment matter). That intuition is shared economic knowledge, but that intuition is nowhere represented in the dataset. As readers, we automatically attribute that implicit knowledge to the data we read in the dataset. However, any model based on that data will never reflect that implicit knowledge if we do not supplement with external data. As shown in the previous section, credit margins have changed over time. This is clearly related to the wider US economic environment. Financial hardship is a key driver for some of the loans. Availability of disposable income is important to assess the ability to repay. Therefore, the cost of living, which varies from state to state, seems relevant. As noted in the post-mortem section, such information will not be used.
 
-```{r}
+```{r echo=FALSE}
 "IF YOU RUN THE MODELING SECTION, YOU WILL NEED UP TO 32GB OF MEMORY, AND EXPECT A LOT OF DISK SWAPPING WHEN DATASETS ARE JUGGLED IN AND OUT OF MEMORY TO DISK TO MINIMISE MEMORY USAGE. CALCULATION TIMES ARE BY BATCHES UP TO 10 MINUTES (DEPENDING ON HARDWARE). THIS EXCLUDES TIME NECESSARY TO PREPARE THE DATASET AS EXPLAINED ON THE PREVIOUS SECTIONS (THAT IS HOURS)." %>% 
-  knitr::kable(col.names = "WARNING:")
+  kable(col.names = "WARNING:") %>% 
+  column_spec(1, width = "15cm") 
 ```
 
 
@@ -63,9 +64,9 @@ The commonly used method to evaluate the creditworthiness of a borrower is to cr
 
 The initial preparation of the dataset takes place in the `CleanLoan.Rmd` file where we bind:
 
-+ the raw LendingClub dataset (see @sec:lendingclub-dataset for how it was prepared);
++ the raw LendingClub dataset (see subsection \@ref(sec:lendingclub-dataset) for how it was prepared);
 
-+ from that raw set, only retain the variables that we selected to be used in the model (see column "Used in model?" in subsection \ref@(sec:list-model-variables));
++ from that raw set, only retain the variables that we selected to be used in the model (see column "Used in model?" in subsection \@ref(sec:list-model-variables));
 
 + the NPV, IRR and credit margins calculated; and,
 
@@ -112,7 +113,7 @@ $$\text{ }$$
 We prepare a dataset with ONLY the predictors NOT removing NA's.
 
 
-```{r 05-01-loan-predictors,echo=TRUE,cache=FALSE}
+```{r 05-01-loan-predictors,echo=TRUE,cache=TRUE}
 ## ######################################################################################
 ##
 ## Prepare a dataset with ONLY the predictors NOT removing NA's
@@ -451,7 +452,7 @@ bestBins %>%
   mutate(IV = round(100 * IV, digits = 2)) %>% 
   arrange(desc(IV)) %>% 
   slice(1:15) %>%
-  knitr::kable(caption = "15 top variables by IV")
+  kable(caption = "15 top variables by IV", digits = 3)
 ```
 $$\text{ }$$
 
@@ -484,7 +485,7 @@ bestBins %>%
   mutate(IV = round(IV, digits = 5)) %>% 
   arrange(desc(IV)) %>% 
   slice(1:15) %>%
-  knitr::kable(caption = "15 top informative variables by IV")
+  kable(caption = "15 top informative variables by IV", digits = 3)
 ```
 $$\text{ }$$
 
@@ -497,7 +498,7 @@ bestBins %>%
   mutate(IV = round(IV, digits = 5)) %>% 
   arrange(IV) %>% 
   slice(1:15) %>%
-  knitr::kable(caption = "15 least informative variables by IV")
+  kable(caption = "15 least informative variables by IV", digits = 3)
 ```
 $$\text{ }$$
 

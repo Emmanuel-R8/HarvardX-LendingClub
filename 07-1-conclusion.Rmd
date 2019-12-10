@@ -1,34 +1,42 @@
 # Conclusion
 
-> Is the interest rate proposed by LC high enough?
+This report was an exploration of the LendingClub dataset. The result should be seen as unsatisfactory: the final model clearly extracts relevant information that classifies loan applications in a 
+way that broadly mirrors the ratings proposed by LendingClub. It is however too imprecise to draw any comfort that it could be used in any way. 
 
-> This report was one of those "it-builds-character" endeavour. Facing such a large dataset, it took a very long time before settling to address a particular question. Exploring the data lead to many blind alleys with little interest.
-
-> As a practical tool, this approach would not work in real life: we have no data on rejected loans. Using this model to accept/reject loans would need more work (using Reject Inference).
-
-> Currently only look at PD. Extend to LGD with Good Dollars and Bad Dollars instead of Good Loans / Bad Loans
+One question that is the ultimate only relevant question has not bee answered: Is the interest rate proposed by LC high enough?
 
 
-Further possible explorations:
+This report has additional clear limitations:
 
-+ Address the unbalanced dataset by sampling a number of training samples whose size is identical to the test dataset.
+  + Facing such a large dataset, it took a very long time before settling on a tractable question. Exploring the data lead to many blind alleys with little interest. See next section for further 
+explanations.
 
-+ Perform PCA beforehand
+  + As a practical tool, our approach would not work in real life: we have no data on rejected loans. Using this model to accept/reject loans would need more work (using Reject Inference).
 
-+ Poisson GLM
+  + We only considered probabilities of default. 
+  
 
-+ Improve the regularisation of the model parameters.
+Further possible avenues to explore are numerous:
 
-+ Explore economic cycles/situations as additional entry.
+  + Address the unbalanced dataset by sampling a number of training samples whose size is identical to the test dataset.
 
-+ We use the entire dataset to estimate the impact of time  as a polynomial curve. To assess future loans, this would not be acceptable. Only an online algorithm should be used. For example ARMA/ARIMA, Kalman filtering of the time-trend trajectory. 
+  + Use PCA (albeit on an extract of the dataset) to narrow the variables.
 
-+ Loss amount where good loan/bad loan proportion is replaced by a good dollar (repaid) / bad dollars (lost) fraction. See SAS Global Forum 2012.
+  + Model the time-to-default to also provided guidance on the maximum term of the accepted loans. Maybe some sort of multivariate Poisson process (if such distributions exist). 
 
-+ The size of the dataset is an issue to apply other techinques. But with stochastics methods, possible other models could be:
-    
-    - Tree models which have numerous variations (CART generally, and simple or aggregated boosted decision trees specifically)
-    
-    - Neural network 
+  + Extend to LGD with Good Dollars and Bad Dollars instead of Good Loans / Bad Loans. This approach is suggested in a report by SAS ([@Miner_sasglobal]).
+
+  + Improve the regularisation of the model parameters.
+
+  + Explore economic cycles/situations as additional entry.
+
+  + We use the entire dataset to estimate the impact of time  as a polynomial curve. To assess future loans, this would not be acceptable. Only an online algorithm should be used. For example 
+ARMA/ARIMA, Kalman filtering of the time-trend trajectory? 
+
+  + The size of the dataset is an issue to apply other techinques. But with stochastics methods, possible other models could be:
+      
+      - Tree models which have numerous variations (CART generally, and simple or aggregated boosted decision trees specifically)
+      
+      - Neural network 
 
 

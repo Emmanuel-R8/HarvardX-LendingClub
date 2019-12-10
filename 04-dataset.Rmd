@@ -5,14 +5,14 @@
 ```
 
 
-The data is sourced as a _SQLite_ database that downloaded from [@KaggleLC] and imported as a `tibble dataframe` with the `RSQLite` package. The variables were reformatted according to their respective types.The full list of variable is given in appendix (see Table \@ref(tab:08-variable-description)). This dataset will be reduced as we focused on the core intent of modeling the probability of default.
+The data is sourced as a _SQLite_ database that downloaded from [@KaggleLC] and imported as a `tibble dataframe` with the `RSQLite` package. The variables were reformatted according to their respective types.The full list of variable is given in Appendix (see Table \@ref(tab:08-variable-description)). This dataset will be reduced as we focused on the core intent of modeling the probability of default.
 
 Note that the dataset was anonymised (all identifying ID numbers are deleted) and we therefore removed the corresponding empty columns from the dataset. Since the identification `ID`s have been removed to anonymise the dataset, we cannot see if a borrower borrowed several times.
 
 
 ## Preamble
 
-The LendingClub dataset, although rich, is difficult to interpret. The only explanation of what the variables mean comes from a spreadsheet attached to the dataset. The explanations are not precise and/or subject to conflicting interpretation. Despite serching the LendingClub website, no further original information was found. We collected a number of reasonable assumptions in Appendix (see subsection \ref@(sec:list-assumptions) in Appendix). 
+The LendingClub dataset, although rich, is difficult to interpret. The only explanation of what the variables mean comes from a spreadsheet attached to the dataset. The explanations are not precise and/or subject to conflicting interpretation. Despite serching the LendingClub website, no further original information was found. We collected a number of reasonable assumptions in Appendix (see subsection \@ref(sec:list-assumptions) in Appendix). 
 
 The dataset has been used a number of times in the past by various people. One paper [@kim2019ensemble] mentions they used a dataset that included 110 variables, which is less than ours with 145 variables. It is therefore clear that the dataset has changed over time in ways we do not know. For example, have loans been excluded because the full 145 veriables were not available?
 
@@ -624,7 +624,7 @@ Zooming without scaling the y-axis and grouping all the ratings available for in
 + Figure \@ref(fig:04-NPV-top) shows a mode with a maximum around 1.25 / 1.5 being loans seemingly repaid in full (the mode is above 100% given the repayment of principal _and_ interest);
 
 
-```{r 04-NPV-top,fig.cap="NPV \\% over 120\\% \n(no y-axis scaling)"}
+```{r 04-NPV-top,fig.cap="NPV \\% higher than 120\\% \n(no y-axis scaling)"}
 NPVset <- 
   loansWorkingSet %>%
   filter(grade %in% c("A", "B", "C", "D")) %>% 

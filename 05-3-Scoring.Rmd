@@ -40,6 +40,7 @@ SGLM_B_reretrain <- readRDS("datasets/SGLM_B_reretrain.rds")
 
 We selected the model fitted during the second training.
 
+$$\text{ }$$
 ```{r}
 # Model to use
 GLModel <- SGLM_B_retrain
@@ -49,6 +50,7 @@ $$\text{ }$$
 
 We collect the list of selected bins.
 
+$$\text{ }$$
 ```{r 05-03-model-names}
 # List of model variables
 modelNames <- 
@@ -63,6 +65,7 @@ $$\text{ }$$
 
 And we collect the model summary (coefficients, significance, etc.). 
 
+$$\text{ }$$
 ```{r 05-03-extract-coefficients}
 # and their coefficients in the model (the summary function for speedglm objects is not exported and
 # bookdown seems to have a problem with that).
@@ -86,10 +89,52 @@ $$\text{ }$$
 
 ### Scoring
 
+Scoring expresses the coefficients that were estimated during the logistic regression into points on a scale. The model estimates the log-odds that a loan will not default. We will provide a detailed 
+description of the calculations to, hopefully, provide guidance to others. (The references we have found in the course of our research have been surprisingly limited.)
 
-Scoring expresses the coefficients that were estimated during the logistic regression into points on a scale. The model estimates the log-odds that a loan will not default. 
+Let us recall that our model will be in the form of a linear regression to model the logodds of the probability of default. That is:
+
+$$\text{logodds} (p) = \text{intercept} + \sum_{\text{Variable} = k} \sum_{\text{bin} = i} \alpha_{k, i} x_{k, i}$$
+
+where:
+
+$$\text{logodds} (p) = \log \frac{p}{1-p}$$
+
+Thanks to the properties of the logodds transformation, the model can take any value between $-\infty$ and $+\infty$ and yield valid probability values. 
 
 
+The idea of scoring is to replace this linear relationship with a points system: if an applicant ticks a box in a particular question/variable, he/she gets so many points. For example, asked for an age band, an applicant would receive 10 points if between 18 and 25 year-old, and 25 points if between 25 and 32. The age bands (the variable bins) were calculated above. 
+
+
+Basic convenience and marketing common sense dictates that:  
+ 
+  + points should be rounded (should 14.99432529875 really be on an application form?) 
+  
+  + those points should never be negative.
+  
+  + Scorecards do not start with an initial piggybank of points. In terms of modeling, that means no intercept.
+  
+
+The idea of scorecard applies to model similar to this one. Marketing consideration might be relevant to our context. They would be completely irrelevant to scorecard for a disease risk assessment. 
+
+Scoring will replace the $\alpha_{k, i}$ coefficients with scores $S_{k, i}$. In addition, we will get rid of the intercept. To remove the intercept, we will apportion it equally across all variables: 
+
+
+$$\text{logodds} (p) = \sum_{\text{Variable} = k} { \left( \frac{\text{intercept}}{K} + \sum_{\text{bin} = i} \alpha_{k, i} x_{k, i} \right) }$$
+where $K$ is the number of variables. And if $I_k$ is the number of bins for variable $k$:
+
+$$\text{logodds} (p) = \sum_{\text{Variable k} = 1}^K { \sum_{\text{bin i} = 1}^{I_k} \left( \frac{\text{intercept}}{K . I_k} + \alpha_{k, i} x_{k, i} \right) }$$
+
+
+Then we select a factor $F$ that will dilate/contract the coefficients such that:
+
+$$\text{logodds} (p) = \sum_{\text{Variable} = k} { \left( \frac{\text{intercept}}{K} + \sum_{\text{bin} = i} \alpha_{k, i} x_{k, i} \right) }$$
+
+
+
+
+
+### Model scorecard
 
 The conversion is done using  three parameters that are chosen somewhat arbitrarily.
 
@@ -104,6 +149,7 @@ Those values will reflect the total estimated score for a borrower (i.e. loan sa
 The score per variable needs to be adjusted using the number of information points, that is the number of characteristics. Here, the model has been trained on the number of bins. We first need to determine how many characteristics are used in the model.
 
 
+$$\text{ }$$
 ```{r 05-03-calculate-n-characteristics}
 
 # The list of characteristics is extracted from the list of bins names.
@@ -132,6 +178,7 @@ $$\text{ }$$
 We can now perform the scoring calculation. 
 
 
+$$\text{ }$$
 ```{r 05-03-scoring-parameters}
 
 ProbDefaultAtAnchor <- 1/20
@@ -149,15 +196,17 @@ ScoreFactor <- OddsAnchor / log(2)
 
 # 5,000 points is 20:1 odds of default
 ScoreOffset <- ScoreAnchor - ScoreFactor * log(OddsAnchor)
-
-# Score at the intercept
-Intercept <- summary(GLModel)$coefficients["(Intercept)", "Estimate"]
 ```
 $$\text{ }$$
 
 Then we apportion across characteristics.
 
+$$\text{ }$$
 ```{r 05-03-parameters-per-chr}
+
+# Score at the intercept
+Intercept <- summary(GLModel)$coefficients["(Intercept)", "Estimate"]
+
 ScorePerVariable <- (ScoreFactor * Intercept + ScoreOffset) / numberOfCharacteristics 
 InterceptPerVariable <- Intercept * ScoreFactor / numberOfCharacteristics
 
@@ -171,10 +220,9 @@ GLMScores <-
 ```
 $$\text{ }$$
 
-> VERY IMPORTANT:
+__Very important__: The intercept points have been allocated across all characteristics. Therefore the regression coefficient estimated for the intercept becomes redundant and needs removing.
 
-The intercept points have been allocated across all characteristics. Therefore the regression coefficient estimated for the intercept becomes redundant and needs removing.
-
+$$\text{ }$$
 ```{r}
 GLMScores[1, "points"] <-  0
 ```
@@ -193,11 +241,7 @@ loansTest <- readRDS("datasets/LoansTest.rds")
 ```
 
 
-```{r message=FALSE,echo=FALSE,cache=FALSE}
-gc(full = TRUE,verbose = FALSE)
-```
-
-
+$$\text{ }$$
 ```{r 05-03-convert-to-matrix}
 # Remove every variable that is not in the list of variables in the model then convert into a matrix
 allMatrix <-
@@ -210,6 +254,7 @@ allMatrix <-
 $$\text{ }$$
 
 
+$$\text{ }$$
 ```{r 05-03-matrix-add-1-col}
 # Add a column of 1s for the intercept
 allMatrix <-
@@ -224,10 +269,10 @@ $$\text{ }$$
 ```{r message=FALSE,echo=FALSE}
 # Done with this dataset
 rm(allFactorsAsBins)
-gc(full = TRUE, verbose = FALSE)
 ```
 
 
+$$\text{ }$$
 ```{r 05-03-logit-estimates}
 CoefficientsVector <- GLMCoefficients$Estimate %>% as.matrix()
 
@@ -259,8 +304,8 @@ We plot the results of the training model and group the results by rating ("A" t
 
 
 
+$$\text{ }$$
 ```{r 05-03-training-hists-value,fig.cap="Model results on the training set"}
-
 
 gridExtra::grid.arrange(
   loansTraining %>%
@@ -291,7 +336,7 @@ gridExtra::grid.arrange(
     geom_density(adjust = 1) +
     ggtitle("Scorecards"),
 
-  ncol = 1
+  ncol = 2, nrow = 2
 )
 
 ```
@@ -300,6 +345,7 @@ $$\text{ }$$
 
 ## Test set
 
+$$\text{ }$$
 ```{r 05-03-test-bins}
 # Prepare the full test set
 bestBins <- readRDS("datasets/bestBins100.rds")
@@ -322,6 +368,7 @@ $$\text{ }$$
 
 
 
+$$\text{ }$$
 ```{r 05-03-test-matrix-select-variables}
 # Retain only the relevant scorecard categories
 predictionMatrix <-
@@ -334,6 +381,7 @@ predictionMatrix <-
 $$\text{ }$$
 
 
+$$\text{ }$$
 ```{r 05-03-test-matrix-add-1-col}
 predictionMatrix <- cbind(as.vector(rep.int(x = 1, times = dim(predictionMatrix)[1])), predictionMatrix)
 dim(predictionMatrix)
@@ -341,6 +389,7 @@ dim(predictionMatrix)
 $$\text{ }$$
 
 
+$$\text{ }$$
 ```{r 05-03-test-matrix}
 TestLogit <- predictionMatrix %*% CoefficientsVector
 TestLogit <-
@@ -354,6 +403,7 @@ predictionScorecard <- predictionMatrix %*% ( GLMScores$points %>% as.matrix() )
 $$\text{ }$$
 
 
+$$\text{ }$$
 ```{r 05-03-test-estimates,fig.cap="Density of loans by scorecard"}
 loansTest %>%
   cbind(TestLogit) %>%
@@ -366,6 +416,7 @@ loansTest %>%
 $$\text{ }$$
 
 
+$$\text{ }$$
 ```{r 05-03-test-estimates-median}
 median(predictionScorecard)
 ```
@@ -375,6 +426,7 @@ $$\text{ }$$
 Same downward dynamics as training set
 
 
+$$\text{ }$$
 ```{r 05-03-test-viz-value,fig.cap="Logit value predicted by the model"}
 loansTest %>%
   cbind(TestLogit) %>%
@@ -385,6 +437,7 @@ loansTest %>%
 $$\text{ }$$
 
 
+$$\text{ }$$
 ```{r 05-03-test-viz-p,fig.cap="Probability of a loan being GOOD predicted by the model"}
 loansTest %>%
   cbind(TestLogit) %>%
@@ -395,6 +448,7 @@ loansTest %>%
 $$\text{ }$$
 
 
+$$\text{ }$$
 ```{r 05-03-test-viz-odds,fig.cap="Odds of a loan being GOOD predicted by the model"}
 loansTest %>%
   cbind(TestLogit) %>%
@@ -411,6 +465,7 @@ $$\text{ }$$
 
 Given a probability $p$ from the model, we use a $p = 0.50$ cut-off point to decide whether a loan is Good or Bad. The Confusion Matrix results are:
 
+$$\text{ }$$
 ```{r 05-03-test-confusion-matrix,echo=TRUE}
 tCM <- loansTest %>%
   cbind(TestLogit) %>%
@@ -441,14 +496,16 @@ A popular measure for the performance of such a logistic regression model is to 
 
 We first create a prediction object that will 
 
+$$\text{ }$$
 ```{r 05-03-test-ROC,echo=TRUE}
 ROCRPrediction <- ROCR::prediction(TestLogit$p, loansTest$isGoodLoan)
 ```
 $$\text{ }$$
 
-Figure \ref@(fig:05-03-ROC-curve) plots the Receiver Operating Characteristic curve of the regression. The area under the ROC curve is `r ROCR::performance(ROCRPrediction, "auc")@y.values[[1]]`. 
+Figure \@ref(fig:05-03-ROC-curve) plots the Receiver Operating Characteristic curve of the regression. The area under the ROC curve is `r ROCR::performance(ROCRPrediction, "auc")@y.values[[1]]`. 
 
 
+$$\text{ }$$
 ```{r 05-03-ROC-curve,echo=TRUE,message=FALSE,fig.cap="Receiver Operating Characteristic"}
 
 ROCR::performance(ROCRPrediction, 
@@ -461,8 +518,7 @@ $$\text{ }$$
 The AUC has an important statistical property: the AUC of a classifer is equivalent to the probability that the classifer will rank a randomly chosen positive instance higher than a randomly chosen negative instance. This is equivalent to the Wilcoxon test of ranks.The AUC is also closely related to the Gini index, which is twice the area between the diagonal and the ROC curve ($\text{Gini} + 1 = 2 \times \text{AUC}$). 
 
 
-
-
+$$\text{ }$$
 ```{r 05-03-precision-recall-curve,echo=TRUE,message=FALSE,fig.cap="Precision/Recall curve"}
 
 ROCR::performance(ROCRPrediction, 
@@ -474,6 +530,8 @@ ROCR::performance(ROCRPrediction,
 ```
 $$\text{ }$$
 
+
+$$\text{ }$$
 ```{r 05-03-sens-spec-curve,echo=TRUE,message=FALSE,fig.cap="Sensitivity/Specificity curve"}
 
 ROCR::performance(ROCRPrediction, 
@@ -484,6 +542,8 @@ ROCR::performance(ROCRPrediction,
 ```
 $$\text{ }$$
 
+
+$$\text{ }$$
 ```{r 05-03-lift-chart,echo=TRUE,fig.cap="Lift Chart"}
 
 ROCRPerformance <- ROCR::performance(ROCRPrediction, 
@@ -493,7 +553,7 @@ ROCRPerformance <- ROCR::performance(ROCRPrediction,
 
 
 ```
-
+$$\text{ }$$
 
 
 

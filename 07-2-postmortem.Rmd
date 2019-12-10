@@ -1,24 +1,29 @@
-
-We initiated the exploration of potential models with Principal Component Analysis, Linear Regression, Extreme Boosting and Random Forest. No model could be trained on the full set. We therefore came to limit the training set on a random sample of 0.1% (1 thousandth) of the initial full set.
-
-Any model will require training in batch (e.g. stochastic gradient descent) or online. Our untested intuition is that online methods are not adapted to an unbalanced dataset: the number of defaults/write-offs is fairly low for high quality ratings. However, the dataset is evidently a time series which points to online training. We will not explore that line of investigation, although exploring that tension would be an interesting subject.
-
-
-
-
-
-
 # Errands and post-mortem
 
-This project took much longer that the MovieLens capstone. Here is a list of ideas explored, abandoned and lessons learned.
+This project took much longer that the MovieLens capstone. Here is a short list of ideas explored, pitfalls, lessons learned, and character-builders. This is in part written with the belief that 
+knowing what does not work is as worthy as what does work. 
 
+
+## Modeling
+
+One bit of advice I have known of, agreed with, and naturally did not follow is to build early and small. In other words, deep and wide exploration of the dataset for the sake of it without modeling is wasteful of time and ideas. Modeling early, small and wrong (at least initially) is a better way to keep track of progress, a good sense of the eventual challenges, and suggest fruitful data exploration avenues. More importantly, it is in and by itself of form of exploration of the dataset. It also tends to explore the data wide-and-shallow rather than deep-but-narrow.
+
+
+Having said that, we explored potential models early. Principal Component Analysis, naive Linear Regression, Extreme Boosting and Random Forest were toyed. No model could be trained on the full set. We therefore came to limit the training set on a random sample of 0.1% (1 thousandth) of the initial full set. 
+
+We then went on a quest to formulate a model suitable for batch training (either simple sequential batches or stochastic) and gradient descent. 
+
+We also considered online training. However, our untested intuition was that online methods are not adapted to an unbalanced dataset: the number of defaults/write-offs is fairly low for high quality ratings. However, the dataset is evidently a time series which points to online training. 
+
+Along the way, the main unanswered question remained what to study out of the dataset: focus on a very narrow of variables? enrich it with other sources to study the impact of cyclical economic crises? determine an optimal pricing of each loan? 
+
+Let's look at a couple of those:
 
 ## Geographical data
 
 We sourced US zip and FIPS (_Federal Information Processing Standards_) codes, and macroeconomical data for possible geographical statistics. The source code for the data import and reformatting is available in the GitHub repository. 
 
-
-Macro-economical datasets were sourced from the same website as Microsoft Excel files. They were converted as-is to tab-separated csv files with LibreOffice. 
+Macro-economical datasets were sourced from the same website as Microsoft Excel files. They were converted as-is to tab-separated csv files with LibreOffice. Geofred turned out the best data source.
 
 + Median income per household:
 https://geofred.stlouisfed.org/map/?th=pubugn&cc=5&rc=false&im=fractile&sb&lng=-112.41&lat=44.31&zm=4&sl&sv&am=Average&at=Not%20Seasonally%20Adjusted,%20Annual,%20Dollars&sti=2022&fq=Annual&rt=county&un=lin&dt=2017-01-01
@@ -33,6 +38,7 @@ https://geofred.stlouisfed.org/map/?th=rdpu&cc=5&rc=false&im=fractile&sb&lng=-90
 
 Of key interest was indicators of economic stress with the following intuition: if a borrower has a good credit standing, traditional banks would provide cheaper access to credit. In times of financial distress (indicated by higher unemployment, lower GDP growth, income per household, ...), we should see higher volumes of loans, and/or changes in the loan application patterns. 
 
+
 Given the time available, that data turned out to be too difficult to use:
 
 + it was incomplete since the reported figures were not available over the entire timespan of the LendingClub dataset;
@@ -40,15 +46,32 @@ Given the time available, that data turned out to be too difficult to use:
 + ZIP codes and FIPS location reference change over time, meaning that determining economic indicators for a given loan was no easy to automatise or would have require substantial time-consuming hand-made adjustment.
 
 
+Lesson learned: data sourcing, cleaning is a full-time job by itself. [@de2018advances], as one of many sources, warned us. And was ignored...
 
 
 
+## Stochastic Gradient Descent
+
+### Conclusions
+
+This subsection is a bit detailed. The main final points are however simple: 
+
+  + A more thorough search for exisitng literature and craft would have been time better spent. 
+  
+  + Throwing more _iron_ should be a last resort after trying to be more clever, or more realistically looking for what more clever people have done in the past. This report is not intended to be a 
+PhD thesis. 
+
+  + R is not (yet) equipped to take advantage of advances in full program differentiation (and leverage deep learning optimisation library) like Swift ^[https://blog.tensorflow.org/2019/06/fastais-deep-learning-from-foundations_28.html] and Julia  ^[https://fluxml.ai/Zygote.jl/latest/] are. R has the `Madness` package and can also interface with Julia. But that was another rabbit hole that was too dark from the outset.
+
+  + On the positive side, calculating the derivative of the multimodal NPV function was checked with Maxima symbolic math capabilities and was an opportunity to re-acquaint ourselves with it.
 
 
-# Stochastic Gradient Descent
+  
+__Here is what was written at the time of exploring SGD.__
 
-
-The diagram \@ref(fig:scikit-map)^[Source: https://scikit-learn.org/stable/tutorial/machine_learning_map/index.html] shows a useful decision tree.
+  
+The early exploration of stochastic gradient as the only way to tackle extremely large dataset was decided on the basis of this diagram: \@ref(fig:scikit-map)^[Source: 
+https://scikit-learn.org/stable/tutorial/machine_learning_map/index.html]. It is otherwise extremely valuable, but we should realised much earlier that financial institutions have beeen dealing with such datasets for decades, especially at times when computing capacity was a orders of magnitude lower than now. If they could do it then, exploring how they did it should have been done first. 
 
 
 ```{r scikit-map, fig.cap="Scikit Learn algorithm cheat-sheet",output.width="70%",cache=FALSE}
@@ -57,11 +80,12 @@ knitr::include_graphics("images/scikit-learn-mlmap.png", auto_pdf = TRUE)
 
 Following the disappointing results of the previous section, we will explore a simpler model, but iteratively trained on a wider set of random samples.
 
-## Description of the model
 
-## Gradient descent
+### Description of the model
 
-### Generalities
+#### Gradient descent
+
+##### Generalities
 
 Gradient descent is a generic numerical optimisation algorithm to iteratively converge towards a (sometimes local) minumum of a given function. It is extensively used in statistical learning to minimise error functions.  
 
@@ -94,7 +118,7 @@ In practice, the cost function will add a penalty term to regularise the model p
 
 
 
-## Stochastic Gradient Descent
+##### Stochastic Gradient Descent
 
 With realistic datasets, gradient descent can experience slow convergence because (1) each iteration requires calculation of the gradient for every single training example, and (2) since each individual sample is potentially very different from another, the calculated gradient may not be optimal. In such case, the gradient descent can be done using a batch of several training samples and use the average of the cost function (__batch gradient descent__). This addresses those two sources of inefficiency.
 
@@ -104,13 +128,12 @@ Aside from the choice of the initial choice of samples, and the averaging of the
 
 
 
-#### Cost function regularisation and derivative
+##### Cost function regularisation and derivative
 
 Regularisation is a way to decrease the complexity of models by narrowing the range that parameters can take. It has long been established that it assists the stability and robustness of learning algorithms. See Chapter 13 of [@shalev2014understanding].
 
 Our regularised cost function is written:
 
-**[TODO]**
 $$ 
 J_{P,Q} = \sum_{(i, j) \in \Omega} {\left (  r_{i,j} - \sum_{k=1}^{N_{features}}{p_{i,k} q_{j,k}} \right )^2} + \frac{\lambda}{2} \left (  \sum_{i,k}{p_{i,k}^2} +  \sum_{j,k}{q_{j,k}^2} \right ) 
 $$
@@ -124,7 +147,7 @@ $$
 The parameters are the matrix coefficients $p_{i,k}$ $q_{j,k}$. $\alpha$ is the learning parameter that needs to be adjusted.
 
 
-#### Cost function partial derivatives
+##### Cost function partial derivatives
 
 The partial derivatives of the cost function is:
 
@@ -148,8 +171,8 @@ $$
 
 If $x$ is a coefficient of $P$ (resp. $Q$), say $p_{a,b}$ (resp. $q_{a,b}$), all partial derivatives will be nil unless for $(i,j) = (a,b)$. 
 
-Therefore:
 
+Therefore:
 
 $$ 
 \frac{\partial J_{P,Q}}{\partial p_{a,b}} = -2 \sum_{(i, j) \in \Omega} { q_{j,b} \left (  r_{i,j} - \sum_{k=1}^{N_{features}}{p_{i,k} q_{j,k}} \right )} + \lambda p_{a,b} 
@@ -174,264 +197,9 @@ $$
 \frac{\partial J_{P,Q}}{\partial q_{a,b}} = -2 \sum_{(i, j) \in \Omega} { p_{i,b} \epsilon_{i,j} } + \lambda q_{a,b} 
 $$
 
-We note that the recent implementations of autodifferentiation algorithm (key to deep learning implementations) would avoid making those calculations by hand. We did not attempt to use the R `madness` package ^[https://github.com/shabbychef/madness].
 
 
-### Stochastic Gradient Descent (SGD)
-
-The size of the datasets is prohibitive to do those calculations across the entire training set. 
-
-Instead, we will repeatedly update the model parameters on small random samples of the training set. 
-
-Chapter 14 of [@shalev2014understanding] gives an extensive introduction to various SGD algorithms.
-
-We implemented a simple version of the algorithm and present the code in more detail.
-
-
-
-```{r MOVIELENS,eval=FALSE,echo=TRUE}
-# The algorithm is implemented from scratch and relies on nothing but the `Tidyverse` libraries.
-library(tidyverse)
-
-# The quality of the training and predictions is measured by the _root mean squared error_
-# (RMSE), for which we define a few helper functions (the global variables are defined
-# later):
-rmse_training <- function() {
-  prediction_Z <- rowSums(LF_Model$P[tri_train$userN,] *
-                            LF_Model$Q[tri_train$movieN,])
-  prediction <- prediction_Z * r_sd + r_m
-  sqrt(sum((tri_train$rating - prediction) ^ 2 / nSamples))
-}
-
-rmse_validation <- function() {
-  prediction_Z <- rowSums(LF_Model$P[tri_test$userN,] *
-                            LF_Model$Q[tri_test$movieN,])
-  prediction <- prediction_Z * r_sd + r_m
-  sqrt(sum((tri_test$rating - prediction) ^ 2) / nTest)
-}
-
-sum_square <- function(v) {
-  return (sqrt(sum(v ^ 2) / nrow(v)))
-}
-
-# The key function updates the model coefficients. Its inputs are:
-#
-# + a list that contains the $P$ an $Q$ matrices, the training RMSE of those matrices, and
-# a logical value indicating whether this RMSE is worse than what it was before the update
-# (i.e. did the update diverge).
-#
-# + a `batch_size` that defines the number of samples to be drawn from the training set. A
-# normal gradient descent would use the full training set; by default we only use 10,000
-# samples out of 10 million (one tenth of a percent).
-#
-# + The cost regularisation `lambda` and gradient descent learning parameter `alpha`.
-#
-# + A number of `times` to run the descent before recalculating the RMSE and exiting the
-# function (calculating the RMSE is computationally expensive).
-#
-#
-# The training set used is less rich than the original set. As discussed, it only uses the
-# rating (more exactly on the z_score of the rating). Genres, timestamps,... are
-# discarded.
-
-
-# Iterate gradient descent
-stochastic_grad_descent <- function(model,
-                                    times = 1,
-                                    batch_size = 10000,
-                                    lambda = 0.1,
-                                    alpha = 0.01,
-                                    verbose = TRUE) {
-  # Run the descent `times` times.
-  for (i in 1:times) {
-    # Extract a sample of size `batch_size` from the training set.
-    spl <- sample(1:nSamples, size = batch_size, replace = FALSE)
-    spl_training_values <- tri_train[spl,]
-    
-    
-    # Take a subset of `P` and `Q` matching the users and
-    # movies in the training sample.
-    spl_P <- model$P[spl_training_values$userN,]
-    spl_Q <- model$Q[spl_training_values$movieN,]
-    
-    # rowSums returns the cross-product for a given user and movie.
-    # err is the term inside brackets in the partial derivatives
-    # calculation above.
-    err <- spl_training_values$rating_z - rowSums(spl_P * spl_Q)
-    
-    # Partial derivatives wrt p and q
-    delta_P <- -err * spl_Q + lambda * spl_P
-    delta_Q <- -err * spl_P + lambda * spl_Q
-    
-    model$P[spl_training_values$userN,]  <- spl_P - alpha * delta_P
-    model$Q[spl_training_values$movieN,] <- spl_Q - alpha * delta_Q
-    
-  }
-  
-  # RMSE against the training set
-  error <- sqrt(sum((
-    tri_train$rating_z - rowSums(model$P[tri_train$userN,] *
-                                   model$Q[tri_train$movieN,])
-  ) ^ 2)
-  / nSamples)
-  
-  # Compares to RMSE before update
-  model$WORSE_RMSE <- (model$RMSE < error)
-  model$RMSE <- error
-  
-  # Print some information to keep track of success
-  if (verbose) {
-    cat(
-      "  # features=",
-      ncol(model$P),
-      "  J=",
-      nSamples * error ^ 2 +
-        lambda / 2 * (sum(model$P ^ 2) + sum(model$Q ^ 2)),
-      "  Z-scores RMSE=",
-      model$RMSE,
-      "\n"
-    )
-    flush.console()
-  }
-  
-  return(model)
-}
-
-
-rm(list_results)
-list_results <- tibble(
-  "alpha" = numeric(),
-  "lambda" = numeric(),
-  "nFeatures" = numeric(),
-  "rmse_training_z_score" = numeric(),
-  "rmse_training" = numeric(),
-  "rmse_validation" = numeric()
-)
-
-# The main training loop runs as follows:
-#
-# + We start with 3 features.
-#
-# + The model is updated in batches of 100 updates. This is done up to 250 times. At each
-# time, if the model starts diverging, the learning parameter ($\alpha$) is reduced.
-#
-# + Once the 250 times have passed, or if $\alpha$ has become incredibly small, or if the
-# RMSE doesn't really improve anymoe (by less than 1 millionth), we add another features
-# and start again.
-
-initial_alpha <- 0.1
-for (n in 1:100) {
-  # Current number of features
-  number_features <- ncol(LF_Model$P)
-  
-  # lambda = 0.01 for 25 features, i.e. for about 2,000,000 parameters.
-  # We keep lambda proportional to the number of features
-  lambda <- 0.1 * (nUsers + nMovies) * number_features / 2000000
-  
-  alpha <- initial_alpha
-  
-  cat(
-    "CURRENT FEATURES: ",
-    number_features,
-    "---- Pre-training validation RMSE = ",
-    rmse_validation(),
-    "\n"
-  )
-  
-  list_results <- list_results %>% add_row(
-    alpha = alpha,
-    lambda = lambda,
-    nFeatures = number_features,
-    rmse_training_z_score = LF_Model$RMSE,
-    rmse_training = rmse_training(),
-    rmse_validation = rmse_validation()
-  )
-  
-  for (i in 1:250) {
-    pre_RMSE <- LF_Model$RMSE
-    LF_Model <- stochastic_grad_descent(
-      model = LF_Model,
-      times = 100,
-      batch_size = 1000 * number_features,
-      alpha = alpha,
-      lambda = lambda
-    )
-    
-    list_results <- list_results %>% add_row(
-      alpha = alpha,
-      lambda = lambda,
-      nFeatures = number_features,
-      rmse_training_z_score = LF_Model$RMSE,
-      rmse_training = rmse_training(),
-      rmse_validation = rmse_validation()
-    )
-    
-    if (LF_Model$WORSE_RMSE) {
-      alpha <- alpha / 2
-      cat("Decreasing gradient parameter to: ", alpha, "\n")
-    }
-    
-    if (initial_alpha / alpha > 1000 |
-        abs((LF_Model$RMSE - pre_RMSE) / pre_RMSE) < 1e-6) {
-      break()
-    }
-  }
-  
-  
-  # RMSE against validation set:
-  rmse_validation_post <- rmse_validation()
-  cat(
-    "CURRENT FEATURES: ",
-    number_features,
-    "---- POST-training validation RMSE = ",
-    rmse_validation_post,
-    "\n"
-  )
-  
-  # if (number_features == 12){
-  #   break()
-  # }
-  
-  
-  # Add k features
-  k_features <- 1
-  LF_Model$P <- cbind(LF_Model$P,
-                      matrix(
-                        rnorm(
-                          nrow(LF_Model$P) * k_features,
-                          mean = 0,
-                          sd = sd(LF_Model$P) / 100
-                        ),
-                        nrow = nrow(LF_Model$P),
-                        ncol = k_features
-                      ))
-  
-  LF_Model$Q <- cbind(LF_Model$Q,
-                      matrix(
-                        rnorm(
-                          nrow(LF_Model$Q) * k_features,
-                          mean = 0,
-                          sd = sd(LF_Model$Q) / 100
-                        ),
-                        nrow = nrow(LF_Model$Q),
-                        ncol = k_features
-                      ))
-  
-}
-
-saveRDS(list_results, "datasets/LRMF_results.rds")
-
-```
-
-
-
-
-
-## Various errands
-
-### Optimising the scorecard (or rating) depending on the NPV curve.
-
-Input - Layer - Single Q - Distribution
+### Cost function for multi-modal NPV
 
 Cost function as a function of the $Q$ parameter (equivalent to scorecard).
 
@@ -462,10 +230,12 @@ The distribution's tail is towards positive infinity. For the symmetric result, 
 If we use 4 log-normal distributions, the cost function is:
 
 $$
-\operatorname{J}\left( x,Q\right) =-{{\left[ x-\left( \alpha_1 \operatorname{PDF_1}\left( x,Q\right) + \alpha_2 \operatorname{PDF_2}\left( x,Q\right) + \alpha_2 \operatorname{PDF_3}\left( x,Q\right) + \alpha_4 \operatorname{PDF_4}\left( x,Q\right) \right) \right] }^2}
+\operatorname{J}\left( x,Q\right) =-{{\left[ x-\left( \alpha_1 \operatorname{PDF_1}\left( x,Q\right) + \alpha_2 \operatorname{PDF_2}\left( x,Q\right) + \alpha_2 \operatorname{PDF_3}\left( x,Q\right) + 
+\alpha_4 \operatorname{PDF_4}\left( x,Q\right) \right) \right] }^2}
 $$
 
-To optimise the shape of the total multi-modal distribution, we will assume that each $\alpha$, $m$ and $\sigma$ is a linear function of $Q$. The derivative $\frac{\partial{\operatorname{J}}}{\partial{Q}}$ is^[This was actually generated using Maxima (code in appendix) which allows for quicker iterations.]:
+To optimise the shape of the total multi-modal distribution, we will assume that each $\alpha$, $m$ and $\sigma$ is a linear function of $Q$. The derivative 
+$\frac{\partial{\operatorname{J}}}{\partial{Q}}$ is^[This was actually generated using Maxima (code in Appendix) which allows for quicker iterations.]:
 
 
 $$
@@ -480,9 +250,11 @@ $$
 
 
 
+We then worked on the basis of code developed for the _Movielens_ capston ^[See https://github.com/Emmanuel-R8/https://github.com/Emmanuel-R8/HarvardX-Movielens].
 
 
+## Final Conclusions
 
-
+We only received 999 cuts. We survived...
 
 

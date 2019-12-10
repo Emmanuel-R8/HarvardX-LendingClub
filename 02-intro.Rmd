@@ -11,12 +11,30 @@ The business model of LC is to match borrowers and investors. Naturally, more pe
 
 For this exercise, we made two simplifying (hopefully not simplistic) assumptions:
 
-+ In determining the risk/return balance, we have not accounted for LC's cost of intermediation. By ignoring fees paid by both sides, we obviously overestimate the returns to the investors. But in first approximation, **we will assume that the risk/reward balance, from the investors' point of view, across ratings is independent from fees.** This is a simplification. Real-world fees are higher the lower the investment grade and push the investors to receive, and the borrowers to pay, higher interest margin. 
+  + In determining the risk/return balance, we have not accounted for LC's cost of intermediation. By ignoring fees paid by both sides, we obviously overestimate the returns to the investors. But in 
+first approximation, **we will assume that the risk/reward balance, from the investors' point of view, across ratings is independent from fees.** This is a simplification. Real-world fees are higher 
+the lower the investment grade and push the investors to receive, and the borrowers to pay, higher interest margin. 
 
-+ All-in interest rates paid by borrowers are fixed. This is highly desirable for borrowers to be able to manage their cashflow. However, an investor should always consider an investment return as a margin above a risk-free return. Banks would look at LIBOR; bond investors (e.g. life insurers) would look at government bonds. Those risk-free rates can change very quickly, whereas we understand that LC sets those rates on a less frequent basis. In other word, the risk premium will vary rapidly. **We assume that individual investors are 'in-elastic' to change in implied risk premia.** But we recognise this as a limitation of our work.
+  + All-in interest rates paid by borrowers are fixed. This is highly desirable for borrowers to be able to manage their cashflow. However, an investor should always consider an investment return as a 
+margin above a risk-free return. Banks would look at LIBOR; bond investors (e.g. life insurers) would look at government bonds. Those risk-free rates can change very quickly, whereas we understand 
+that LC sets those rates on a less frequent basis. In other word, the risk premium will vary rapidly. **We assume that individual investors are 'in-elastic' to change in implied risk premia.** But we 
+recognise this as a limitation of our work.
 
 
 This report is organised as follows:
 
-+ [XXXX]
+  + We first introduce some financial terms and concepts that will be used in the rest of the report. This can be skipped if you studied finance. Those are just basic concepts. 
+  
+  + The second section introduces the dataset and uses a number of visualisations to illustrate some important aspects. We also provide the calculation of some financial amounts introduced in the 
+first section. 
 
+  + The third section described the model we used to assess the probability of a loan defaulting based on the information provided by an applicant. This is just one exapmle of the sort of questions 
+one could try to answer based on the dataset. 
+
+  + Finally, we assess our results in the conclusion. We provided numerous avenues to improve on this project. 
+  
+  + A post-mortem section is provided for interest purposes only.
+
+
+  
+  

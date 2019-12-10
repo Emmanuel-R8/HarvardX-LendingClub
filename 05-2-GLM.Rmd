@@ -60,7 +60,6 @@ rm(allFactorsAsCharacteristics)
 
 ```{r message=FALSE,echo=FALSE}
 rm(loansTraining)
-gc(full = TRUE, verbose = FALSE)
 ```
 
 <!-- END OF COPY                                                                     -->
@@ -82,6 +81,7 @@ Although the original dataset may not contain such variables, binning variables 
 
 To identify such bins, we use a "trick" to speed up comparison: we run a hash digest on each column and spot identical hashes. 
 
+$$\text{ }$$
 ```{r 05-02-rm-useless-bins,message=FALSE,echo=TRUE}
 namesCharacteristics <- names(loanSampleCharacteristics)
 namesBins <- names(loanSampleBins)
@@ -97,6 +97,7 @@ $$\text{ }$$
 
 We also identify any empty bin (this has only been useful when working on extremely small extracts of the original dataset).
 
+$$\text{ }$$
 ```{r message=FALSE,echo=TRUE}
 # Remove any categories uniformaly constant (only 0)
 #
@@ -122,11 +123,8 @@ Finally, we will select a model.
 
 ### First model - complete dataset
 
-```{r message=FALSE,echo=FALSE}
-gc(full = TRUE, verbose = FALSE)
-```
 
-
+$$\text{ }$$
 ```{r 05-02-first-training-B,echo=TRUE,message=FALSE}
 # About 700 sec wall-time to complete training dataset
 # The dataset is the sample less duplicate, less zero-ed columns
@@ -154,6 +152,7 @@ saveRDS(SGLM_B_train, "datasets/SGLM_B_train.rds")
 
 There are a number of NA coefficients. The first 10 are:
 
+$$\text{ }$$
 ```{r 05-02-first-training-B-NA,echo=TRUE,message=FALSE}
 speedglm:::summary.speedglm(SGLM_B_train)$coefficients %>% 
   as.data.frame() %>% 
@@ -161,7 +160,7 @@ speedglm:::summary.speedglm(SGLM_B_train)$coefficients %>%
   filter(is.na(Estimate)) %>% 
   slice(1:10) %>% 
   select("Bin name") %>% 
-  knitr::kable(caption = "First model. Example of NA coefficients.") %>% 
+  kable(caption = "First model. Example of NA coefficients.", digits = 3) %>% 
   kableExtra::kable_styling(latex_options = "HOLD_position")
 
 ```
@@ -170,6 +169,7 @@ $$\text{ }$$
 
 The most significant bins are:
 
+$$\text{ }$$
 ```{r 05-02-first-training-B-best10,echo=TRUE,message=FALSE}
 speedglm:::summary.speedglm(SGLM_B_train)$coefficients %>% 
   as.data.frame() %>% 
@@ -178,7 +178,7 @@ speedglm:::summary.speedglm(SGLM_B_train)$coefficients %>%
   arrange(desc(z_value)) %>% 
   select(Bin_name, Estimate, z_value) %>% 
   slice(1:15) %>%
-  knitr::kable(caption = "First training. 15 best bins") %>% 
+  kable(caption = "First training. 15 best bins", digits = 3) %>% 
   kableExtra::kable_styling(latex_options = "HOLD_position")
 
 ```
@@ -187,6 +187,7 @@ $$\text{ }$$
 
 We store the list of bins identified as colinear for later use. 
 
+$$\text{ }$$
 ```{r  05-02-first-training-B-vars,echo=TRUE,message=FALSE}
 NAsFirstTraining <-
   
@@ -209,13 +210,10 @@ $$\text{ }$$
 
 ### Second training - fitted model less colinear bins
 
-```{r message=FALSE,echo=FALSE}
-gc(full = TRUE, verbose = FALSE)
-```
-
 
 For the second training, we use the complete dataset with duplicate and colinear bins removed. 
 
+$$\text{ }$$
 ```{r 05-02-second-training-B,echo=TRUE,message=FALSE}
 # Start the model training again
 {
@@ -245,6 +243,7 @@ saveRDS(SGLM_B_retrain, "datasets/SGLM_B_retrain.rds")
 
 The most significant bins are:
 
+$$\text{ }$$
 ```{r 05-02-second-training-B-best10,echo=TRUE,message=FALSE}
 
 speedglm:::summary.speedglm(SGLM_B_retrain)$coefficients %>% 
@@ -254,7 +253,7 @@ speedglm:::summary.speedglm(SGLM_B_retrain)$coefficients %>%
   arrange(desc(z_value)) %>% 
   select(Bin_name, Estimate, z_value) %>% 
   slice(1:15) %>%
-  knitr::kable(caption = "Second training. 15 best bins") %>% 
+  kable(caption = "Second training. 15 best bins", digits = 3) %>% 
   kableExtra::kable_styling(latex_options = "HOLD_position")
 
 ```
@@ -263,6 +262,7 @@ $$\text{ }$$
 
 We can now select any bins whose significance value is under 2 $\sigma$. 
 
+$$\text{ }$$
 ```{r 05-02-second-training-B-vars,echo=TRUE,message=FALSE}
 NAsSecondTraining <-
   tibble(
@@ -286,13 +286,11 @@ $$\text{ }$$
 ### Third training - second fitted model less non-significant bins
 
 
-```{r message=FALSE,echo=FALSE}
-gc(full = TRUE, verbose = FALSE)
-```
 
 
 For the third training, we use the complete dataset with duplicate, colinear and non-significant bins removed. 
 
+$$\text{ }$$
 ```{r 05-02-third-training-B,echo=TRUE,message=FALSE}
 # Start the model training again. About 350 sec.
 {
@@ -326,6 +324,7 @@ saveRDS(SGLM_B_reretrain, "datasets/SGLM_B_reretrain.rds")
 
 The most significant bins are:
 
+$$\text{ }$$
 ```{r 05-02-third-training-B-best10,echo=TRUE,message=FALSE}
 
 speedglm:::summary.speedglm(SGLM_B_reretrain)$coefficients %>% 
@@ -335,14 +334,14 @@ speedglm:::summary.speedglm(SGLM_B_reretrain)$coefficients %>%
   arrange(desc(z_value)) %>% 
   select(Bin_name, Estimate, z_value) %>% 
   slice(1:15) %>%
-  knitr::kable(caption = "Third training: 15 best bins") %>% 
+  kable(caption = "Third training: 15 best bins", digits = 3) %>% 
   kableExtra::kable_styling(latex_options = "HOLD_position")
 
 ```
 $$\text{ }$$
 
 
-
+$$\text{ }$$
 ```{r 05-02-third-training-B-vars,echo=FALSE,message=FALSE}
 NAsThirdTraining <-
   tibble(
@@ -362,34 +361,34 @@ NAsThirdTraining <- NAsThirdTraining$name
 $$\text{ }$$
 
 
-Table \@ref(tab:0502-training-criteria) shows the Akaike Information Criterion and Log-likelihood for each of the 3 training results. Two points to note:
+Table \@ref(tab:05-02-training-criteria) shows the Akaike Information Criterion and Log-likelihood for each of the 3 training results. Two points to note:
 
   + The results did not change from first to second training. This is normal since we only removed non-informative categorical bins for which the regression could not determine a coefficient (i.e. colinearity with other variables);
 
   + Removing seemingly non-significant bins makes the model worse (at least by those measures). This would suggest that individual bins should not be considered but only the entire variable to which they belong.
 
 
-
+$$\text{ }$$
 ```{r 05-02-training-criteria,echo=FALSE}
 tibble(
   "Criteria" = c("AIC", "Log likelihood"),
-  "First #1" = c(
+  "Training #1" = c(
     speedglm:::summary.speedglm(SGLM_B_train)$aic,
     speedglm:::summary.speedglm(SGLM_B_train)$logLik
   ),
   
-  "Second #2" = c(
+  "Training #2" = c(
     speedglm:::summary.speedglm(SGLM_B_retrain)$aic,
     speedglm:::summary.speedglm(SGLM_B_retrain)$logLik
   ),
   
-  "Third #3" = c(
+  "Training #3" = c(
     speedglm:::summary.speedglm(SGLM_B_reretrain)$aic,
     speedglm:::summary.speedglm(SGLM_B_reretrain)$logLik
   )
 ) %>%
   
-  knitr::kable(caption = "Training AIC and Log-likelihood") %>% 
+  kable(caption = "Training AIC and Log-likelihood", digits = 3) %>% 
   kableExtra::kable_styling(latex_options = "HOLD_position")
 
 ```
@@ -401,6 +400,5 @@ In the next section we will only work with the second model since it appears to 
 
 ```{r echo=FALSE,message=FALSE}
 rm(loansData)
-
 ```
 
