@@ -357,12 +357,10 @@ $$\text{ }$$
 
 We replicate the exact same steps on the test set loans, also converted into a matrix.
 
-$$\text{ }$$
 ```{r echo=FALSE,message=FALSE}
 # Prepare the full test set
 bestBins <- readRDS("datasets/bestBins100.rds")
 ```
-$$\text{ }$$
 
 $$\text{ }$$
 ```{r 05-03-test-bins,echo=TRUE,message=FALSE}
@@ -502,7 +500,7 @@ More critically, the confusion matrix does not (and cannot) reflect the conseque
 
 A popular measure for the performance of such a logistic regression model is to consider its _Receiver Operating Characteristic_ curve (_ROC_) and calculate its area under curve (_AUC_). We use the `ROCR` package ([@10.1093/bioinformatics/bti623]). We recommend \@fawcett2004roc for a very good overview of Receiver Operating Characteristics graphs.
 
-We first create a prediction object that will 
+We first create a prediction object that will be used for plotting.
 
 $$\text{ }$$
 ```{r 05-03-test-ROC,echo=TRUE,message=FALSE}
