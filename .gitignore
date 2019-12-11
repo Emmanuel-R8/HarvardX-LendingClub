@@ -6,8 +6,6 @@ _publish.R
 
 _book
 _bookdown_files
-*_cache
-*_files
 profile*
 HarvardX-LendingClub.Rmd
 
@@ -24,6 +22,9 @@ scratchpad.*
 /build
 /OLD
 /Research
+/NOT-repoed
+*_cache
+*_files
 
 datasets/simplemaps_uszips_basicv1.6
 datasets/lending_club.csv

@@ -1,4 +1,4 @@
-# Appendix {-}
+# Appendix
 
 ```{r message=FALSE,echo=FALSE}
 library(tidyverse)
@@ -20,7 +20,7 @@ As mentioned during this report, we had to make numerous assumptions given the l
 
 + LIBOR funding rate: we use the 3-year and 5-year swap rates. In reality, we should have used average tenor-weighted swap rates (i.e. ca. 1.5 Y and 2.5 Y). This requires a full swap curve and more calculation than necessary for our purpose. The principles of this report should not be significantly affted by this approximation. 
 
-We do hope that LendingClub investors receive information of much better quality!
+We expect that LendingClub investors receive information of much better quality since the largest investors are now banks.
 
 
 ## Data preparation and formatting

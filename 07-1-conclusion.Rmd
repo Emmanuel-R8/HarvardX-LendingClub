@@ -3,15 +3,14 @@
 This report was an exploration of the LendingClub dataset. The result should be seen as unsatisfactory: the final model clearly extracts relevant information that classifies loan applications in a 
 way that broadly mirrors the ratings proposed by LendingClub. It is however too imprecise to draw any comfort that it could be used in any way. 
 
-One question that is the ultimate only relevant question has not bee answered: Is the interest rate proposed by LC high enough?
+One question, which is at the end of the day the only relevant question, has not been answered: Is the interest rate proposed by LC high enough?
 
 
 This report has additional clear limitations:
 
-  + Facing such a large dataset, it took a very long time before settling on a tractable question. Exploring the data lead to many blind alleys with little interest. See next section for further 
-explanations.
+  + Facing such a large dataset, it took a very long time before settling on a tractable question. Exploring the data lead to many blind alleys with little interest. See next section for further explanations.^[But there is no Goldielocks dataset: they are always to small or too big.]
 
-  + As a practical tool, our approach would not work in real life: we have no data on rejected loans. Using this model to accept/reject loans would need more work (using Reject Inference).
+  + As a practical tool, our approach would not work in real life: we have no data on rejected loans. Using this model to accept/reject loans would need more work (for example using Reject Inference).
 
   + We only considered probabilities of default. 
   

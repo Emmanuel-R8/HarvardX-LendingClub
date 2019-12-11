@@ -77,7 +77,7 @@ knitr::opts_chunk$set(
   out.width = "70%",
   fig.align = "center",
   dev = "png",
-  dpi = 300, 
+  dpi = 600, 
   # fig.height = 3,
 
   # Text size

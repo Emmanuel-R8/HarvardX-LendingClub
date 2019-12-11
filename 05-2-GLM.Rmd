@@ -3,8 +3,7 @@
 In this section, we fit a linear regression model using the fully binned dataset.
 
 
-We tested several R linear regression packages. `glm` crashed on even small extracts of the dataset. `glmnet` returns errors that were not understandable nor documented on the internet. We settled on the `speedglm` package which is designed to handled very large datatsets. Note that it includes has a `select()` function which would shadow or conflict with `dplyr::select()`, so it is only used fully qualified to avoid any collision.
-
+We tested several R linear regression packages. `glm` crashed on even small extracts of the dataset. `glmnet` returns errors that were not understandable nor documented on the internet. Although it does not include a `predict` function, we settled on the `speedglm` package which is designed to handled very large datatsets. Note that it includes has a `select()` function which would shadow or conflict with `dplyr::select()`, so it is only used fully qualified to avoid any collision.
 
 
 
@@ -62,14 +61,10 @@ rm(allFactorsAsCharacteristics)
 rm(loansTraining)
 ```
 
+
 <!-- END OF COPY                                                                     -->
 <!------------------------------------------------------------------------------------->
 
-
-```{r message=FALSE,echo=FALSE}
-ncol(loanSampleBins)
-ncol(loanSampleCharacteristics)
-```
 
 
 ### Remove identical bins
@@ -109,8 +104,7 @@ zeroColumnsNames <- loanSampleBins[, colSums(loanSampleBins) == 0] %>% names()
 $$\text{ }$$
 
 
-
-Fitting the model will be done in four consecutive steps. We start with the binned dataset, removing variables with IV under 2%. All variables are one-hot encoded. 
+We start with the binned dataset created in the previous subsection, removing variables with IV under 2%. All variables are one-hot encoded. Fitting the model will be done in four consecutive steps: 
 
   1. We fit a model on the binned dataset.
   
@@ -119,6 +113,7 @@ Fitting the model will be done in four consecutive steps. We start with the binn
   3. Next, we refit after removing any variable whose significance is not at least p-value > 95%.
   
 Finally, we will select a model.
+
 
 
 ### First model - complete dataset
@@ -139,7 +134,7 @@ $$\text{ }$$
                                      family = binomial())
   
   doMC::registerDoMC(cores = NULL)
-  cat(proc.time() - startTime, "\n")
+  cat("-- Lapsed time: ", proc.time() - startTime)
 }
 ```
 $$\text{ }$$
@@ -230,7 +225,7 @@ $$\text{ }$$
                                        family = binomial())
   
   doMC::registerDoMC(cores = NULL)
-  cat(proc.time() - startTime)
+  cat("-- Lapsed time: ", proc.time() - startTime)
 }
 ```
 $$\text{ }$$
@@ -311,7 +306,7 @@ $$\text{ }$$
                                          family = binomial())
   
   doMC::registerDoMC(cores = NULL)
-  cat(proc.time() - startTime)
+  cat("-- Lapsed time: ", proc.time() - startTime)
 }
 ```
 $$\text{ }$$
@@ -363,9 +358,9 @@ $$\text{ }$$
 
 Table \@ref(tab:05-02-training-criteria) shows the Akaike Information Criterion and Log-likelihood for each of the 3 training results. Two points to note:
 
-  + The results did not change from first to second training. This is normal since we only removed non-informative categorical bins for which the regression could not determine a coefficient (i.e. colinearity with other variables);
+  + The results did not change from first to second training. This is normal since we only removed non-informative categorical bins for which the regression could not determine a coefficient (i.e. colinearity with other variables). We did not remove any information;
 
-  + Removing seemingly non-significant bins makes the model worse (at least by those measures). This would suggest that individual bins should not be considered but only the entire variable to which they belong.
+  + Removing seemingly non-significant bins makes the model worse (at least by those measures). This would suggest that bins should not be individually considered, but only the entire variable to which they belong.
 
 
 $$\text{ }$$
@@ -395,7 +390,7 @@ tibble(
 $$\text{ }$$
 
 
-In the next section we will only work with the second model since it appears to be the best.
+In the next section we will only work with the second model since it is the best (by those measures).
 
 
 ```{r echo=FALSE,message=FALSE}

@@ -1,14 +1,7 @@
+
 # Internal Rate of Return, Credit Margins and Net Present Values
 
-In this section, we describe the response variables that we will generate for each loan and that will be used in the rest of this report.
-
-As indicated in the introduction, our purpose is to test a model that predicts the financial risk of a loan.
-
-## Important warning
-
-The calculations presented here are simplistic, although they bear some resemblance to what financial institutions (_FIs_) do. The literature on credit assessment and pricing is very rich and very complex. Finding the optimal capital allocation to particular risks while at the same time satisfying internal risk policies and regulatory requirements is a problem that financial institutions have yet to solve in full. Investing in a loan is not only a matter of assessing the risk of a particular borrower, but also assessing systemic risks (which exist across all borrowers), risks associated with funding the loan (interest, currency and liquidity markets), each requiring a risk assessment and pricing.
-
-In other words, nobody would, let alone should, make any investment decision based on the calculations below.
+In this section, we introduce basic financial concepts. We also describe variables that we will generate for each loan and that will be used in the rest of this report.
 
 
 ## Background
@@ -17,9 +10,9 @@ This subsection can be skipped by anybody with basic financial knowledge.
 
 A bird in hand or two in the bush; a penny today or a pound tomorrow. What is the price of delaying obtaining and owning something? This is what pricing a loan is about. A lender could keep his/her cash in hand, or lend it and have it in hand later. He/she would accept this in exchange for receiving a bit more: this is the rate of interest. A lender wants to be compensated for delaying the possibility of using the cash, but also for taking the risk of not receiving it, partially or in full, when repayment is due.
 
-There are borrowers that one can see as (almost) completely safe or risk-free such as central banks or governments of strong economies. A lender always has the possibility to lend to them instead of more risky borrowers. Therefore, a lender would require a higher interest rate than risk-free. The additional interest that a lender requires is commensurate with the risk of the borrower not repaying (called _credit worthiness_) and is called the _credit margin_.
+There are borrowers that one can see as (almost) completely safe or risk-free such as central banks or governments of strong economies. A lender always has the possibility to lend to them instead of more risky borrowers. Therefore, a lender would require a higher interest rate than risk-free. The additional interest that a lender requires is commensurate with the risk of the borrower not repaying (_credit worthiness_) and is called the _credit margin_.
 
-For each individual borrower, an FI would assess information provided by the borrower and massive amounts of historical data to answer the question: considering historical borrowers with a profile similar to the applicant's, what is the probability of not getting principal and interest back (_Probability of Default_ or _PD_)? And, in case the borrower stops paying and using additional courses of action (such as seizing and selling assets), what is the total loss that could be expected on average (_Loss given Default_ or _LGD_)?
+For each individual borrower, an FI would assess information provided by the borrower and historical data to answer the question: considering historical borrowers with a profile similar to the applicant's, what is the probability of not getting principal and interest back (_Probability of Default_ or _PD_)? And, in case the borrower stops paying and, maybe using additional courses of action (such as seizing and selling assets), what is the total loss that could be expected on average (_Loss given Default_ or _LGD_)?
 
 Making that assessment, the FI would require an interest rate which would roughly be the sum of:
 
@@ -29,17 +22,18 @@ Making that assessment, the FI would require an interest rate which would roughl
 
 + a margin to cover all the operational costs of running their operations; and,
 
-+ a margin to remunerate the capital allocated by the FI (banking regulations require all banks to allocate an amount of capital against any risk taken; those are stipulated in a number of complex rules).
++ a margin to remunerate the capital allocated by the FI (banking regulations require all banks to allocate an amount of capital against any risk taken; this is stipulated in a number of complex rules).
 
-Said crudely, this total is the amount for the FI to get out of bed and look at a loan. Although this sounds like an exact science (for some definition of the word), it is not. At the end of the day, the FI will also have to contend with the competition from other FIs or non banking lenders, market liquidity (if there is a lot of money available to be lent, it brings prices down) and, critically, whether the borrower would at all be interested in accepting that cost.
+Said crudely, this total is the amount for the FI to get out of bed and look at a loan. Although this sounds like an exact science (for some definition of the word), it is not. At the end of the day, the FI will also have to contend with the competition from other FIs or non banking lenders, market liquidity (if there is a lot of money available to be lent, it brings prices down) and, od course, whether the borrower would at all be interested in accepting that cost.
 
 Note that the dataset is distorted by this additional survival effect: the application information of many loans does not appear merely because the rate of interest was considered too high (this is not dissimilar to _survival effects_ where some data did not survive through the history of a dataset^[A well-known example is historical stock prices which disappear when companies are de-listed or go bankrupt.]).
 
+
 ## Internal Rate of Return
 
-For the purpose of this report, we will simplify things enormously: we will only consider the first two components of the interest rate. The risk-free rate and the credit margin that would cover the cost of default/losses of individual borrowers.
+For the purpose of this report, we will simplify things: we will only consider the first two components of the interest rate. The risk-free rate and the credit margin that would cover the cost of default/losses of individual borrowers.
 
-With respect to a given loan and its cash flow, two calculations are important here: the Net Present Value (_NPV_) and the Internal Rate of Return (_IRR_). If we remember that an FI is indifferent to holding a principal $P$ today or receiving it with an annual interest a year later (i.e. $P \times (1 + r)$ where $r$ is the annual rate of interest), we can say that any amount $CF_1$ received in a year is equivalent to $CF_0 = \frac{CF_1}{1 + r}$ today. More generally, a steam of future cash receipts is worth:
+With respect to a given loan and its cash flow, two calculations are important: the Net Present Value (_NPV_) and the Internal Rate of Return (_IRR_). If we remember that an FI is indifferent to holding a principal $P$ today or receiving it a year later with an annual interest (i.e. $P \times (1 + r)$ where $r$ is the annual rate of interest), we can say that any amount $CF_1$ received in a year is equivalent to $CF_0 = \frac{CF_1}{1 + r}$ today. More generally, a steam of future cash receipts is worth:
 
 $$NPV(r) = \sum_{Year \space i = 1}^{Year = n}\frac{CF_i}{(1 + r)^i}$$
 
@@ -51,17 +45,17 @@ If we now have a day 1 cash flow $CF_0$, we can calculate:
 
 $$CF_0 - \sum_{Year \space i = 1}^{Year = n}\frac{CF_i}{(1 + r)^i}$$
 
-However, for any given $CF_0$, there is no reason that it would equal the NPV of the future cash flow (i.e no reason why the difference would be equal to zero). But this is an equation depending on $r$. If we can find a value of $r$ that zeroes this formula, it is called the internal rate of return of the cash flow:
+However, for any given $CF_0$, there is no reason that it would equal the NPV of the future cash flow (i.e no reason why the difference would be equal to zero). But this equation is a funciton of $r$. If we can find a value of $r$ that zeroes this formula, it is called the internal rate of return of the cash flow ^[Given the coefficients of such polynomials, we never strange root values.]:
 
 $$CF_0 - \sum_{Year \space i = 1}^{Year = n}\frac{CF_i}{(1 + IRR(CF))^i} = 0$$
 
 or for monthly cash flow:
 
-$$CF_0 - \sum_{Month \space i = 1}^{Month = 12 \times n}\frac{CF_i}{(1 + \frac{IRR(r)}{12})^i}  = 0$$
+$$CF_0 - \sum_{Month \space i = 1}^{Month = 12 \times n}\frac{CF_i}{(1 + \frac{IRR(CF)}{12})^i}  = 0$$
 
 ## Dataset calculation
 
-For each loan. we calculated the IRR, credit margin and NPV. The calculations were performed in Julia due to R's slow performance on such a large dataset. For this reason, the resulting datasets are available on the GitHub repository as gzipped CSV files.
+For each loan. we calculated the IRR, credit margin and NPV. The calculations were performed in Julia due to R's slow performance on such a large dataset ^[The resulting datasets are too large to be made available on the GitHub repository.].
 
 The source code files are in the `Scripts` folder. 
 
@@ -71,9 +65,9 @@ We used the dataset to calculate the IRR of each loan. We used the following inf
 
 From that information, we recreated a cash flow for each loan. Unfortunately, this R code takes close to a full day to run on the entire dataset of completed loans (i.e. excluding all ongoing loans). This is just impractical for anybody to run to check this report and the resulting IRR results dataset is included in the Github repository. To make things practical, the dataset was actually created using code in Julia^[https://julialang.org/]. It is a direct translation of the R code, with a similar syntax (therefore very easy to follow). The Julia code runs about 500 times quicker (this is not a typo), or about 3 minutes. We appreciate that this is the departure from the assignment description.
 
-Similarly, we calculate the credit margin required by each loan noting that:
+Similarly, we calculate the credit margin required by each loan noting that $\text{Risk-free} + \text{Credit Margin} = IRR(loan)$.
 
-$$\text{Risk-free} + \text{Credit Margin} = IRR(loan)$$
+
 
 ### Credit Margins
 
@@ -82,9 +76,10 @@ As noted in the previous section, risk-free rates change over time. When solving
 Again, this was coded in Julia. The Julia code here takes about 1h20min to run. On the assumptions that the equivalent R code would take therefore almost 30 days to run through the full dataset, we did not write any R code for this calculation. 
 
 
+
 ### NPV
 
 
-We also calculated the NPV of each loan, both as an absolute dollar amount and as a portion of the original. Again, this was coded in Julia. Visualisations based on the NPV are in the next section.
+We also calculated the NPV of each loan, both as an absolute dollar amount and as a portion of the original. Again, this was coded in Julia. Visualisations based on the credit margins and NPV are in the next section.
 
 

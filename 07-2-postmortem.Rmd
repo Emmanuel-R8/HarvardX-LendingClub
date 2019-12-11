@@ -1,19 +1,19 @@
+
 # Errands and post-mortem
 
-This project took much longer that the MovieLens capstone. Here is a short list of ideas explored, pitfalls, lessons learned, and character-builders. This is in part written with the belief that 
-knowing what does not work is as worthy as what does work. 
+This project took much longer that the MovieLens capstone. Here is a short list of ideas explored, pitfalls, lessons learned, and character-builders. This last section is written in the belief that knowing what does not work is as worthy as what does work.^[Nobody gets a prize for having been incorrect. But nobody gets a prize not knowing where others have been incorrect.] 
 
 
 ## Modeling
 
-One bit of advice I have known of, agreed with, and naturally did not follow is to build early and small. In other words, deep and wide exploration of the dataset for the sake of it without modeling is wasteful of time and ideas. Modeling early, small and wrong (at least initially) is a better way to keep track of progress, a good sense of the eventual challenges, and suggest fruitful data exploration avenues. More importantly, it is in and by itself of form of exploration of the dataset. It also tends to explore the data wide-and-shallow rather than deep-but-narrow.
+One bit of advice I have known of, agreed with, and naturally set aside, was is to build early and small. In other words, deep and wide exploration of the dataset for the sake of it without modeling is wasteful of time and ideas. Modeling early, small and wrong (at least initially) is a better way to keep track of progress, a good sense of the eventual challenges, and suggest fruitful data exploration avenues. More importantly, it is in and by itself of form of exploration of the dataset. It also tends to explore the data wide-and-shallow rather than deep-but-narrow.
 
 
-Having said that, we explored potential models early. Principal Component Analysis, naive Linear Regression, Extreme Boosting and Random Forest were toyed. No model could be trained on the full set. We therefore came to limit the training set on a random sample of 0.1% (1 thousandth) of the initial full set. 
+Having said that, I did some early exploration of models. Principal Component Analysis, naive Linear Regression, Extreme Boosting and Random Forest were toyed with. No model could be trained on the full set. I therefore came to limit the training set on a random sample of 0.1% (1 thousandth) of the initial full set. 
 
-We then went on a quest to formulate a model suitable for batch training (either simple sequential batches or stochastic) and gradient descent. 
+I then went on a quest to formulate a model suitable for batch training (either simple sequential batches or stochastic) and gradient descent. 
 
-We also considered online training. However, our untested intuition was that online methods are not adapted to an unbalanced dataset: the number of defaults/write-offs is fairly low for high quality ratings. However, the dataset is evidently a time series which points to online training. 
+I also considered online training. However, an untested (and possibly completely wrong) intuition was that online methods are not adapted to an unbalanced dataset: the number of defaults/write-offs is low for high quality ratings. However, the dataset is evidently a time series which points to online training. 
 
 Along the way, the main unanswered question remained what to study out of the dataset: focus on a very narrow of variables? enrich it with other sources to study the impact of cyclical economic crises? determine an optimal pricing of each loan? 
 
@@ -36,7 +36,7 @@ https://geofred.stlouisfed.org/map/?th=rdpu&cc=5&rc=false&im=fractile&sb&lng=-90
 
 
 
-Of key interest was indicators of economic stress with the following intuition: if a borrower has a good credit standing, traditional banks would provide cheaper access to credit. In times of financial distress (indicated by higher unemployment, lower GDP growth, income per household, ...), we should see higher volumes of loans, and/or changes in the loan application patterns. 
+Of key interest were indicators of economic stress with the following intuition: if a borrower had a good credit standing, traditional banks would provide cheaper access to credit. In times of financial distress (indicated by higher unemployment, lower GDP growth, income per household, ...), we should see higher volumes of loans, and/or changes in the loan application patterns. 
 
 
 Given the time available, that data turned out to be too difficult to use:
@@ -58,34 +58,25 @@ This subsection is a bit detailed. The main final points are however simple:
 
   + A more thorough search for exisitng literature and craft would have been time better spent. 
   
-  + Throwing more _iron_ should be a last resort after trying to be more clever, or more realistically looking for what more clever people have done in the past. This report is not intended to be a 
-PhD thesis. 
+  + Throwing more _iron_ should be a last resort after trying to be more clever (or more realistically looking for what actually clever people have done in the past). This report is not intended to be a PhD thesis. 
 
-  + R is not (yet) equipped to take advantage of advances in full program differentiation (and leverage deep learning optimisation library) like Swift ^[https://blog.tensorflow.org/2019/06/fastais-deep-learning-from-foundations_28.html] and Julia  ^[https://fluxml.ai/Zygote.jl/latest/] are. R has the `Madness` package and can also interface with Julia. But that was another rabbit hole that was too dark from the outset.
+  + R is not (yet) equipped to take advantage of advances in full program automatic differentiation (and leverage deep learning optimisation library) like Swift ^[https://blog.tensorflow.org/2019/06/fastais-deep-learning-from-foundations_28.html] and Julia  ^[https://fluxml.ai/Zygote.jl/latest/] are. R has the `Madness` package and can also interface with Julia. But that was another rabbit hole that was too dark from the outset.
 
   + On the positive side, calculating the derivative of the multimodal NPV function was checked with Maxima symbolic math capabilities and was an opportunity to re-acquaint ourselves with it.
 
 
-  
 __Here is what was written at the time of exploring SGD.__
 
   
-The early exploration of stochastic gradient as the only way to tackle extremely large dataset was decided on the basis of this diagram: \@ref(fig:scikit-map)^[Source: 
-https://scikit-learn.org/stable/tutorial/machine_learning_map/index.html]. It is otherwise extremely valuable, but we should realised much earlier that financial institutions have beeen dealing with such datasets for decades, especially at times when computing capacity was a orders of magnitude lower than now. If they could do it then, exploring how they did it should have been done first. 
+The early exploration of stochastic gradient as the only way to tackle extremely large dataset was decided on the basis of this diagram: \@ref(fig:scikit-map)^[Source: https://scikit-learn.org/stable/tutorial/machine_learning_map/index.html]. It is otherwise extremely valuable, but we should realised much earlier that financial institutions have beeen dealing with such datasets for decades, at times when computing capacity was a orders of magnitude lower than now. If they could do it then, exploring how they did it should have been done first. 
 
 
 ```{r scikit-map, fig.cap="Scikit Learn algorithm cheat-sheet",output.width="70%",cache=FALSE}
 knitr::include_graphics("images/scikit-learn-mlmap.png", auto_pdf = TRUE)
 ```
 
-Following the disappointing results of the previous section, we will explore a simpler model, but iteratively trained on a wider set of random samples.
 
-
-### Description of the model
-
-#### Gradient descent
-
-##### Generalities
+### Gradient descent
 
 Gradient descent is a generic numerical optimisation algorithm to iteratively converge towards a (sometimes local) minumum of a given function. It is extensively used in statistical learning to minimise error functions.  
 
@@ -118,85 +109,13 @@ In practice, the cost function will add a penalty term to regularise the model p
 
 
 
-##### Stochastic Gradient Descent
+### Stochastic Gradient Descent
 
 With realistic datasets, gradient descent can experience slow convergence because (1) each iteration requires calculation of the gradient for every single training example, and (2) since each individual sample is potentially very different from another, the calculated gradient may not be optimal. In such case, the gradient descent can be done using a batch of several training samples and use the average of the cost function (__batch gradient descent__). This addresses those two sources of inefficiency.
 
 This method however still requires iterating over the entire dataset. We can instead iterate over batched of random training samples drawn from the entire dataset, instead of being drawn sequentially. This is the _stochastic gradient descent_.
 
 Aside from the choice of the initial choice of samples, and the averaging of the cost function, the update of $\theta$ remains identical.
-
-
-
-##### Cost function regularisation and derivative
-
-Regularisation is a way to decrease the complexity of models by narrowing the range that parameters can take. It has long been established that it assists the stability and robustness of learning algorithms. See Chapter 13 of [@shalev2014understanding].
-
-Our regularised cost function is written:
-
-$$ 
-J_{P,Q} = \sum_{(i, j) \in \Omega} {\left (  r_{i,j} - \sum_{k=1}^{N_{features}}{p_{i,k} q_{j,k}} \right )^2} + \frac{\lambda}{2} \left (  \sum_{i,k}{p_{i,k}^2} +  \sum_{j,k}{q_{j,k}^2} \right ) 
-$$
-
-The gradient descent algorithm seeks to minimise the $J_{(\theta)}$ cost function by step-wise update of each model parameter $x$ as follows:
-
-$$
-\theta_{t+1}^i \leftarrow \theta_{t}^i - \alpha \frac{\partial J_{(\theta)}}{\partial \theta_i} 
-$$
-
-The parameters are the matrix coefficients $p_{i,k}$ $q_{j,k}$. $\alpha$ is the learning parameter that needs to be adjusted.
-
-
-##### Cost function partial derivatives
-
-The partial derivatives of the cost function is:
-
-
-
-$$
-\frac{\partial J_{P,Q}}{\partial x} = \frac{\partial}{\partial x} \left ( \sum_{(i, j) \in \Omega} {\left ( r_{i,j} - \sum_{k=1}^{N_{features}}{p_{i,k} q_{j,k}} \right )^2} + \frac{\lambda}{2} \left ( \sum_{i,k}{p_{i,k}^2} + \sum_{j,k}{q_{j,k}^2} \right ) \right )
-$$
-
-$$
-\frac{\partial J_{P,Q}}{\partial x} = \sum_{(i, j) \in \Omega} { 2 \frac{\partial r_{i,j} - \sum_{k=1}^{N_{features}} {p_{i,k} q_{j,k}}} {\partial x} \left (  r_{i,j} - \sum_{k=1}^{N_{features}}{p_{i,k} q_{j,k}} \right )  } + \frac{\lambda}{2} \left ( \sum_{i,k}{2 \frac{\partial p_{i,k}}{\partial x} p_{i,k}} + \sum_{j,k}{2 \frac{\partial p_{i,k}}{\partial x} q_{j,k}} \right ) 
-$$
-
-We note that $r_{i,j}$ are constants
-
-$$
-\frac{\partial J_{P,Q}}{\partial x} = 2 \sum_{(i, j) \in \Omega} \sum_{k=1}^{N_{features}} \left ( { \frac{\partial - {p_{i,k} q_{j,k}}}{\partial x} \left (  r_{i,j} - \sum_{k=1}^{N_{features}}{p_{i,k} q_{j,k}} \right ) }  \right ) + \lambda \left ( \sum_{i,k}{\frac{\partial p_{i,k}}{\partial x} p_{i,k}} + \sum_{j,k}{\frac{\partial p_{i,k}}{\partial x} q_{j,k}} \right ) 
-$$
-
-
-
-If $x$ is a coefficient of $P$ (resp. $Q$), say $p_{a,b}$ (resp. $q_{a,b}$), all partial derivatives will be nil unless for $(i,j) = (a,b)$. 
-
-
-Therefore:
-
-$$ 
-\frac{\partial J_{P,Q}}{\partial p_{a,b}} = -2 \sum_{(i, j) \in \Omega} { q_{j,b} \left (  r_{i,j} - \sum_{k=1}^{N_{features}}{p_{i,k} q_{j,k}} \right )} + \lambda p_{a,b} 
-$$
-
-and,
-
-$$
-\frac{\partial J_{P,Q}}{\partial q_{a,b}} = -2 \sum_{(i, j) \in \Omega} { p_{i,b} \left (  r_{i,j} - \sum_{k=1}^{N_{features}}{p_{i,k} q_{j,k}} \right ) } + \lambda q_{a,b} 
-$$
-
-Since $\epsilon{i, j} = r_{i,j} - \sum_{k=1}^{N_{features}}{p_{i,k} q_{j,k}}$ is the rating prediction error, this becomes:
-
-
-$$ 
-\frac{\partial J_{P,Q}}{\partial p_{a,b}} = -2 \sum_{(i, j) \in \Omega} { q_{j,b} \epsilon_{i,j}} + \lambda p_{a,b} 
-$$
-
-and,
-
-$$
-\frac{\partial J_{P,Q}}{\partial q_{a,b}} = -2 \sum_{(i, j) \in \Omega} { p_{i,b} \epsilon_{i,j} } + \lambda q_{a,b} 
-$$
-
 
 
 ### Cost function for multi-modal NPV
@@ -253,7 +172,7 @@ $$
 We then worked on the basis of code developed for the _Movielens_ capston ^[See https://github.com/Emmanuel-R8/https://github.com/Emmanuel-R8/HarvardX-Movielens].
 
 
-## Final Conclusions
+## Final final Conclusion
 
 We only received 999 cuts. We survived...
 
