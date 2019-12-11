@@ -1,21 +1,8 @@
 # Appendix {-}
 
-```{r very-long-table}
-tibble(randomRows = rnorm(1000)) %>%
-  knitr::kable(
-    "latex",
-    caption = "Caption of the Table",
-    booktabs = T,
-    longtable = T,
-    col.names = c("Random Number")
-  ) 
-```
-
-
 ```{r message=FALSE,echo=FALSE}
 library(tidyverse)
 ```
-
 
 ## List of assumptions / limitations regarding the dataset {#sec:list-assumptions}
 
@@ -53,9 +40,7 @@ We here show the code used to prepare the data. It was automatically formatted b
 
 ### LendingClub dataset {#sec:lendingclub-dataset}
 
-```{r child="Scripts/R-Data-Preparation.R",eval=FALSE,echo=TRUE}
-```
-
+See `Scripts/R-Data-Preparation.R`.
 
 
 ### Zip codes and FIPS codes
