@@ -242,9 +242,14 @@ loansTest <- readRDS("datasets/LoansTest.rds")
 ```
 
 
+We first review how the fitted model performed on the training set.
+
+We remove every variable that is not in the list of variables in the model then convert into a matrix.
+
 $$\text{ }$$
 ```{r 05-03-convert-to-matrix,echo=TRUE,message=FALSE}
-# Remove every variable that is not in the list of variables in the model then convert into a matrix
+# Remove every variable that is not in the list of variables in the model then convert
+# into a matrix
 allMatrix <-
   allFactorsAsBins[, !is.na(match(
     names(allFactorsAsBins),
@@ -254,6 +259,7 @@ allMatrix <-
 ```
 $$\text{ }$$
 
+The coefficients of the model also include the interept (set at zero in the scores). We add a column of 1's to the training data.
 
 $$\text{ }$$
 ```{r 05-03-matrix-add-1-col,echo=TRUE,message=FALSE}
@@ -273,6 +279,8 @@ rm(allFactorsAsBins)
 ```
 
 
+The coefficients of the model, then the scores, are converted to a vector format.
+
 
 $$\text{ }$$
 ```{r 05-03-logit-estimates,echo=TRUE,message=FALSE}
@@ -280,21 +288,21 @@ CoefficientsVector <- GLMCoefficients$Estimate %>% as.matrix()
 
 # Score per variable
 TrainingScorecard <- allMatrix %*% ( GLMScores$points %>% as.matrix() ) 
-dim(allMatrix)
-dim(GLMScores$points)
+```
+$$\text{ }$$
+ 
 
-# CHECK: Any variable with NAs?
-# GLMCoefficients$modelName[which(is.na(CoefficientsVector))]
-# CoefficientsVector[is.na(CoefficientsVector)] <- 0
-# dim(CoefficientsVector)
+We can now multiply the matrix of sample with the vector of coefficients.
 
+ 
+$$\text{ }$$
+```{r echo=TRUE,message=FALSE}
 TrainingLogit <- allMatrix %*% CoefficientsVector
 TrainingLogit <-
   enframe(TrainingLogit[, 1]) %>%
   mutate(oddsGood = exp(value),
          p = 1 / (1 + oddsGood)) %>% 
   cbind(TrainingScorecard)
-
 
 ```
 $$\text{ }$$
@@ -347,13 +355,16 @@ $$\text{ }$$
 
 ## Test set
 
+We replicate the exact same steps on the test set loans, also converted into a matrix.
+
 $$\text{ }$$
 ```{r echo=FALSE,message=FALSE}
 # Prepare the full test set
 bestBins <- readRDS("datasets/bestBins100.rds")
 ```
+$$\text{ }$$
 
-
+$$\text{ }$$
 ```{r 05-03-test-bins,echo=TRUE,message=FALSE}
 predictionCategories <- loansTest[, "loanID"]
 
@@ -367,8 +378,6 @@ for (index in 1:length(bestBins$variable)) {
 
   predictionCategories <- cbind(predictionCategories, binned)
 }
-
-dim(predictionCategories)
 ```
 $$\text{ }$$
 
@@ -389,7 +398,8 @@ $$\text{ }$$
 
 $$\text{ }$$
 ```{r 05-03-test-matrix-add-1-col,echo=TRUE,message=FALSE}
-predictionMatrix <- cbind(as.vector(rep.int(x = 1, times = dim(predictionMatrix)[1])), predictionMatrix)
+predictionMatrix <- cbind(as.vector(rep.int(x = 1, times = dim(predictionMatrix)[1])), 
+                          predictionMatrix)
 ```
 $$\text{ }$$
 
@@ -421,7 +431,7 @@ loansTest %>%
 $$\text{ }$$
 
 
-Same downward dynamics as training set
+We can now see the same downward dynamics as training set
 
 
 $$\text{ }$$
